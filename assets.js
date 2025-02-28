@@ -1,31 +1,36 @@
 /*BEWARE OF BOM ENCODING IN SPRITESHEETSSSS*/
 
-class Sprite {
-  constructor(name, imgSrc, anims) {
+export class Sprite {
+  constructor(name, isAnim, offX, offY) {
     this.name = name;
     this.image = new Image();
-    this.image.src = imgSrc;
+    this.image.src = `./assets/${this.name}.png`;
     this.atlas = {};
-    this.fps = 24;
+    this.fps = isAnim ? 24 : 1;
     this.anims = {};
-    this.curAnim = 0;
+    this.curAnim = {};
     this.isVisible = true;
+    this.offsetX = offX;
+    this.offsetY = offY;
 
-    this.fetchAtlas(`./assets/${this.name}.json`)
-      .then((a) => {
-        this.atlas = a;
-        console.log(`load atlas of ${this.name}`, this.atlas);
+    if (isAnim) {
+      this.fetchAtlas(`./assets/${this.name}.json`)
+        .then((a) => {
+          this.atlas = a;
+          console.log(`load atlas of ${this.name}`, this.atlas);
 
-        this.anims = this.loadAnimData(a.frames);
-        console.log(`load anims of ${this.name}`, this.anims);
-      })
-      .catch((e) => console.error(e));
+          this.anims = this.loadAnimData(a.frames);
+          console.log(`load anims of ${this.name}`, this.anims);
+        })
+        .catch((e) => console.error(e));
+    }
   }
 
   loadAnimData(frames) {
     const anims = {};
-
-    for (const frameKey in frames) {
+    let isFirst = true;
+    let firstA;
+    for (let frameKey in frames) {
       const strippedKey = frameKey.replace(new RegExp(`^${this.name}`), "");
       const [animName] = strippedKey.split(/(?=\d)/);
 
@@ -33,8 +38,14 @@ class Sprite {
         anims[animName] = 0;
       }
       anims[animName]++;
-    }
 
+      // default anim
+      if (isFirst) {
+        firstA = animName;
+        isFirst = false;
+      }
+    }
+    this.curAnim = { name: firstA, count: anims[`${firstA}`] };
     return anims;
   }
   async fetchAtlas(atlasSrc) {
@@ -56,11 +67,3 @@ class Sprite {
     this.isVisible = isV;
   }
 }
-
-export const playerSprite = new Sprite(
-  "lobby_player",
-  "./assets/lobby_player.png"
-);
-
-export const bgImage = new Image();
-bgImage.src = "./assets/lobby_bg.png";
