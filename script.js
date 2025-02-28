@@ -3,28 +3,34 @@ import { Sprite } from "./assets.js";
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+const DEVSIZE_X = 2560;
+const DEVSIZE_Y = 1440;
+
 const CANVAS_WIDTH = (canvas.width = 1920);
 const CANVAS_HEIGHT = (canvas.height = 1080);
+
+const RATIO = DEVSIZE_X / CANVAS_WIDTH;
+//expect mons to be fhd but my mon is qhd so in case thinking of rescaling start from here idk
 
 // back to front!!!!!
 let toLoadSprites = [
   {
     name: "lobby_bg",
     isAnim: false,
-    offsetX: -244 / 2,
-    offsetY: -197 / 2,
+    offsetX: -244 / RATIO,
+    offsetY: -197 / RATIO,
   },
   {
     name: "lobby_player",
     isAnim: true,
-    offsetX: 487 / 2,
-    offsetY: 572 / 2,
+    offsetX: 487 / RATIO,
+    offsetY: 572 / RATIO,
   },
   {
     name: "lobby_table",
     isAnim: false,
-    offsetX: 760 / 2,
-    offsetY: 886 / 2,
+    offsetX: 760 / RATIO,
+    offsetY: 886 / RATIO,
   },
 ]; //this is super cursed
 
@@ -90,8 +96,8 @@ function update() {
           frameData.frame.h,
           s.offsetX,
           s.offsetY,
-          frameData.frame.w / 2,
-          frameData.frame.h / 2
+          frameData.frame.w / RATIO,
+          frameData.frame.h / RATIO
         );
       } else {
         console.error(`Frame key ${frameKey} not found in atlas for ${s.name}`);
@@ -101,15 +107,15 @@ function update() {
         s.image,
         s.offsetX,
         s.offsetY,
-        s.image.width / 2,
-        s.image.height / 2
+        s.image.width / RATIO,
+        s.image.height / RATIO
       ); // update thissss
     }
   }
 
   // Step 3: Draw a filled rectangle
   ctx.fillStyle = "blue"; // Set the fill color
-  ctx.fillRect(0, 0, 1920, 100);
+  //ctx.fillRect(0, 0, 1920, 100);
   timer++;
 
   requestAnimationFrame(update);
