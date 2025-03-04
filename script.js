@@ -1,5 +1,5 @@
 import { Sprite } from "./sprite.js";
-import { InputHandler } from "./InputHandler.js";
+import "./InputHandler.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -16,45 +16,64 @@ const RATIO = DEVSIZE_X / CANVAS_WIDTH;
 let state = 0;
 /** 0: p1 enter game => 1: p2 enter game => 2: 0/1/2 players ready => 3: gamestart (switch scene) */
 // back to front!!!!!
-let toLoadSprites = /*[
+let toLoadSprites =
+  /*[
   {
     name: "lobby_player",
     isAnim: true,
-    offsetX: 2052 / RATIO,
-    offsetY: 572 / RATIO,
+    x: 2052 / RATIO,
+    y: 572 / RATIO,
     isFlip: true,
   },
-]; */ [
-  {
-    name: "lobby_bg",
-    isAnim: false,
-    offsetX: -244 / RATIO,
-    offsetY: -197 / RATIO,
-    isFlip: false,
-  },
-  {
-    name: "lobby_player",
-    isAnim: true,
-    offsetX: 487 / RATIO,
-    offsetY: 572 / RATIO,
-    isFlip: false,
-  },
-  {
-    name: "lobby_player",
-    isAnim: true,
-    offsetX: 2052 / RATIO,
-    offsetY: 572 / RATIO,
-    isFlip: true,
-  },
+]; */
+  // manually enter these from flash
+  [
+    {
+      name: "lobby_bg",
+      isAnim: false,
+      x: -244 / RATIO,
+      y: -197 / RATIO,
+      aOffsets: null,
+      isFlip: false,
+      clickable: false,
+    },
+    {
+      name: "lobby_player",
+      isAnim: true,
+      x: -500 / RATIO,
+      y: 427 / RATIO,
+      aOffsets: {
+        Enter: { x: 0, y: 115 / RATIO },
+        Idle: { x: 0, y: 150 / RATIO },
+        Ready: { x: 0, y: 0 },
+      },
+      isFlip: false,
+      clickable: true,
+    },
+    {
+      name: "lobby_player",
+      isAnim: true,
+      x: 2100 / RATIO,
+      y: 427 / RATIO,
+      aOffsets: {
+        Enter: { x: 0, y: -116 / RATIO },
+        Idle: { x: 0, y: 150 / RATIO },
+        Ready: { x: 0, y: 0 },
+      },
+      isFlip: true,
+      clickable: true,
+    },
 
-  {
-    name: "lobby_table",
-    isAnim: false,
-    offsetX: 720 / RATIO,
-    offsetY: 886 / RATIO,
-    isFlip: false,
-  },
-];
+    {
+      name: "lobby_table",
+      isAnim: false,
+      x: 720 / RATIO,
+      y: 886 / RATIO,
+      aOffsets: null,
+      isFlip: false,
+      clickable: false,
+    },
+  ];
 
 let loadedSprites = [];
 
@@ -65,9 +84,11 @@ function loadSprites(spriteConfigs) {
       const playerSprite = new Sprite(
         config.name,
         config.isAnim,
-        config.offsetX,
-        config.offsetY,
-        config.isFlip
+        config.x,
+        config.y,
+        config.aOffsets,
+        config.isFlip,
+        config.clickable
       );
 
       const checkAtlasLoaded = setInterval(() => {
@@ -134,3 +155,41 @@ function update() {
 }
 
 start();
+
+//input handling
+
+// player enters empty room
+document.addEventListener("keydown", (e) => {
+  if (e.key == "e" && !e.repeat) {
+    console.log("Player enters game");
+    const player = loadedSprites[1];
+    player.setAnim("Enter");
+    player.x = -200 / RATIO;
+
+    const targetX = 487 / RATIO;
+    const speed = 10;
+
+    function animate() {
+      if (player.x < targetX) {
+        player.x += speed;
+        requestAnimationFrame(animate);
+      } else {
+        player.x = targetX;
+        player.setAnim("Idle");
+      }
+    }
+
+    animate();
+  }
+});
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  for (let s of loadedSprites) {
+    if (s.isPointInside(x, y, RATIO)) {
+      s.handleClick();
+    }
+  }
+});

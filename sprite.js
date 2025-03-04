@@ -1,19 +1,21 @@
 /*BEWARE OF BOM ENCODING IN SPRITESHEETSSSS*/
 
 export class Sprite {
-  constructor(name, isAnim, offX, offY, isFlip = false) {
+  constructor(name, isAnim, x, y, aOffsets, isFlip = false, clickable = true) {
     this.name = name;
     this.image = new Image();
     this.image.src = `./assets/${this.name}.png`;
     this.atlas = {};
     this.fps = isAnim ? 24 : 1;
-    this.anims = {};
-    this.curAnim = {};
+    this.anims = {}; // {{name: "name", count: 123, offset:{x: 121, y:42322}},...}
+    this.animOffsets = aOffsets; // {Enter: { x: 0, y: -116 / RATIO }, Idle: { x: 0, y: 150 / RATIO },Ready: { x: 0, y: 0 }}
+    this.curAnim = {}; // {name: "name", count: 123, offset:{x: 121, y:42322}}
     this.isVisible = true;
     this.isFlip = isFlip;
-    this.offsetX = offX;
-    this.offsetY = offY;
+    this.x = x; // position on the canvas
+    this.y = y;
     this.isAtlasLoaded = false;
+    this.clickable = clickable;
 
     if (isAnim) {
       this.fetchAtlas(`./assets/${this.name}.json`)
@@ -23,8 +25,6 @@ export class Sprite {
 
           this.anims = this.loadAnimData(a.frames);
           console.log(`load anims of ${this.name}`, this.anims);
-
-          //ready to draw
         })
         .catch((e) => console.error(e));
     }
@@ -39,10 +39,16 @@ export class Sprite {
       const strippedKey = frameKey.replace(new RegExp(`^${this.name}`), "");
       const [animName] = strippedKey.split(/(?=\d)/);
 
+      //console.log("anim:", anims);
+
+      // new anim
       if (!anims[animName]) {
-        anims[animName] = 0;
+        anims[animName] = {
+          count: 0,
+          offset: this.animOffsets[animName] || { x: 0, y: 0 },
+        };
       }
-      anims[animName]++;
+      anims[animName].count++;
 
       // default anim
       if (isFirst) {
@@ -50,7 +56,11 @@ export class Sprite {
         isFirst = false;
       }
     }
-    this.curAnim = { name: firstA, count: anims[`${firstA}`] };
+    this.curAnim = {
+      name: firstA,
+      count: anims[`${firstA}`].count,
+      offset: anims[`${firstA}`].offset,
+    };
     return anims;
   }
 
@@ -68,8 +78,12 @@ export class Sprite {
   }
 
   setAnim(animName) {
-    this.curAnim = { name: animName, count: this.anims[`${animName}`] };
-    console.log("set animation to", animName);
+    this.curAnim = {
+      name: animName,
+      count: this.anims[`${animName}`].count,
+      offset: this.anims[`${animName}`].offset,
+    };
+    console.log("set animation to", this.curAnim);
   }
 
   set setVisible(isV) {
@@ -94,9 +108,9 @@ export class Sprite {
     ctx.save(); // Save the current state
 
     if (this.name === "lobby_table") {
-      ctx.translate(this.offsetX, this.offsetY); // Move the origin to the sprite's position
-      ctx.scale(0.859, 1); // Scale horizontally by 86%
-      ctx.translate(-this.offsetX, -this.offsetY); // Move the origin back
+      ctx.translate(this.x, this.y);
+      ctx.scale(0.859, 1);
+      ctx.translate(-this.x, -this.y);
     }
 
     if (this.isFlip) {
@@ -108,35 +122,58 @@ export class Sprite {
       const frameKey =
         this.name + this.curAnim.name + String(frameT).padStart(4, "0");
       const frame = this.atlas.frames[frameKey];
-
+      ///////////**************/ */
+      //console.log("offset of", this.name, this.curAnim, this.curAnim);
+      //console.log(frame.spriteSourceSize);
       if (frame) {
+        //console.log(frame.frame.x, this.curAnim.offset.x);
+        //for animated sprites
         ctx.drawImage(
           this.image,
           frame.frame.x,
           frame.frame.y,
           frame.frame.w,
           frame.frame.h,
-          this.offsetX * (this.isFlip ? -1 : 1),
-          this.offsetY,
+          (this.x + this.curAnim.offset.x) * (this.isFlip ? -1 : 1),
+          this.y + this.curAnim.offset.y,
           frame.frame.w / ratio,
           frame.frame.h / ratio
         );
       }
     } else {
-      console.log("sdfljksdfjkl");
+      //console.log("sdfljksdfjkl");
       ctx.drawImage(
         this.image,
         0,
         0,
         this.image.width,
         this.image.height,
-        this.isFlip ? this.offsetX - this.image.width / ratio : this.offsetX,
-        this.offsetY,
+        this.isFlip ? this.x - this.image.width / ratio : this.x,
+        this.y,
         this.image.width / ratio,
         this.image.height / ratio
       );
     }
 
-    ctx.restore(); // Restore the state
+    ctx.restore();
+  }
+
+  isPointInside(x, y, ratio) {
+    const width = this.image.width / ratio;
+    const height = this.image.height / ratio;
+    const spriteX = this.isFlip ? this.x - width : this.x;
+    return (
+      x >= spriteX &&
+      x <= spriteX + width &&
+      y >= this.y &&
+      y <= this.y + height
+    );
+  }
+
+  handleClick() {
+    if (this.clickable) {
+      //console.log(`sprite ${this.name} clicked`);
+      this.setAnim("Ready");
+    }
   }
 }
