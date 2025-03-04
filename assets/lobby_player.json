@@ -18,23 +18,23 @@
 },
 "lobby_playerEnter0002":
 {
-	"frame": {"x":375,"y":0,"w":270,"h":657},
+	"frame": {"x":375,"y":0,"w":375,"h":664},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":86,"y":1,"w":375,"h":664},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":375,"h":664},
 	"sourceSize": {"w":375,"h":664}
 },
 "lobby_playerEnter0003":
 {
-	"frame": {"x":375,"y":0,"w":270,"h":657},
+	"frame": {"x":375,"y":0,"w":375,"h":664},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":86,"y":1,"w":375,"h":664},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":375,"h":664},
 	"sourceSize": {"w":375,"h":664}
 },
 "lobby_playerIdle0000":
 {
-	"frame": {"x":645,"y":0,"w":522,"h":639},
+	"frame": {"x":750,"y":0,"w":522,"h":639},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":522,"h":639},
@@ -42,90 +42,90 @@
 },
 "lobby_playerReady0000":
 {
-	"frame": {"x":1167,"y":0,"w":711,"h":825},
+	"frame": {"x":1272,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
+	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0001":
 {
-	"frame": {"x":1167,"y":0,"w":711,"h":825},
+	"frame": {"x":1272,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
+	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0002":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0003":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0004":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0005":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0006":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0007":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0008":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0009":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 },
 "lobby_playerReady0010":
 {
-	"frame": {"x":0,"y":825,"w":744,"h":818},
+	"frame": {"x":2016,"y":0,"w":744,"h":825},
 	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":7,"w":744,"h":825},
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":744,"h":825},
 	"sourceSize": {"w":744,"h":825}
 }},
 "meta": {
@@ -133,7 +133,7 @@
 	"version": "12.0.0.481",
 	"image": "lobby_player.png",
 	"format": "RGBA8888",
-	"size": {"w":2048,"h":2048},
+	"size": {"w":3379,"h":1686},
 	"scale": "1"
 }
 }

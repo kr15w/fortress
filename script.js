@@ -1,4 +1,5 @@
-import { Sprite } from "./assets.js";
+import { Sprite } from "./sprite.js";
+import { InputHandler } from "./InputHandler.js";
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -12,32 +13,50 @@ const CANVAS_HEIGHT = (canvas.height = 1080);
 const RATIO = DEVSIZE_X / CANVAS_WIDTH;
 //expect mons to be fhd but my mon is qhd so in case thinking of rescaling start from here idk
 
+let state = 0;
+/** 0: p1 enter game => 1: p2 enter game => 2: 0/1/2 players ready => 3: gamestart (switch scene) */
 // back to front!!!!!
-let toLoadSprites = [
+let toLoadSprites = /*[
+  {
+    name: "lobby_player",
+    isAnim: true,
+    offsetX: 2052 / RATIO,
+    offsetY: 572 / RATIO,
+    isFlip: true,
+  },
+]; */ [
   {
     name: "lobby_bg",
     isAnim: false,
     offsetX: -244 / RATIO,
     offsetY: -197 / RATIO,
+    isFlip: false,
   },
   {
     name: "lobby_player",
     isAnim: true,
     offsetX: 487 / RATIO,
     offsetY: 572 / RATIO,
+    isFlip: false,
   },
+  {
+    name: "lobby_player",
+    isAnim: true,
+    offsetX: 2052 / RATIO,
+    offsetY: 572 / RATIO,
+    isFlip: true,
+  },
+
   {
     name: "lobby_table",
     isAnim: false,
-    offsetX: 760 / RATIO,
+    offsetX: 720 / RATIO,
     offsetY: 886 / RATIO,
+    isFlip: false,
   },
-]; //this is super cursed
+];
 
 let loadedSprites = [];
-/*const playerSprite = new Sprite("lobby_player", true);
-const lobbyBgSprite = new Sprite("lobby_bg", false);
-*/
 
 function loadSprites(spriteConfigs) {
   const loadPromises = spriteConfigs.map((config) => {
@@ -47,16 +66,17 @@ function loadSprites(spriteConfigs) {
         config.name,
         config.isAnim,
         config.offsetX,
-        config.offsetY
+        config.offsetY,
+        config.isFlip
       );
 
       const checkAtlasLoaded = setInterval(() => {
         if (playerSprite.atlas) {
           clearInterval(checkAtlasLoaded);
-          loadedSprites.push(playerSprite); // Store the loaded sprite
-          resolve(); // Resolve the promise when the atlas is loaded
+          loadedSprites.push(playerSprite);
+          resolve();
         }
-      }, 100); // Check every 100ms
+      }, 100);
     });
   });
 
@@ -65,59 +85,51 @@ function loadSprites(spriteConfigs) {
 
 async function start() {
   await loadSprites(toLoadSprites);
+
   console.log("loaded", loadedSprites);
   update();
 }
 
 // update loop
 let timer = 0;
-let frameT = 0;
 function update() {
-  //console.log(loadedSprites);
+  //state manage
+  /*switch (state) {
+    case 0:
+      //p1 enter
+      loadedSprites[1].setAnim("Enter");
+      break;
+    case 1:
+      //Enter finish
+      loadedSprites[1].setAnim("Idle");
+      break;
+    case 2:
+      //p2 enter
+      loadedSprites[1].setAnim("Enter");
+      break;
+    case 3:
+      //0/1/2 players ready
+
+      break;
+    case 4:
+      //gamestart
+      break;
+  }*/
+
+  //draw
+
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+  /*const test = new Image();
+  test.src = `./assets/test.png`;
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.drawImage(test, 0, 0, 100, 100, 0 - 200, 0, test.width * -1, test.height);
+  ctx.restore();*/
   for (let s of loadedSprites) {
-    //console.log("drawing", s.offsetX, s.offsetY);
-    if (s.fps > 1 && s.atlas.frames) {
-      frameT = Math.floor((timer / 60) * s.fps) % s.curAnim.count;
-      //???console.log(frameT);
-      const frameKey = `${s.name}${s.curAnim.name}${String(frameT).padStart(
-        4,
-        "0"
-      )}`;
-      const frameData = s.atlas.frames[frameKey];
-
-      if (frameData) {
-        ctx.drawImage(
-          s.image,
-          frameData.frame.x,
-          frameData.frame.y,
-          frameData.frame.w,
-          frameData.frame.h,
-          s.offsetX,
-          s.offsetY,
-          frameData.frame.w / RATIO,
-          frameData.frame.h / RATIO
-        );
-      } else {
-        console.error(`Frame key ${frameKey} not found in atlas for ${s.name}`);
-      }
-    } else {
-      ctx.drawImage(
-        s.image,
-        s.offsetX,
-        s.offsetY,
-        s.image.width / RATIO,
-        s.image.height / RATIO
-      ); // update thissss
-    }
+    s.draw(ctx, timer, RATIO);
   }
-
-  // Step 3: Draw a filled rectangle
-  ctx.fillStyle = "blue"; // Set the fill color
-  //ctx.fillRect(0, 0, 1920, 100);
   timer++;
-
   requestAnimationFrame(update);
 }
 
