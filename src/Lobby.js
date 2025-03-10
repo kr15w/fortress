@@ -31,7 +31,7 @@ export class Lobby extends Phaser.Scene {
         //Display origin = -x of the symbol in group, -y of symbol in goup
         //
         // /*oafkjldfsaadfsjo;js*/ this.p1anims = {"Enter":{count: 4,offsets: {x: 0, y: 150}},
-        {name: "Idle"}};
+        /*{name: "Idle"}};*/
         this.anims.create(
             { key: 'enter',
             frames: this.anims.generateFrameNames(
