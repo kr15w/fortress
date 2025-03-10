@@ -3,7 +3,7 @@ import { Lobby } from './Lobby';
 import Phaser from 'phaser';
 
 const config = {
-    title: 'Card Memory Game',
+    title: 'Fortress',
     type: Phaser.AUTO,
     width: 2560,
     height: 1440,
