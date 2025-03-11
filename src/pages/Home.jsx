@@ -7,13 +7,16 @@ const Home = () => {
         
         <form id="loginForm">
             <h2>Login</h2>
-            <input type='text'></input>
-            <input type='password'></input>
+            <input type='text'></input><br/>
+            <input type='password'></input><br/>
+            <input type="submit" value="Log in"/>
         </form>
-        <a>New account</a>
+        <p>Or <button>Sign up with google</button></p>
+        
+        <Link to="/signup">Get an account</Link><br/>
 
-        <Link to={"/game"}>Play le game lmaolmaolmao</Link>
-        <Link to={"/leaderboard"}>See leaderboard</Link>
+        {/*<Link to={"/game"}>Play le game lmaolmaolmao</Link> <br/>*/}
+        <Link to={"/leaderboard"}>See leaderboard</Link><br/>
     </>
   )
 }
