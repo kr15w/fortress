@@ -1,9 +1,9 @@
 import React from 'react'
 import { Link } from "react-router-dom"
-const Home = () => {
+const Gate = () => {
   return (
     <>
-        <h1>Home, all users can see this page</h1>
+        <h1>Gate, all users can see this page</h1>
         
         <form id="loginForm">
             <h2>Login</h2>
@@ -11,8 +11,9 @@ const Home = () => {
             <input type='password'></input><br/>
             <input type="submit" value="Log in"/>
         </form>
-        <p>Or <button>Sign up with google</button></p>
+        <p>Or <button>Sign in with google</button></p>
         
+        <Link to="/menu">Pretend you logged in.</Link><br/>
         <Link to="/signup">Get an account</Link><br/>
 
         {/*<Link to={"/game"}>Play le game lmaolmaolmao</Link> <br/>*/}
@@ -21,4 +22,4 @@ const Home = () => {
   )
 }
 
-export default Home
+export default Gate

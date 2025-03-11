@@ -1,43 +1,38 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import Home from './pages/Home';
+import Gate from './pages/Gate';
 import Game from "./pages/Game";
 import Signup from "./pages/Signup";
 import Leaderboard from "./pages/Leaderboard"
+import User from "./pages/User";
+import UserConfig from "./pages/UserConfig"
+import NoMatch from "./pages/NoMatch"
+//import PrivateRoute from './PrivateRoute';
+import Menu from './pages/Menu';
 
 const App = () => {
   return (
   <BrowserRouter>
     <div id="topBar">
       <Link to="/">
-        <h1>Go back to home</h1>
+        <h1>Go back to Gate</h1>
       </Link>
     </div>
-    <div id="body">
-      {
-        /*<Routes>
-  <Route index element={<Home />} />
-  <Route path="about" element={<About />} />
-
-  <Route element={<AuthLayout />}>
-    <Route path="login" element={<Login />} />
-    <Route path="register" element={<Register />} />
-  </Route>
-
-  <Route path="concerts">
-    <Route index element={<ConcertsHome />} />
-    <Route path=":city" element={<City />} />
-    <Route path="trending" element={<Trending />} />
-  </Route>
-</Routes>
-*/}
-      
+    <div id="body">      
       <Routes>
-        <Route path="/" element={<Home/>}/>
-        <Route path='/game' element={<Game/>}/>
+        <Route path="/" element={<Gate/>}/>
         <Route path='/leaderboard' element={<Leaderboard/>}/>
         <Route path='/signup' element={<Signup/>}/>
+
+        <Route path='/menu' element={<Menu/>}/>
+        <Route path='/game' element={<Game/>}/>
+        <Route path="/user" element={<User/>}>
+          <Route path=":userId" element={<UserConfig/>}/>
+        </Route>
+
+        <Route path="*" element={<NoMatch/>}/>
       </Routes>
+      
     </div>
   </BrowserRouter>
   )
