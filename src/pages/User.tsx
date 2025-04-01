@@ -1,11 +1,16 @@
-import React from 'react'
-import { useParams, Outlet } from 'react-router-dom'
+import React from 'react';
+import { useParams, Outlet } from 'react-router-dom';
 
-const User = () => {
-  const {userId} = useParams();
+interface UserParams {
+  userId: string;
+}
+
+const User: React.FC = () => {
+  const { userId } = useParams<UserParams>();
+  
   return (
     <>
-    <section id="userProfile">
+      <section id="userProfile">
         <h2>Username: {userId} </h2>
         <h5>Register date:</h5>
         
@@ -27,9 +32,9 @@ const User = () => {
         </div>
       </section>
 
-    <Outlet/>
+      <Outlet/>
     </>
-  )
-}
+  );
+};
 
-export default User
+export default User;

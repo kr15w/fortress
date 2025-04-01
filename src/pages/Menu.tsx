@@ -1,6 +1,7 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-const Menu = () => {
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const Menu: React.FC = () => {
   return (
     <>
       <h1>Menu</h1>
@@ -8,7 +9,7 @@ const Menu = () => {
       <Link to="/game">Start a game</Link><br/>
       <Link to="/game">Join a game</Link><br/>
     </>
-  )
-}
+  );
+};
 
-export default Menu
+export default Menu;
