@@ -23,7 +23,7 @@ export default class Lobby extends Phaser.Scene {
                 }),
                 repeat:anim.repeat
             });
-    }
+    })}
     playAnim(sprite, key) {
         const anim = ANIMS[key];
         if (!anim) return;
