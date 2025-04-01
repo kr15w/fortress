@@ -13,11 +13,6 @@ import Menu from "@/pages/Menu";
 const App = () => {
   return (
   <BrowserRouter>
-    <div id="topBar">
-      <Link to="/">
-        <h1>Go back to Gate</h1>
-      </Link>
-    </div>
     <div id="body">      
       <Routes>
         <Route path="/" element={<Gate/>}/>

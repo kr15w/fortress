@@ -1,3 +1,4 @@
+import TopBar from '@/components/TopBar';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -12,6 +13,7 @@ import { Link } from 'react-router-dom';
 const Leaderboard: React.FC = () => {
   return (
     <>
+    <TopBar/>
       <h1>Leaderboard</h1>
       <table>
         <thead>

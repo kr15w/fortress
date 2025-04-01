@@ -1,5 +1,5 @@
 import React from 'react';
-import Lobby from '@/pages/game/Lobby';
+import Lobby from '@/pages/game/Lobby.js';
 import Phaser from 'phaser';
 
 const Game: React.FC = () => {
@@ -8,7 +8,7 @@ const Game: React.FC = () => {
         type: Phaser.AUTO,
         width: 2560,
         height: 1440,
-        parent: 'gameContainer',
+        parent: 'game',
         backgroundColor: '#192a56',
         pixelArt: true,
         scale: {
@@ -23,7 +23,7 @@ const Game: React.FC = () => {
     const game = new Phaser.Game(config);
     
     return (
-        <div id="gameContainer"></div>
+        <div id="game"></div>
     );
 };
 

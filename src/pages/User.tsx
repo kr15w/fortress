@@ -1,3 +1,4 @@
+import TopBar from '@/components/TopBar';
 import React from 'react';
 import { useParams, Outlet } from 'react-router-dom';
 
@@ -10,6 +11,7 @@ const User: React.FC = () => {
   
   return (
     <>
+    <TopBar/>
       <section id="userProfile">
         <h2>Username: {userId} </h2>
         <h5>Register date:</h5>

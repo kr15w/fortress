@@ -85,8 +85,9 @@ export default class Lobby extends Phaser.Scene {
         //Emits a Player enters room event
         
         this.input.keyboard.once("keydown",(e)=>{
+            console.log(e.key);
             if (e.key === "e" && !e.repeat && !this.p1Enter){
-                //this.p1.play("enter");
+                this.p1.play("enter");
             console.log("p1 enters")
             this.tweens.add({
                 targets:this.p1,
