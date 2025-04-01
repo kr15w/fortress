@@ -12,8 +12,7 @@ import Menu from "@/pages/Menu";
 
 const App = () => {
   return (
-  <BrowserRouter>
-    <div id="body">      
+  <BrowserRouter>  
       <Routes>
         <Route path="/" element={<Gate/>}/>
         <Route path='/leaderboard' element={<Leaderboard/>}/>
@@ -27,8 +26,6 @@ const App = () => {
 
         <Route path="*" element={<NoMatch/>}/>
       </Routes>
-      
-    </div>
   </BrowserRouter>
   )
 }

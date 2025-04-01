@@ -23,7 +23,7 @@ const Game: React.FC = () => {
     const game = new Phaser.Game(config);
     
     return (
-        <div id="game"></div>
+        <></>
     );
 };
 
