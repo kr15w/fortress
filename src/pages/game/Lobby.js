@@ -107,7 +107,7 @@ export default class Lobby extends Phaser.Scene {
 		this.p2.setPosition(SCENE_W + this.p2.width, 1098);
 		
 		this.p1.scale = this.p2.scale = 1;
-		this.p2.flipX = true;
+		this.p2.scaleX = -1;
 		
 
 		/******handle inputs */
