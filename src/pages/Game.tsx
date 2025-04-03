@@ -2,6 +2,12 @@ import React, { Component } from 'react';
 import Lobby from '@/pages/game/Lobby.js';
 import Phaser from 'phaser';
 
+/**
+ * @todo send exit event to server
+ * @todo ask for confirmation
+ * @todo handle fullscreen
+ * @todo reject mobile clietns
+ */
 class Game extends Component {
     private game: Phaser.Game | null = null;
 
