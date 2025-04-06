@@ -1,6 +1,9 @@
 import React, { Component } from "react";
-import Lobby from "@/pages/game/Lobby.js";
 import Phaser from "phaser";
+
+//all scneens
+import Lobby from "@/pages/game/Lobby.js";
+import Match from "@/pages/game/Match.js";
 
 /**
  * @todo send exit event to server
@@ -19,13 +22,13 @@ class Game extends Component {
 			width: 2560,
 			height: 1440,
 			parent: "game",
-			backgroundColor: "#192a56",
+			backgroundColor: "#333333",
 			pixelArt: true,
 			scale: {
 				mode: Phaser.Scale.FIT,
 				autoCenter: Phaser.Scale.CENTER_BOTH,
 			},
-			scene: [Lobby],
+			scene: [Match],
 		};
 
 		this.game = new Phaser.Game(config);

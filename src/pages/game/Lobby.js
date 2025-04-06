@@ -6,6 +6,7 @@ import Phaser from "phaser";
  * @todo emit a signal on each event
  * @todo hint at player to click on char to be ready
  * @todo show usernaem
+ * @todo add prelobby in case user reloads screen (how to handle?)
  */
 
 export default class Lobby extends Phaser.Scene {
@@ -151,16 +152,21 @@ export default class Lobby extends Phaser.Scene {
 							this.p2Enter = true;
 						},
 					});
-				} else {
-					//console.log("p2 RED");
-
-					if (this.p2Ready) {
-						this.p2.play("idle");
-					} else {
-						this.p2.play("ready");
-					}
-					this.p2Ready = !this.p2Ready;
 				}
+			}
+		});
+		this.input.keyboard.on("keydown", (e) => {
+			if (e.key === "e" && !e.repeat) {
+				if (!this.p2Enter) {
+					return;
+				}
+				//console.log("p2 RED");
+				if (this.p2Ready) {
+					this.p2.play("idle");
+				} else {
+					this.p2.play("ready");
+				}
+				this.p2Ready = !this.p2Ready;
 			}
 		});
 
@@ -198,27 +204,13 @@ export default class Lobby extends Phaser.Scene {
 	}
 
 	update() {
-		// Update the position of the dots to match p1's and p2's origin positions
-		// Update p1's origin dot
-		if (this.p1 && this.p1OriginDot) {
-			const p1OriginX = this.p1.x;
-			const p1OriginY = this.p1.y;
-			this.p1OriginDot.setPosition(p1OriginX, p1OriginY);
-		}
-
-		// Update p2's origin dot
-		if (this.p2 && this.p2OriginDot) {
-			const p2OriginX = this.p2.x;
-			const p2OriginY = this.p2.y;
-			this.p2OriginDot.setPosition(p2OriginX, p2OriginY);
-		}
-
 		// Check if both players are ready to start the game
 		// Is it good to poll?
 		if (this.p1Ready && this.p2Ready) {
 			// Add a small delay before switching scenes
 			if (!this.startingGame) {
 				this.startingGame = true;
+				log.push("add transition anim here");
 				console.log("Both players ready! Starting game in 2 seconds...");
 
 				// Add a timer to switch scenes
