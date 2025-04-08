@@ -10,11 +10,18 @@ interface UserCredentials {
   username: string;
   password: string;
   email?: string;
+  licenseKey?: string;
 }
 
 export const register = async (credentials: UserCredentials): Promise<AuthResponse> => {
   try {
-    const response = await axios.post(`${API_BASE}/auth/register`, credentials, {
+    const payload = {
+      username: credentials.username,
+      email: credentials.email,
+      password: credentials.password,
+      license_key: credentials.licenseKey
+    };
+    const response = await axios.post(`${API_BASE}/auth/register`, payload, {
       withCredentials: true
     });
     return response.data;

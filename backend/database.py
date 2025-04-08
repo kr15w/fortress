@@ -39,6 +39,7 @@ class DatabaseService:
             )
             session.add(user)
             session.commit()
+            session.refresh(user)  # Ensure we have the ID
             return user
         except Exception as e:
             session.rollback()
@@ -58,3 +59,68 @@ class DatabaseService:
         if user and check_password_hash(user.password_hash, password):
             return user
         return None
+
+    def add_license_key(self, key):
+        session = self.Session()
+        try:
+            license_key = LicenseKey(
+                hashed_key=generate_password_hash(key),
+                user_id=-1
+            )
+            session.add(license_key)
+            session.commit()
+            return license_key
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def validate_license_key(self, key):
+        session = self.Session()
+        try:
+            # Get all unused keys
+            unused_keys = session.query(LicenseKey).filter(
+                LicenseKey.user_id == -1
+            ).all()
+            
+            # Check if any unused key matches the input
+            for license_key in unused_keys:
+                if check_password_hash(license_key.hashed_key, key):
+                    return True
+            return False
+        except Exception as e:
+            print(f"License validation error: {str(e)}")
+            return False
+        finally:
+            session.close()
+
+    def consume_license_key(self, key, user_id):
+        session = self.Session()
+        try:
+            # Get all unused keys
+            unused_keys = session.query(LicenseKey).filter(
+                LicenseKey.user_id == -1
+            ).all()
+            
+            # Find and update the matching key
+            for license_key in unused_keys:
+                if check_password_hash(license_key.hashed_key, key):
+                    license_key.user_id = user_id
+                    session.commit()
+                    session.refresh(license_key)
+                    return True
+            return False
+        except Exception as e:
+            session.rollback()
+            print(f"License consumption error: {str(e)}")
+            raise e
+        finally:
+            session.close()
+
+    def get_all_license_keys(self):
+        session = self.Session()
+        try:
+            return session.query(LicenseKey).all()
+        finally:
+            session.close()

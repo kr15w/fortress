@@ -8,7 +8,8 @@ const Signup: React.FC = () => {
     username: '',
     password: '',
     passwordConfirm: '',
-    email: ''
+    email: '',
+    licenseKey: ''
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -33,7 +34,8 @@ const Signup: React.FC = () => {
       await register({
         username: formData.username,
         password: formData.password,
-        email: formData.email
+        email: formData.email,
+        licenseKey: formData.licenseKey
       });
       navigate('/');
     } catch (err) {
@@ -80,6 +82,15 @@ const Signup: React.FC = () => {
           type='password'
           name="passwordConfirm"
           value={formData.passwordConfirm}
+          onChange={handleChange}
+          required
+        /><br/>
+
+        <label>License Key:</label>
+        <input
+          type='text'
+          name="licenseKey"
+          value={formData.licenseKey}
           onChange={handleChange}
           required
         /><br/>

@@ -34,14 +34,42 @@ def token_required(f):
     return decorated
 
 # Auth routes
+@app.route('/api/auth/validate_license', methods=['POST'])
+def validate_license():
+    data = request.get_json()
+    if not data or 'license_key' not in data:
+        return jsonify({'message': 'License key required'}), 400
+    
+    try:
+        if not db.validate_license_key(data['license_key']):
+            return jsonify({'message': 'Invalid or already used license key'}), 400
+        return jsonify({'valid': True}), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 400
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json()
+    if 'license_key' not in data:
+        return jsonify({'message': 'License key required'}), 400
+    
     try:
-        db.create_user(data['username'], data['email'], data['password'])
+        if not all(k in data for k in ['username', 'email', 'password', 'license_key']):
+            return jsonify({'message': 'Missing required fields'}), 400
+
+        # First validate license key
+        if not db.validate_license_key(data['license_key']):
+            return jsonify({'message': 'Invalid or already used license key'}), 400
+            
+        # Create user and consume license key
+        user = db.create_user(data['username'], data['email'], data['password'])
+        if not db.consume_license_key(data['license_key'], user.id):
+            raise Exception('Failed to consume license key')
+            
         return jsonify({'message': 'Registered successfully'}), 201
     except Exception as e:
-        return jsonify({'message': str(e)}), 400
+        app.logger.error(f"Registration error: {str(e)}")
+        return jsonify({'message': f'Registration failed: {str(e)}'}), 400
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
