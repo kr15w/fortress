@@ -1,7 +1,12 @@
 import random
+from typing import List
 random.seed(0)
 
-class Player:
+class Observer:
+    def on_notify(self, event_type, data):
+        raise NotImplementedError
+
+class Player(Observer):
     '''These would probably be stored in the server, so I'm not saving the player choices here '''
     def __init__(self, name):
         self.name = name
@@ -10,6 +15,9 @@ class Player:
         self.shields = []
         self.bombs = []
 
+    def on_notify(self, event_type, data):
+        
+    
     def build(self, type):
         assert type in ["shield", "bomb", "tower"], "Invalid type"
         if type == "shield":
@@ -19,7 +27,8 @@ class Player:
         elif type == "tower":
             self.hp += 1
 
-    def attack(self, target: 'Player', type, index: int = None):
+    def attacked(self, attacker: 'Player', type, index: int = None):
+        '''
         assert type in ["shield", "bomb", "tower"], "Invalid type"
         if (len(self.bombs) <= 0):
             print("no bombs")
@@ -32,6 +41,7 @@ class Player:
         elif type == "bomb":
             target.bombs.pop(index)
         self.bombs.pop()
+        '''
 
     def upgrade(self, type: str, index: int):
         if type == "shield":
@@ -45,11 +55,55 @@ class Player:
         print("Shields:", self.shields)
         print("bombs:", self.bombs, "\n")
 
-p1 = Player("p1")
-p2 = Player("p2")
-roundWinner: Player = None
-roundLoser: Player = None
-finalWinner: Player = None
+class Table:
+    '''
+    Trying to impl the observer pattern. Instead of p1.attack(p2), Table would call p2.attacked(by p1).
+    Probably useful as ref for server.
+    '''
+    def __init__(self):
+        '''What other observers do we need?'''
+        self.players: List[Player] = []
+        self.roundWinner = None
+        self.roundLoser = None
+        self.finalWinner = None
+        self.rounds = 0
+    
+    def addPlayer(self, player: Player):
+        self.players.append(player)
+
+    def removePlayer(self, player: Player):
+        self.players.remove(player)
+
+    def notify(self, event_type, data):
+        for player in self.players:
+            player.on_notify(event_type, data)
+
+    def decideWinner(self, p1Rps, p2Rps):
+        '''Whose turn is it?'''
+        self.rounds += 1
+        if (p1Rps == p2Rps):
+            print("draw")
+            return None
+        elif (p1Rps == 'r' and p2Rps == 's' or p1Rps == 's' and p2Rps == 'p' or p1Rps == 'p' and p2Rps == 'r'):
+            self.roundWinner = self.players[0]
+            self.roundLoser = self.players[1]
+            
+        else:
+            print("lose")
+            self.roundWinner = self.players[1]
+            self.roundLoser = self.players[0]
+        self.notify("rpsResult", {
+                "winner": self.roundWinner,
+                "loser": self.roundLoser,
+            })
+    def handleAttack(self, attacker, target, )
+
+p1 = Player("discovry")
+p2 = Player("noogai67")
+
+table = Table()
+table.addPlayer(p1)
+table.addPlayer(p2)
 
 rps = ['r', 'p', 's']
 improve = ['build', 'attack', 'upgrade']
@@ -57,9 +111,9 @@ bld = ["shield", "bomb"]
 
 while True:
     print("-------type initials only-----------")
-    print("p1:", p1.hp, "vs", p2.hp, ":p2")
-    print("p1 shields: ", p1.shields, "p2 shields: ", p2.shields)
-    print("p1 bombs: ", p1.bombs, "p2 bombs: ", p2.bombs)
+    print("p1:", table.players[0].hp, "vs", table.players[1].hp, ":p2")
+    print("p1 shields: ", table.players[0].shields, "p2 shields: ", table.players[1].shields)
+    print("p1 bombs: ", table.players[0].bombs, "p2 bombs: ", table.players[1].bombs)
     print("----------------------")
 
     # get players inputs
@@ -73,38 +127,30 @@ while True:
     print("----")
     
     # determine winner
-    if (p1Rps == p2Rps):
+    if table.decideWinner(p1Rps, p2Rps) == None:
         print("draw")
         continue
-    elif (p1Rps == 'r' and p2Rps == 's' or p1Rps == 's' and p2Rps == 'p' or p1Rps == 'p' and p2Rps == 'r'):
-        print("win")
-        roundWinner = p1
-        roundLoser = p2
-    else:
-        print("lose")
-        roundWinner = p2
-        roundLoser = p1
     
     # tower incomplete, build auto
-    if roundWinner.hp < 4:
+    if table.roundWinner.hp < 4:
         print("auto build")
-        roundWinner.build("tower")
+        table.roundWinner.build("tower")
         continue
 
     # tower complete
     #control available options here
-    if (len(roundWinner.bombs)==0 and len(roundWinner.shields)==0):
+    if (len(table.roundWinner.bombs)==0 and len(table.roundWinner.shields)==0):
         #no bombs and no shields
         choice = "b"
-    elif (len(roundWinner.shields)>0 and len(roundWinner.bombs)==0):
+    elif (len(table.roundWinner.shields)>0 and len(table.roundWinner.bombs)==0):
         #no bombs AND yes shields, can't atack
-        if (roundWinner == p1):
+        if (table.roundWinner == p1):
             choice = input("build/upgrade: ")
         else:
             choice = random.choice(["b", "u"])
     else:
         #bombs and shields, all
-        if (roundWinner == p1):
+        if (table.roundWinner == p1):
             choice = input("build/attack/upgrade: ")
         else:
             choice = random.choice(["b", "a", "u"])
@@ -113,7 +159,7 @@ while True:
     match choice:
         case "b":
             # input
-            if (roundWinner == p1):
+            if (table.roundWinner == p1):
                 buildC = input("add a shield/bomb: ")
             else:
                 buildC = random.choice(['s', 'b'])
@@ -121,12 +167,12 @@ while True:
             print("building", buildC)
             
             if buildC == "s":
-                roundWinner.build("shield")
+                table.roundWinner.build("shield")
             else:
-                roundWinner.build("bomb")
+                table.roundWinner.build("bomb")
         case "a":
             # input
-            if (roundWinner == p1):
+            if (table.roundWinner == p1):
                 attackC = input("target tower/bomb:")
             else:
                 attackC = random.choice(['t', 'b'])
@@ -134,7 +180,7 @@ while True:
             print("attacking", attackC)
             
             if attackC == "t":
-                roundWinner.attack(roundLoser, "tower")
+                table.roundWinner.attack(roundLoser, "tower")
 
                 if roundLoser.hp < 0:
                     print(roundLoser.hp)
@@ -142,28 +188,28 @@ while True:
                     break
             else:
                 i = int(input("target which bomb (index)):"))
-                roundWinner.attack(roundLoser,"bomb", i)
+                table.roundWinner.attack(roundLoser,"bomb", i)
         case "u":
             #can choose upgrade if u must have shields, but may or may not have bombs
             # input
-            if (roundWinner == p1):
+            if (table.roundWinner == p1):
                 upgradeC = input("upgrade shield/bomb:")
                 i = int(input("target which one (index)):"))
             else:
-                upgradeC = "s" if (len(roundWinner.bombs) == 0) else random.choice(['s', 'b'])
+                upgradeC = "s" if (len(table.roundWinner.bombs) == 0) else random.choice(['s', 'b'])
 
                 if upgradeC == "s":
-                    i = random.randint(0, len(roundWinner.shields)-1)
+                    i = random.randint(0, len(table.roundWinner.shields)-1)
                 else:
                     #why is it  here
-                    i = random.randint(0, len(roundWinner.bombs)-1)
+                    i = random.randint(0, len(table.roundWinner.bombs)-1)
 
             print("upgrading", upgradeC, i)
 
             if upgradeC == "s":
-                roundWinner.upgrade("shield", i)
+                table.roundWinner.upgrade("shield", i)
             else:
-                roundWinner.upgrade("bomb", i)
+                table.roundWinner.upgrade("bomb", i)
         case 'q':
             break
         case _:
