@@ -3,6 +3,8 @@ from flask_cors import CORS
 import jwt
 import datetime
 from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
+from database import DatabaseService
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -12,8 +14,8 @@ app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change in production
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(minutes=15)
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = datetime.timedelta(days=7)
 
-# Mock database
-users = []
+# Initialize database
+db = DatabaseService('sqlite:///users.db')
 
 # JWT token required decorator
 def token_required(f):
@@ -35,20 +37,18 @@ def token_required(f):
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json()
-    users.append({
-        'username': data['username'],
-        'email': data['email'],
-        'password': data['password']  # In production, hash this
-    })
-    return jsonify({'message': 'Registered successfully'}), 201
+    try:
+        db.create_user(data['username'], data['email'], data['password'])
+        return jsonify({'message': 'Registered successfully'}), 201
+    except Exception as e:
+        return jsonify({'message': str(e)}), 400
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     auth = request.get_json()
     
-    # In production, verify against database
-    user = next((u for u in users if u['username'] == auth['username']), None)
-    if not user or user['password'] != auth['password']:
+    user = db.verify_user(auth['username'], auth['password'])
+    if not user:
         return jsonify({'message': 'Invalid credentials'}), 401
     
     # Create tokens
