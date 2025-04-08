@@ -38,8 +38,8 @@ const Signup: React.FC = () => {
         licenseKey: formData.licenseKey
       });
       navigate('/');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
     }
   };
 

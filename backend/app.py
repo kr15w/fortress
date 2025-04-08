@@ -69,6 +69,12 @@ def register():
         return jsonify({'message': 'Registered successfully'}), 201
     except Exception as e:
         app.logger.error(f"Registration error: {str(e)}")
+        if "UNIQUE constraint failed" in str(e) and "users.username" in str(e):
+            return jsonify({'message': 'Username already taken'}), 400
+        elif "UNIQUE constraint failed" in str(e) and "users.email" in str(e):
+            return jsonify({'message': 'Email already registered'}), 400
+        elif "license_key" in str(e):
+            return jsonify({'message': 'Invalid or already used license key'}), 400
         return jsonify({'message': f'Registration failed: {str(e)}'}), 400
 
 @app.route('/api/auth/login', methods=['POST'])
