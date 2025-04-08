@@ -6,32 +6,115 @@ class Observer:
     def on_notify(self, event_type, data):
         raise NotImplementedError
 
+# Should I store their positions on screen?
+class Shield:
+    def __init__(self):
+        self.hp = 1
+    def __str__(self):
+        return f"Shield(hp={self.hp})"
+class Bomb:
+    def __init__(self):
+        self.pow = 1
+    def __str__(self):
+        return f"Bomb(pow={self.pow})"
+
 class Player(Observer):
     '''These would probably be stored in the server, so I'm not saving the player choices here '''
-    def __init__(self, name):
+    def __init__(self, name, table: 'Table'):
+        self.table = table
         self.name = name
         self.hp = 0
 
-        self.shields = []
-        self.bombs = []
+        self.shields: List[Shield] = []
+        self.bombs: List[Bomb] = []
 
     def on_notify(self, event_type, data):
+        '''This is what the frontend would see'''
         print(f"{self.name} received notification: {event_type} with data: {data}")
-    
-    def build(self, type):
-        assert type in ["shield", "bomb", "tower"], "Invalid type"
-        if type == "shield":
-            self.shields.append(1)
-        elif type == "bomb":
-            self.bombs.append(1)
-        elif type == "tower":
-            self.hp += 1
+        match event_type:
+            case "rpsResult":
+                print(f"{self.name} won the round!")
+            case "build":
+                type = data["type"]
+            case "attack":
+                type = data["type"]
+                target = data["target"]
+                print(f"{self.name} attacked {target.name} with {type}")
+            case "upgrade":
+                type = data["type"]
+                target = data["target"]
+                print(f"{self.name} upgraded their {target.name}")
+            case _:
+                print(f"Unknown event type: {event_type}")
 
-    def upgrade(self, type: str, index: int):
-        if type == "shield":
-            self.shields[index] += 1
-        elif type == "bomb":
-            self.bombs[index] += 1
+    def handleInputRps(self):
+        '''Just for submitting rps choices'''
+        choice = input("r/p/s/q: ")
+        assert choice in ['r', 'p', 's', 'q'], "Invalid choice"
+        table.onPlayerInput(self, "rps", {
+            "choice": choice
+        })
+
+    def handleInputTower(self):
+        '''For choosing tower upgrades. Sends all the configs for their turn at once
+        Assert it should always be in good format'''
+
+        # tower incomplete, build auto
+        if table.roundWinner.hp < 4:
+            print("auto build")
+            table.onPlayerInput(self, "tower", {
+                "action": "build",
+                "type": "tower"
+            })
+        # tower complete
+        #control available options here
+
+        if (len(table.roundWinner.bombs)==0 and len(table.roundWinner.shields)==0):
+            #no bombs and no shields
+            choice = input("build: ")
+        elif (len(table.roundWinner.shields)>0 and len(table.roundWinner.bombs)==0):
+            #no bombs AND yes shields, can't atack
+            choice = input("build/upgrade: ")
+        else:
+            #bombs and shields, all
+            choice = input("build/attack/upgrade: ")
+        assert choice in ['b', 'a', 'u'], "Invalid choice"
+
+        # format the data sent to server
+        match choice:
+            case "b":
+                # input
+                if (table.roundWinner == p1):
+                    buildC = input("add a shield/bomb: ")
+                else:
+                    buildC = random.choice(['s', 'b'])
+
+                print("building", buildC)
+                
+                if buildC == "s":
+                    table.roundWinner.build("shield")
+                else:
+                    table.roundWinner.build("bomb")
+            case "a":
+                attackC = input("target tower/bomb:")
+                i = int(input("target which bomb (index)):"))
+            case "u":
+                #can choose upgrade if u must have shields, but may or may not have bombs
+                # input
+                if (table.roundWinner == p1):
+                    upgradeC = input("upgrade shield/bomb:")
+                    i = int(input("target which one (index)):"))
+            case 'q':
+                exit()
+            case _:
+                print("Invalid choice:", choice)
+                return
+
+        table.onPlayerInput(self, "tower", {
+            "action": choice,
+            "type": None
+        })
+
 
     def display(self):
         print(self.name+": ")
@@ -59,7 +142,13 @@ class Table:
         self.players.remove(player)
 
     def notify(self, event_type, data):
+        '''Types:
+        - rpsResult: {winner, loser}
+        - build: type, player
+        - attack: type, player, target
+        - upgrade: type, player, target'''
         for player in self.players:
+            print(f"sending to {player}:", event_type, data)
             player.on_notify(event_type, data)
 
     def decideWinner(self, p1Rps, p2Rps):
@@ -80,6 +169,20 @@ class Table:
                 "winner": self.roundWinner,
                 "loser": self.roundLoser,
             })
+    
+    def handleBuild(self, type:str):
+        assert type in ["shield", "bomb", "tower"], "Invalid type"
+        if (self.roundWinner == None or self.roundLoser == None):
+            print("no winner")
+            return
+        if type == "shield":
+            self.roundWinner.shields.append(Shield())
+        elif type == "bomb":
+            self.roundWinner.bombs.append(Bomb())
+        elif type == "tower":
+            assert self.roundWinner.hp < 4, "tower already complete"
+            self.roundWinner.hp += 1
+
     def handleAttack(self, type, atkIndex: int, targetIndex: int = None):
         # index is only for bombs
         assert type in ["bomb", "tower"], "Invalid type"
@@ -96,9 +199,51 @@ class Table:
                 target.shields.pop()
             else:
                 target.hp -= 1
+
+            if target.hp < 0:
+                print(target.hp)
+                print(target, "died!")
+
         elif type == "bomb":
             target.bombs.pop(targetIndex)
         attacker.bombs.pop(atkIndex)
+    
+    def handleUpgrade(self, type, index:int):
+        assert type in ["shield", "bomb"], "Invalid type"
+        
+        if (self.roundWinner == None or self.roundLoser == None):
+            print("no winner")
+            return
+        if type == "shield":
+            assert index >=0 and index < len(self.roundWinner.shields), "Invalid index"
+            self.roundWinner.shields[index].hp += 1
+        elif type == "bomb":
+            assert index >=0 and index < len(self.roundWinner.bombs), "Invalid index"
+            self.roundWinner.bombs[index].bomb += 1
+    
+    def onPlayerInput(self, player: Player, type: str, data:dict):
+        '''which player did what type of action:
+        type: rps OR tower
+        if type == rps:
+            data = {choice: 'r'/'p'/'s'}
+        if type == tower:
+            data = {action: 'build'/'attack'/'upgrade', type: 'shield'/'bomb'/'tower'}
+        '''
+        if type == "rps":
+            # get player input
+            choice = data["choice"]
+            if choice == 'q':
+                exit()
+            
+            p1Rps = choice
+
+            # When we have a server, this will be the other player, how to change this
+            p2Rps = random.choice(['r', 'p', 's'])
+
+            print("Results:",p1Rps,"vs", p2Rps)
+            print("----")
+            
+            self.decideWinner(p1Rps, p2Rps)
 
 p1 = Player("discovry")
 p2 = Player("noogai67")
@@ -129,92 +274,6 @@ while True:
     print("----")
     
     # determine winner
-    if table.decideWinner(p1Rps, p2Rps) == None:
-        print("draw")
-        continue
     
-    # tower incomplete, build auto
-    if table.roundWinner.hp < 4:
-        print("auto build")
-        table.roundWinner.build("tower")
-        continue
-
-    # tower complete
-    #control available options here
-    if (len(table.roundWinner.bombs)==0 and len(table.roundWinner.shields)==0):
-        #no bombs and no shields
-        choice = "b"
-    elif (len(table.roundWinner.shields)>0 and len(table.roundWinner.bombs)==0):
-        #no bombs AND yes shields, can't atack
-        if (table.roundWinner == p1):
-            choice = input("build/upgrade: ")
-        else:
-            choice = random.choice(["b", "u"])
-    else:
-        #bombs and shields, all
-        if (table.roundWinner == p1):
-            choice = input("build/attack/upgrade: ")
-        else:
-            choice = random.choice(["b", "a", "u"])
-
     # winner actions
-    match choice:
-        case "b":
-            # input
-            if (table.roundWinner == p1):
-                buildC = input("add a shield/bomb: ")
-            else:
-                buildC = random.choice(['s', 'b'])
-
-            print("building", buildC)
-            
-            if buildC == "s":
-                table.roundWinner.build("shield")
-            else:
-                table.roundWinner.build("bomb")
-        case "a":
-            # input
-            if (table.roundWinner == p1):
-                attackC = input("target tower/bomb:")
-            else:
-                attackC = random.choice(['t', 'b'])
-
-            print("attacking", attackC)
-            
-            if attackC == "t":
-                table.roundWinner.attack(roundLoser, "tower")
-
-                if roundLoser.hp < 0:
-                    print(roundLoser.hp)
-                    print("gg")
-                    break
-            else:
-                i = int(input("target which bomb (index)):"))
-                table.roundWinner.attack(roundLoser,"bomb", i)
-        case "u":
-            #can choose upgrade if u must have shields, but may or may not have bombs
-            # input
-            if (table.roundWinner == p1):
-                upgradeC = input("upgrade shield/bomb:")
-                i = int(input("target which one (index)):"))
-            else:
-                upgradeC = "s" if (len(table.roundWinner.bombs) == 0) else random.choice(['s', 'b'])
-
-                if upgradeC == "s":
-                    i = random.randint(0, len(table.roundWinner.shields)-1)
-                else:
-                    #why is it  here
-                    i = random.randint(0, len(table.roundWinner.bombs)-1)
-
-            print("upgrading", upgradeC, i)
-
-            if upgradeC == "s":
-                table.roundWinner.upgrade("shield", i)
-            else:
-                table.roundWinner.upgrade("bomb", i)
-        case 'q':
-            break
-        case _:
-            print("Invalid choice:", choice)
-            continue
-
+    
