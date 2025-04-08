@@ -16,7 +16,7 @@ class Player(Observer):
         self.bombs = []
 
     def on_notify(self, event_type, data):
-        
+        print(f"{self.name} received notification: {event_type} with data: {data}")
     
     def build(self, type):
         assert type in ["shield", "bomb", "tower"], "Invalid type"
@@ -26,22 +26,6 @@ class Player(Observer):
             self.bombs.append(1)
         elif type == "tower":
             self.hp += 1
-
-    def attacked(self, attacker: 'Player', type, index: int = None):
-        '''
-        assert type in ["shield", "bomb", "tower"], "Invalid type"
-        if (len(self.bombs) <= 0):
-            print("no bombs")
-            return
-        if type == "tower":
-            if (len(target.shields) > 0):
-                target.shields.pop()
-            else:
-                target.hp -= 1
-        elif type == "bomb":
-            target.bombs.pop(index)
-        self.bombs.pop()
-        '''
 
     def upgrade(self, type: str, index: int):
         if type == "shield":
@@ -96,7 +80,25 @@ class Table:
                 "winner": self.roundWinner,
                 "loser": self.roundLoser,
             })
-    def handleAttack(self, attacker, target, )
+    def handleAttack(self, type, atkIndex: int, targetIndex: int = None):
+        # index is only for bombs
+        assert type in ["bomb", "tower"], "Invalid type"
+        if (self.roundWinner == None or self.roundLoser == None):
+            print("no winner")
+            return
+        
+        attacker = self.roundWinner
+        target = self.roundLoser
+        
+        assert len(attacker.bombs) > 0, "no bombs"
+        if type == "tower":
+            if (len(target.shields) > 0):
+                target.shields.pop()
+            else:
+                target.hp -= 1
+        elif type == "bomb":
+            target.bombs.pop(targetIndex)
+        attacker.bombs.pop(atkIndex)
 
 p1 = Player("discovry")
 p2 = Player("noogai67")
