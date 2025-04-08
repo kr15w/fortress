@@ -6,6 +6,13 @@ from datetime import datetime
 
 Base = declarative_base()
 
+class LicenseKey(Base):
+    __tablename__ = 'license_keys'
+    
+    id = Column(Integer, primary_key=True)
+    hashed_key = Column(String(128), unique=True, nullable=False)
+    user_id = Column(Integer, default=-1)  # -1 means unused
+
 class User(Base):
     __tablename__ = 'users'
     
