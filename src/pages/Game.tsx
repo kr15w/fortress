@@ -1,8 +1,7 @@
-import React, { Component } from "react";
+import { Component } from "react";
 import Phaser from "phaser";
 
-//all scneens
-import Lobby from "@/pages/game/Lobby.js";
+//all scenes
 import Match from "@/pages/game/Match.js";
 
 /**
