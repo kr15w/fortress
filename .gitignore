@@ -25,3 +25,7 @@ dist-ssr
 
 # flash 
 *.fla
+
+
+# back end stuff
+backend/venv
