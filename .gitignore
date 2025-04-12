@@ -30,3 +30,4 @@ dist-ssr
 # back end stuff
 backend/venv
 backend/__pycache__
+backend/user.db
