@@ -1,8 +1,67 @@
 import random
+from abc import ABC, abstractmethod
 from typing import List
 random.seed(0)
 
-class Observer:
+class RpsResult:
+    def __init__(self, winner:'Player', loser:'Player'):
+        '''
+        Useful for JWT reference, seen by the server and both players
+        Valid actions:
+        - r/p/s/q
+        '''
+        self.winner:Player = winner
+        self.loser:Player = loser
+
+    def __str__(self):
+        return f"RpsResult(choice={self.choice})"
+    
+class RpsAction:
+    def __init__(self, source:'Player', choice: str):
+        '''
+        Useful for JWT reference, seen by the server and both players
+        Valid actions:
+        - r/p/s/q
+        '''
+        assert choice in ['r', 'p', 's', 'q'], "Invalid choice"
+        self.source:Player = source
+        self.choice:str = choice
+
+    def __str__(self):
+        return f"RpsAction(choice={self.choice})"
+    
+class TowerActionTypes:
+    BUILD_TOWER = 'bt'
+    BUILD_SHIELD = 'bs'
+    BUILD_BOMB = 'bb'
+    ATTACK_TOWER = 'at'
+    ATTACK_BOMB = 'ab'
+    UPGRADE_SHIELD = 'us'
+    UPGRADE_BOMB = 'ub'
+    QUIT = 'q'
+class TowerAction:
+    def __init__(self, source:'Player', action: TowerActionTypes, target:list[int] = None):
+        '''
+        Useful for JWT reference, seen by the server and both players
+        Valid actions:
+        action: see TowerActionTypes
+        target:
+            - build (b): None
+            - attack tower (at): (index_of_atker's_bomb)
+            - attack bomb (ab): (index_of_atker's_bomb, index_of_target's_bomb)
+            - upgrade shield (us): (index_of_shield)
+            - upgrade bomb (ub): (index_of_bomb)
+        '''
+        assert action in TowerActionTypes, "Invalid action"
+        self.source: Player = source #who sent this msg
+        self.action:str = action
+        self.target:list[int] = target
+
+    def __str__(self):
+        return f"TowerAction(emitter={self.source} action={self.action} target={self.target})"
+
+class Observer(ABC):
+    @abstractmethod
     def on_notify(self, event_type, data):
         raise NotImplementedError
 
@@ -28,9 +87,10 @@ class Player(Observer):
         self.shields: List[Shield] = []
         self.bombs: List[Bomb] = []
 
-    def on_notify(self, event_type, data):
+    def on_notify(self, move: TowerAction):
         '''This is what the frontend would see'''
-        print(f"{self.name} received notification: {event_type} with data: {data}")
+        print(f"{self.name} received notification: {move}")
+        '''
         match event_type:
             case "rpsResult":
                 print(f"{self.name} won the round!")
@@ -45,77 +105,74 @@ class Player(Observer):
                 target = data["target"]
                 print(f"{self.name} upgraded their {target.name}")
             case _:
-                print(f"Unknown event type: {event_type}")
-
-    def handleInputRps(self):
+                print(f"Unknown event type: {event_type}")'''
+        
+    def handleInputRps(self)->RpsAction:
         '''Just for submitting rps choices'''
+        print(f"{self.name} ",end='')
         choice = input("r/p/s/q: ")
         assert choice in ['r', 'p', 's', 'q'], "Invalid choice"
-        table.onPlayerInput(self, "rps", {
-            "choice": choice
-        })
+        
+        return RpsAction(self, choice)
 
-    def handleInputTower(self):
-        '''For choosing tower upgrades. Sends all the configs for their turn at once
+    def handleInputTower(self)->TowerAction:
+        '''For choosing actions. Sends all the configs for their turn at once
         Assert it should always be in good format'''
 
         # tower incomplete, build auto
         if table.roundWinner.hp < 4:
             print("auto build")
-            table.onPlayerInput(self, "tower", {
-                "action": "build",
-                "type": "tower"
-            })
+            return TowerAction(self, "b", None)
+            
         # tower complete
         #control available options here
-
         if (len(table.roundWinner.bombs)==0 and len(table.roundWinner.shields)==0):
             #no bombs and no shields
-            choice = input("build: ")
+            action = input("build: ")
         elif (len(table.roundWinner.shields)>0 and len(table.roundWinner.bombs)==0):
             #no bombs AND yes shields, can't atack
-            choice = input("build/upgrade: ")
+            action = input("build/upgrade: ")
         else:
             #bombs and shields, all
-            choice = input("build/attack/upgrade: ")
-        assert choice in ['b', 'a', 'u'], "Invalid choice"
+            action = input("build/attack/upgrade: ")
+        assert action in ['b', 'a', 'u'], "Invalid choice"
 
-        # format the data sent to server
-        match choice:
+        match action:
             case "b":
-                # input
-                if (table.roundWinner == p1):
-                    buildC = input("add a shield/bomb: ")
-                else:
-                    buildC = random.choice(['s', 'b'])
-
-                print("building", buildC)
-                
-                if buildC == "s":
-                    table.roundWinner.build("shield")
-                else:
-                    table.roundWinner.build("bomb")
+                target = input("add a shield/bomb: ")
+                return TowerAction(self, TowerActionTypes.BUILD_SHIELD if target == "s" else TowerActionTypes.BUILD_BOMB, None)
             case "a":
-                attackC = input("target tower/bomb:")
-                i = int(input("target which bomb (index)):"))
+                target = input("target tower/bomb:")
+                i_atk = int(input("index of your bomb (index):"))
+                assert i_atk >= 0 and i_atk < len(self.bombs), "Invalid self bomb index"
+
+                if target == "t":
+                    #attack tower
+                    return TowerAction(self, TowerActionTypes.ATTACK_TOWER, None)
+                elif target == "b":
+                    i_tgt = int(input("target which opponent bomb (index)):"))
+                    assert i_tgt >= 0 and i_tgt < len(self.bombs), "Invalid opp bomb index"
+
+                    return TowerAction(self, TowerActionTypes.ATTACK_BOMB, [i_atk, i_tgt])
             case "u":
-                #can choose upgrade if u must have shields, but may or may not have bombs
-                # input
-                if (table.roundWinner == p1):
-                    upgradeC = input("upgrade shield/bomb:")
-                    i = int(input("target which one (index)):"))
+                #can choose upgrade if u have shields, but may or may not have bombs
+                target = input("upgrade shield/bomb:")
+                if target == "s":
+                    i = int(input("target which one of your shields(index):"))
+                    assert i >= 0 and i < len(self.shields), "Invalid own shield index"
+
+                    return TowerAction(self, TowerActionTypes.UPGRADE_SHIELD, [i])
+                elif target == "b":
+                    i = int(input("target which one of your bombs(index):"))
+                    assert i >= 0 and i < len(self.bombs), "Invalid own bomb index"
+
+                    return TowerAction(self, TowerActionTypes.UPGRADE_BOMB, [i])
             case 'q':
-                exit()
+                print("Note the actual game doesnt have this")
+                raise Exception("Quit")
             case _:
-                print("Invalid choice:", choice)
-                return
-
-        table.onPlayerInput(self, "tower", {
-            "action": choice,
-            "type": None
-        })
-
-
+                raise Exception("Invalid choice: "+action)
+        
     def display(self):
         print(self.name+": ")
         print("HP:", self.hp)
@@ -130,9 +187,9 @@ class Table:
     def __init__(self):
         '''What other observers do we need?'''
         self.players: List[Player] = []
-        self.roundWinner = None
-        self.roundLoser = None
-        self.finalWinner = None
+        self.roundWinner:Player = None
+        self.roundLoser:Player = None
+        self.finalWinner:Player = None
         self.rounds = 0
     
     def addPlayer(self, player: Player):
@@ -141,7 +198,8 @@ class Table:
     def removePlayer(self, player: Player):
         self.players.remove(player)
 
-    def notify(self, event_type, data):
+    def notify(self, towerAction: TowerAction):
+        #wip
         '''Types:
         - rpsResult: {winner, loser}
         - build: type, player
@@ -151,7 +209,7 @@ class Table:
             print(f"sending to {player}:", event_type, data)
             player.on_notify(event_type, data)
 
-    def decideWinner(self, p1Rps, p2Rps):
+    def decideWinner(self, p1Rps: str, p2Rps: str) -> Player:
         '''Whose turn is it?'''
         self.rounds += 1
         if (p1Rps == p2Rps):
@@ -169,6 +227,13 @@ class Table:
                 "winner": self.roundWinner,
                 "loser": self.roundLoser,
             })
+        
+    def showPlayers(self):
+        print("-------type initials only-----------")
+        print("p1:", table.players[0].hp, "vs", table.players[1].hp, ":p2")
+        print("p1 shields: ", table.players[0].shields, "p2 shields: ", table.players[1].shields)
+        print("p1 bombs: ", table.players[0].bombs, "p2 bombs: ", table.players[1].bombs)
+        print("----------------------")
     
     def handleBuild(self, type:str):
         assert type in ["shield", "bomb", "tower"], "Invalid type"
@@ -221,7 +286,7 @@ class Table:
             assert index >=0 and index < len(self.roundWinner.bombs), "Invalid index"
             self.roundWinner.bombs[index].bomb += 1
     
-    def onPlayerInput(self, player: Player, type: str, data:dict):
+    def __use_return_instead___onPlayerInput(self, player: Player, type: str, data:dict):
         '''which player did what type of action:
         type: rps OR tower
         if type == rps:
@@ -245,35 +310,38 @@ class Table:
             
             self.decideWinner(p1Rps, p2Rps)
 
+    def startGame(self, player1: Player, player2: Player):
+        # call when everything is initialized
+        # notify players every step
+        while self.finalWinner != None:
+            self.showPlayers()
+            # get player inputs
+            p1Rps:str = player1.handleInputRps()
+            p2Rps:str = player2.handleInputRps()
+            if p1Rps == 'q' or p2Rps == 'q':
+                break
+
+            print("Results:",p1Rps,"vs", p2Rps)
+            print("----")
+            # determine winner, sets roundWinner and roundLoser
+            self.decideWinner(player1, player2)
+
+            if self.roundWinner == None:
+                print("draw")
+                continue
+            elif self.roundWinner == player1:
+                print("p1 wins")
+                player1.handleInputTower()
+            elif self.roundWinner == player2:
+                print("p2 wins")
+                player2.handleInputTower()
+            else:
+                raise Exception("hey your not sposed to see this eror")
+            
 p1 = Player("discovry")
 p2 = Player("noogai67")
 
 table = Table()
 table.addPlayer(p1)
 table.addPlayer(p2)
-
-rps = ['r', 'p', 's']
-improve = ['build', 'attack', 'upgrade']
-bld = ["shield", "bomb"]
-
-while True:
-    print("-------type initials only-----------")
-    print("p1:", table.players[0].hp, "vs", table.players[1].hp, ":p2")
-    print("p1 shields: ", table.players[0].shields, "p2 shields: ", table.players[1].shields)
-    print("p1 bombs: ", table.players[0].bombs, "p2 bombs: ", table.players[1].bombs)
-    print("----------------------")
-
-    # get players inputs
-    choice = input("r/p/s/q: ")
-    if choice == 'q':
-        break
-    p1Rps = choice
-    p2Rps = random.choice(rps)
-
-    print("Results:",p1Rps,"vs", p2Rps)
-    print("----")
-    
-    # determine winner
-    
-    # winner actions
     
