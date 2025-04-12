@@ -54,12 +54,32 @@ To add a new license key:
 python add_license_key.py "key_value" "description"
 ```
 
+## Game Logic
+
+The game is a turn-based combat system where players:
+- Alternate turns playing Rock-Paper-Scissors
+- Build shields (+3 health) or cannons (1 damage)
+- Attack with accumulated cannons
+- Damage is applied top-down on opponent's stack
+
+For detailed implementation, see [game_logic.md](backend/game_logic.md)
+
+## Frontend Development
+
+For WebSocket configuration and token handling examples, see:
+- [match_demo.html](backend/templates/match_demo.html) - demonstrates WebSocket communication with the game server
+
+Two new links have been added to the manual page:
+1. Token fetching endpoint
+2. WebSocket demo connected to game logic
+
 ## Production Deployment
 (Add your production deployment instructions here)
 
 ## TODO
-- [ ] Implement room creation/joining logic
-- [ ] Develop server-side game logic
-- [ ] Create system for storing user stats
-- [ ] Implement leaderboard functionality
-(Add your production deployment instructions here)
+- [x] Implement core game logic
+- [ ] Frontend graphics implementation
+- [ ] Database integration
+- [ ] User profile customization
+- [ ] Dashboard implementation
+- [ ] Leaderboard functionality
