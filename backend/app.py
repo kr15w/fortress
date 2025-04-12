@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
+import requests
 from flask_cors import CORS
 import jwt
 import datetime
@@ -107,6 +108,31 @@ def login():
 @token_required
 def profile():
     return jsonify({'message': 'This is protected content'})
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    if path.startswith('api/'):
+        return Response('Not Found', status=404)
+    
+    frontend_url = f'http://localhost:5173/{path}'
+    try:
+        resp = requests.request(
+            method=request.method,
+            url=frontend_url,
+            headers={key: value for (key, value) in request.headers if key != 'Host'},
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False)
+        
+        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+        headers = [(name, value) for (name, value) in resp.raw.headers.items()
+                  if name.lower() not in excluded_headers]
+        
+        response = Response(resp.content, resp.status_code, headers)
+        return response
+    except requests.exceptions.RequestException as e:
+        return Response(str(e), status=500)
 
 if __name__ == '__main__':
     app.run(host='::', port=5000, debug=True)
