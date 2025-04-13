@@ -3,6 +3,12 @@ from abc import ABC, abstractmethod
 from typing import List
 random.seed(0)
 
+DEBUG = True
+def debug(*msg):
+    global DEBUG
+    if DEBUG:
+        print(msg)
+    
 class RpsResult:
     def __init__(self, winner:'Player', loser:'Player'):
         '''
@@ -14,7 +20,7 @@ class RpsResult:
         self.loser:Player = loser
 
     def __str__(self):
-        return f"RpsResult(choice={self.choice})"
+        return f"RpsResult({self.winner} wins, {self.loser} loses)"
     
 class RpsAction:
     def __init__(self, source:'Player', choice: str):
@@ -39,6 +45,7 @@ class TowerActionTypes:
     UPGRADE_SHIELD = 'us'
     UPGRADE_BOMB = 'ub'
     QUIT = 'q'
+
 class TowerAction:
     def __init__(self, source:'Player', action: TowerActionTypes, target:list[int] = None):
         '''
@@ -52,7 +59,7 @@ class TowerAction:
             - upgrade shield (us): (index_of_shield)
             - upgrade bomb (ub): (index_of_bomb)
         '''
-        assert action in TowerActionTypes, "Invalid action"
+        assert action in vars(TowerActionTypes).values(), "Invalid action"
         self.source: Player = source #who sent this msg
         self.action:str = action
         self.target:list[int] = target
@@ -79,33 +86,18 @@ class Bomb:
 
 class Player(Observer):
     '''These would probably be stored in the server, so I'm not saving the player choices here '''
-    def __init__(self, name, table: 'Table'):
-        self.table = table
+    def __init__(self, name):
         self.name = name
         self.hp = 0
 
         self.shields: List[Shield] = []
         self.bombs: List[Bomb] = []
 
+    def __str__(self):
+        return f"Player(name={self.name}, hp={self.hp}, shields={self.shields}, bombs={self.bombs})"
     def on_notify(self, move: TowerAction):
         '''This is what the frontend would see'''
-        print(f"{self.name} received notification: {move}")
-        '''
-        match event_type:
-            case "rpsResult":
-                print(f"{self.name} won the round!")
-            case "build":
-                type = data["type"]
-            case "attack":
-                type = data["type"]
-                target = data["target"]
-                print(f"{self.name} attacked {target.name} with {type}")
-            case "upgrade":
-                type = data["type"]
-                target = data["target"]
-                print(f"{self.name} upgraded their {target.name}")
-            case _:
-                print(f"Unknown event type: {event_type}")'''
+        debug(f"{self.name} received notification: {move}")
         
     def handleInputRps(self)->RpsAction:
         '''Just for submitting rps choices'''
@@ -122,7 +114,7 @@ class Player(Observer):
         # tower incomplete, build auto
         if table.roundWinner.hp < 4:
             print("auto build")
-            return TowerAction(self, "b", None)
+            return TowerAction(self, TowerActionTypes.BUILD_TOWER, None)
             
         # tower complete
         #control available options here
@@ -198,35 +190,27 @@ class Table:
     def removePlayer(self, player: Player):
         self.players.remove(player)
 
-    def notify(self, towerAction: TowerAction):
+    def notify(self, msg):
         #wip
-        '''Types:
-        - rpsResult: {winner, loser}
-        - build: type, player
-        - attack: type, player, target
-        - upgrade: type, player, target'''
         for player in self.players:
-            print(f"sending to {player}:", event_type, data)
-            player.on_notify(event_type, data)
+            debug(f"sending to {player.name}:", msg)
+            player.on_notify(msg)
 
-    def decideWinner(self, p1Rps: str, p2Rps: str) -> Player:
+    def decideWinner(self, p1RpsAction: RpsAction, p2RpsAction: RpsAction):
         '''Whose turn is it?'''
-        self.rounds += 1
+        p1Rps = p1RpsAction.choice
+        p2Rps = p2RpsAction.choice
         if (p1Rps == p2Rps):
-            print("draw")
-            return None
+            self.roundWinner = self.roundLoser = None
         elif (p1Rps == 'r' and p2Rps == 's' or p1Rps == 's' and p2Rps == 'p' or p1Rps == 'p' and p2Rps == 'r'):
+            print("p1 win")
             self.roundWinner = self.players[0]
             self.roundLoser = self.players[1]
-            
         else:
-            print("lose")
+            print("p2 win")
             self.roundWinner = self.players[1]
             self.roundLoser = self.players[0]
-        self.notify("rpsResult", {
-                "winner": self.roundWinner,
-                "loser": self.roundLoser,
-            })
+        self.notify(RpsResult(self.roundWinner, self.roundLoser))
         
     def showPlayers(self):
         print("-------type initials only-----------")
@@ -266,7 +250,7 @@ class Table:
                 target.hp -= 1
 
             if target.hp < 0:
-                print(target.hp)
+                debug(target.hp)
                 print(target, "died!")
 
         elif type == "bomb":
@@ -284,48 +268,26 @@ class Table:
             self.roundWinner.shields[index].hp += 1
         elif type == "bomb":
             assert index >=0 and index < len(self.roundWinner.bombs), "Invalid index"
-            self.roundWinner.bombs[index].bomb += 1
-    
-    def __use_return_instead___onPlayerInput(self, player: Player, type: str, data:dict):
-        '''which player did what type of action:
-        type: rps OR tower
-        if type == rps:
-            data = {choice: 'r'/'p'/'s'}
-        if type == tower:
-            data = {action: 'build'/'attack'/'upgrade', type: 'shield'/'bomb'/'tower'}
-        '''
-        if type == "rps":
-            # get player input
-            choice = data["choice"]
-            if choice == 'q':
-                exit()
-            
-            p1Rps = choice
-
-            # When we have a server, this will be the other player, how to change this
-            p2Rps = random.choice(['r', 'p', 's'])
-
-            print("Results:",p1Rps,"vs", p2Rps)
-            print("----")
-            
-            self.decideWinner(p1Rps, p2Rps)
+            self.roundWinner.bombs[index].pow += 1
 
     def startGame(self, player1: Player, player2: Player):
         # call when everything is initialized
         # notify players every step
-        while self.finalWinner != None:
+        while self.finalWinner == None:
             self.showPlayers()
-            # get player inputs
-            p1Rps:str = player1.handleInputRps()
-            p2Rps:str = player2.handleInputRps()
-            if p1Rps == 'q' or p2Rps == 'q':
-                break
+            self.roundWinner = None
+            self.roundLoser = None
+            self.rounds += 1
 
-            print("Results:",p1Rps,"vs", p2Rps)
+            # get player inputs
+            p1RpsAction:RpsAction = player1.handleInputRps()
+            p2RpsAction:RpsAction = player2.handleInputRps()
+
+            print("Results:",p1RpsAction,"vs", p2RpsAction)
             print("----")
             # determine winner, sets roundWinner and roundLoser
-            self.decideWinner(player1, player2)
-
+            self.decideWinner(p1RpsAction, p2RpsAction)
+            #debug(self.roundWinner, self.roundLoser)
             if self.roundWinner == None:
                 print("draw")
                 continue
@@ -345,3 +307,4 @@ table = Table()
 table.addPlayer(p1)
 table.addPlayer(p2)
     
+table.startGame(p1, p2)
