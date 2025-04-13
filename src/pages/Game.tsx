@@ -13,38 +13,38 @@ import Match from "@/pages/game/Match.js";
  */
 
 class Game extends Component {
-	private game: Phaser.Game | null = null;
+  private game: Phaser.Game | null = null;
 
-	componentDidMount() {
-		const config: Phaser.Types.Core.GameConfig = {
-			title: "Fortress",
-			type: Phaser.AUTO,
-			width: 2560,
-			height: 1440,
-			parent: "game",
-			backgroundColor: "#333333",
-			pixelArt: true,
-			scale: {
-				mode: Phaser.Scale.FIT,
-				autoCenter: Phaser.Scale.CENTER_BOTH,
-			},
-			scene: [Match],
-		};
+  componentDidMount() {
+    const config: Phaser.Types.Core.GameConfig = {
+      title: "Fortress",
+      type: Phaser.AUTO,
+      width: 2560,
+      height: 1440,
+      parent: "game",
+      backgroundColor: "#333333",
+      pixelArt: true,
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+      },
+      scene: [Lobby, Match],
+    };
 
-		this.game = new Phaser.Game(config);
-	}
+    this.game = new Phaser.Game(config);
+  }
 
-	componentWillUnmount() {
-		if (this.game) {
-			this.game.destroy(true);
-			this.game = null;
-			console.log("Game destroyed");
-		}
-	}
+  componentWillUnmount() {
+    if (this.game) {
+      this.game.destroy(true);
+      this.game = null;
+      console.log("Game destroyed");
+    }
+  }
 
-	render() {
-		return <div id="game"></div>;
-	}
+  render() {
+    return <div id="game"></div>;
+  }
 }
 
 export default Game;
