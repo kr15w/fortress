@@ -1,12 +1,8 @@
 # Fortress le gaym
 
----
-
 A turn-based tower defense game where players build shields and bombs, with moves determined by Rock-Paper-Scissors.
 
 ## Game Overview
-
----
 
 Players take turns by playing Rock-Paper-Scissors. The winner can do one of:
 
@@ -20,8 +16,6 @@ Players take turns by playing Rock-Paper-Scissors. The winner can do one of:
 Damage is applied top-down on the opponent's stack. The game ends when a player's empty tower is attacked.
 
 ## Game Logic
-
----
 
 The "round winner" here means winner of a RPS match at the start of a round.
 
@@ -65,16 +59,12 @@ The "round winner" here means winner of a RPS match at the start of a round.
 
 ## Error Handling
 
----
-
 For the prototype, let's not worry about it yet. But we do need to worry about these later:
 
 - user quits suddenly mid match
 - just see srs lmao
 
 ## Class Documentation
-
----
 
 ### Message Classes
 
@@ -139,8 +129,6 @@ Manages game state and processes player actions.
 
 ## Sample Battle Scenario
 
----
-
 ```python
 # Initialize players and table
 p1 = Player("discovry")
@@ -169,8 +157,6 @@ table.handleBuild(TowerAction(p1, TowerActionTypes.BUILD_SHIELD))  # P1 shields 
 ```
 
 ## Integration Notes
-
----
 
 _The updated game flow isn't connected to backend yet._
 For online play:
