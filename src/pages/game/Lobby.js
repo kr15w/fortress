@@ -207,12 +207,9 @@ export default class Lobby extends Phaser.Scene {
     // Check if both players are ready to start the game
     // Is it good to poll?
     if (this.p1Ready && this.p2Ready) {
-      // Add a small delay before switching scenes
       if (!this.startingGame) {
         this.startingGame = true;
-        console.log("Both players ready! Starting game in 2 seconds...");
-
-        // Add a timer to switch scenes
+        console.log("both ready, start in 2 sec");
         this.time.delayedCall(2000, () => {
           this.scene.start("Match");
         });
