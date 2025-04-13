@@ -1,0 +1,8 @@
+Flask==2.0.1
+Flask-Cors==3.0.10
+PyJWT==2.1.0
+SQLAlchemy==1.4.23
+Werkzeug==2.0.1
+requests==2.26.0
+python-socketio==5.7.2
+Flask-SocketIO==5.3.2

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask WebSocket Demo</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .input-group { margin-bottom: 15px; }
+        input[type="text"] { width: 100%; padding: 8px; margin-bottom: 5px; }
+        button { padding: 10px 15px; margin-right: 10px; }
+        .response { margin-top: 20px; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Demo</h1>
+    
+    <div class="input-group">
+        <label for="user-token">User & Token:</label>
+        <input type="text" id="user-token" placeholder="token">
+    </div>
+
+    <div class="button-group">
+        <div>
+            <input type="text" id="rps_move_text" placeholder="RPS move">
+            <button onclick="sendData('rps_move')">rps_move</button>
+        </div>
+        <div>
+            <input type="text" id="game_move_text" placeholder="Game move">
+            <button onclick="sendData('game_move')">game_move</button>
+        </div>
+        <div>
+            <input type="text" id="room_id_text" placeholder="Room ID">
+            <button onclick="sendData('room_id')">room_id</button>
+        </div>
+    </div>
+
+    <div class="response">
+        <p><strong>Response:</strong> <span id="response-text"></span></p>
+        <p><strong>Status:</strong> <span id="status-text"></span></p>
+    </div>
+
+    <script>
+        const socket = io();
+        
+        // Handle updates from server
+        socket.on('update', function(data) {
+            document.getElementById('response-text').textContent = data.response;
+            document.getElementById('status-text').textContent = data.status;
+        });
+
+        // Send data when button is clicked
+        function sendData(buttonId) {
+            const mainText = document.getElementById('user-token').value;
+            const subText = document.getElementById(`${buttonId}_text`).value;
+            
+            socket.emit('button_click', {
+                button_id: buttonId,
+                main_text: mainText,
+                sub_text: subText
+            });
+        }
+    </script>
+</body>
+</html>

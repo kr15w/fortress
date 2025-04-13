@@ -1,5 +1,4 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Gate from '@/pages/Gate';
 import Game from "@/pages/Game";
 import Signup from "@/pages/Signup";

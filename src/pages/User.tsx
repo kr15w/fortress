@@ -2,9 +2,9 @@ import TopBar from '@/components/TopBar';
 import React from 'react';
 import { useParams, Outlet } from 'react-router-dom';
 
-interface UserParams {
-  userId: string;
-}
+type UserParams = {
+  userId?: string;
+};
 
 const User: React.FC = () => {
   const { userId } = useParams<UserParams>();
