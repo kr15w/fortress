@@ -3,7 +3,7 @@ import Phaser from "phaser";
 
 //all scenes
 import Match from "@/pages/game/Match.js";
-
+import Lobby from "@/pages/game/Lobby.js";
 /**
  * @todo send exit event to server
  * @todo ask for confirmation

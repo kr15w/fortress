@@ -1,6 +1,6 @@
 from player import Player
 from database import DatabaseService
-
+'''This is outdated, see flow.py.'''
 class Game:
     def __init__(self):
         self.player1 = Player()
