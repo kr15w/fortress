@@ -4,8 +4,9 @@
 
 ### Frontend
 
-1. Install dependencies: `npm install`
-2. Run development server: `npm run dev`
+1. Navigate to backend directory: `cd frontend`
+2. Install dependencies: `npm install`
+3. Run development server: `npm run dev`
 
 ### Backend
 
