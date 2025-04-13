@@ -8,7 +8,8 @@ def debug(*msg):
     global DEBUG
     if DEBUG:
         print(msg)
-    
+
+# Message object
 class RpsResult:
     def __init__(self, winner:'Player', loser:'Player'):
         '''
@@ -21,7 +22,8 @@ class RpsResult:
 
     def __str__(self):
         return f"RpsResult({self.winner} wins, {self.loser} loses)"
-    
+
+# Message object
 class RpsAction:
     def __init__(self, source:'Player', choice: str):
         '''
@@ -36,6 +38,7 @@ class RpsAction:
     def __str__(self):
         return f"RpsAction(choice={self.choice})"
     
+# list of constants
 class TowerActionTypes:
     BUILD_TOWER = 'bt'
     BUILD_SHIELD = 'bs'
@@ -46,6 +49,7 @@ class TowerActionTypes:
     UPGRADE_BOMB = 'ub'
     QUIT = 'q'
 
+# Message object
 class TowerAction:
     def __init__(self, source:'Player', action: TowerActionTypes, target:list[int] = None):
         '''
@@ -76,12 +80,12 @@ class Observer(ABC):
 class Shield:
     def __init__(self):
         self.hp = 1
-    def __str__(self):
+    def __repr__(self):
         return f"Shield(hp={self.hp})"
 class Bomb:
     def __init__(self):
         self.pow = 1
-    def __str__(self):
+    def __repr__(self):
         return f"Bomb(pow={self.pow})"
 
 class Player(Observer):
@@ -140,7 +144,7 @@ class Player(Observer):
 
                 if target == "t":
                     #attack tower
-                    return TowerAction(self, TowerActionTypes.ATTACK_TOWER, None)
+                    return TowerAction(self, TowerActionTypes.ATTACK_TOWER, [i_atk])
                 elif target == "b":
                     i_tgt = int(input("target which opponent bomb (index)):"))
                     assert i_tgt >= 0 and i_tgt < len(self.bombs), "Invalid opp bomb index"
@@ -183,6 +187,7 @@ class Table:
         self.roundLoser:Player = None
         self.finalWinner:Player = None
         self.rounds = 0
+        self.gameOver = False
     
     def addPlayer(self, player: Player):
         self.players.append(player)
@@ -193,7 +198,6 @@ class Table:
     def notify(self, msg):
         #wip
         for player in self.players:
-            debug(f"sending to {player.name}:", msg)
             player.on_notify(msg)
 
     def decideWinner(self, p1RpsAction: RpsAction, p2RpsAction: RpsAction):
@@ -201,6 +205,7 @@ class Table:
         p1Rps = p1RpsAction.choice
         p2Rps = p2RpsAction.choice
         if (p1Rps == p2Rps):
+            print("draw")
             self.roundWinner = self.roundLoser = None
         elif (p1Rps == 'r' and p2Rps == 's' or p1Rps == 's' and p2Rps == 'p' or p1Rps == 'p' and p2Rps == 'r'):
             print("p1 win")
@@ -219,22 +224,28 @@ class Table:
         print("p1 bombs: ", table.players[0].bombs, "p2 bombs: ", table.players[1].bombs)
         print("----------------------")
     
-    def handleBuild(self, type:str):
-        assert type in ["shield", "bomb", "tower"], "Invalid type"
+    def handleBuild(self, bldAction: TowerAction):
+        action: str = bldAction.action
+        assert action in [TowerActionTypes.BUILD_BOMB, TowerActionTypes.BUILD_SHIELD, TowerActionTypes.BUILD_TOWER], "Invalid type"
+
         if (self.roundWinner == None or self.roundLoser == None):
             print("no winner")
             return
-        if type == "shield":
+        
+        if action == TowerActionTypes.BUILD_SHIELD:
             self.roundWinner.shields.append(Shield())
-        elif type == "bomb":
+        elif action == TowerActionTypes.BUILD_BOMB:
             self.roundWinner.bombs.append(Bomb())
-        elif type == "tower":
+        elif action == TowerActionTypes.BUILD_TOWER:
             assert self.roundWinner.hp < 4, "tower already complete"
             self.roundWinner.hp += 1
+    
+    def handleAttack(self, atkAction: TowerAction):
+        action: str = atkAction.action
+        atkIndex: int = atkAction.target[0]
+        targetIndex: int = atkAction.target[1] if action == TowerActionTypes.ATTACK_BOMB else None
+        assert action in [TowerActionTypes.ATTACK_BOMB, TowerActionTypes.ATTACK_TOWER], "Invalid type"
 
-    def handleAttack(self, type, atkIndex: int, targetIndex: int = None):
-        # index is only for bombs
-        assert type in ["bomb", "tower"], "Invalid type"
         if (self.roundWinner == None or self.roundLoser == None):
             print("no winner")
             return
@@ -243,37 +254,47 @@ class Table:
         target = self.roundLoser
         
         assert len(attacker.bombs) > 0, "no bombs"
-        if type == "tower":
+        if action == TowerActionTypes.ATTACK_TOWER:
             if (len(target.shields) > 0):
-                target.shields.pop()
+                # attack the frontmost shield, then tower
+                if target.shields[-1].hp > 0:
+                    target.shields[-1].hp -= 1
+                else:
+                    target.shields.pop()
             else:
                 target.hp -= 1
 
             if target.hp < 0:
                 debug(target.hp)
                 print(target, "died!")
+                self.gameOver = True
+                return
 
-        elif type == "bomb":
+        elif action == TowerActionTypes.ATTACK_BOMB:
             target.bombs.pop(targetIndex)
+
         attacker.bombs.pop(atkIndex)
-    
-    def handleUpgrade(self, type, index:int):
-        assert type in ["shield", "bomb"], "Invalid type"
+        
+    def handleUpgrade(self, upgAction: TowerAction):
+        action: str = upgAction.action
+        index: int = upgAction.target[0]
+        assert action in [TowerActionTypes.UPGRADE_BOMB, TowerActionTypes.UPGRADE_SHIELD], "Invalid type"
         
         if (self.roundWinner == None or self.roundLoser == None):
             print("no winner")
             return
-        if type == "shield":
+        
+        if action == TowerActionTypes.UPGRADE_SHIELD:
             assert index >=0 and index < len(self.roundWinner.shields), "Invalid index"
             self.roundWinner.shields[index].hp += 1
-        elif type == "bomb":
+        elif action == TowerActionTypes.UPGRADE_BOMB:
             assert index >=0 and index < len(self.roundWinner.bombs), "Invalid index"
             self.roundWinner.bombs[index].pow += 1
 
     def startGame(self, player1: Player, player2: Player):
         # call when everything is initialized
         # notify players every step
-        while self.finalWinner == None:
+        while not self.gameOver:
             self.showPlayers()
             self.roundWinner = None
             self.roundLoser = None
@@ -285,20 +306,35 @@ class Table:
 
             print("Results:",p1RpsAction,"vs", p2RpsAction)
             print("----")
+
             # determine winner, sets roundWinner and roundLoser
+            # ask for input at winner
+            # notify both
             self.decideWinner(p1RpsAction, p2RpsAction)
-            #debug(self.roundWinner, self.roundLoser)
             if self.roundWinner == None:
-                print("draw")
                 continue
             elif self.roundWinner == player1:
-                print("p1 wins")
-                player1.handleInputTower()
+                towerAction: TowerAction = player1.handleInputTower()
+
             elif self.roundWinner == player2:
-                print("p2 wins")
-                player2.handleInputTower()
+                towerAction: TowerAction = player2.handleInputTower()
             else:
                 raise Exception("hey your not sposed to see this eror")
+            
+            print("tower action:", towerAction)
+            
+            match towerAction.action:
+                case TowerActionTypes.BUILD_TOWER | TowerActionTypes.BUILD_SHIELD | TowerActionTypes.BUILD_BOMB:
+                    self.handleBuild(towerAction)
+                case TowerActionTypes.ATTACK_TOWER | TowerActionTypes.ATTACK_BOMB:
+                    self.handleAttack(towerAction)
+                case TowerActionTypes.UPGRADE_SHIELD | TowerActionTypes.UPGRADE_BOMB:
+                    self.handleUpgrade(towerAction)
+                case TowerActionTypes.QUIT:
+                    print("quit")
+                    raise Exception("Quit")
+                case _:
+                    raise Exception("Invalid action")
             
 p1 = Player("discovry")
 p2 = Player("noogai67")
@@ -308,3 +344,10 @@ table.addPlayer(p1)
 table.addPlayer(p2)
     
 table.startGame(p1, p2)
+
+print(
+f'''
+gg, {table.roundWinner.name} wins the game!
+total number of rounds: {table.rounds}
+
+    ''')
