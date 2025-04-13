@@ -1,4 +1,5 @@
 from player import Player
+from database import DatabaseService
 
 class Game:
     def __init__(self):
@@ -9,7 +10,8 @@ class Game:
         self.p2_rps = None
         self.winner_move = None
         self.round_winner = None
-
+        self.db = DatabaseService()
+        
     def submit_rps(self, player_num, choice):
         """Submit RPS choice for a player, returns True if both players have submitted"""
         valid_moves = ['rock', 'paper', 'scissors']
@@ -69,8 +71,10 @@ class Game:
         
         if self.winner_move == 'shield':
             self.round_winner.build_shield()
+            self.db.increment_count(self.round_winner.username, 1, 'shield')
         elif self.winner_move == 'cannon':
             self.round_winner.build_cannon()
+            self.db.increment_count(self.round_winner.username, 1, 'bomb')
         elif self.winner_move == 'attack':
             self._process_attack()
         
@@ -111,7 +115,11 @@ class Game:
     def get_winner(self):
         """Get winning player if game is over"""
         if self.player1.is_defeated():
+            self.db.increment_count(self.player2.username, 1, 'win')
+            self.db.increment_count(self.player1.username, 1, 'lose')
             return 2
         elif self.player2.is_defeated():
+            self.db.increment_count(self.player1.username, 1, 'win')
+            self.db.increment_count(self.player2.username, 1, 'lose')
             return 1
         return None

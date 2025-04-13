@@ -15,13 +15,18 @@ class LicenseKey(Base):
 
 class User(Base):
     __tablename__ = 'users'
-    
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(128), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    win_count = Column(Integer, default=0)
+    loss_count = Column(Integer, default=0)
+    total_bomb_count = Column(Integer, default=0)
+    total_shield_count = Column(Integer, default=0)
+
+
 
 class DatabaseService:
     def __init__(self, db_url='sqlite:///users.db'):
@@ -124,3 +129,18 @@ class DatabaseService:
             return session.query(LicenseKey).all()
         finally:
             session.close()
+
+    def increment_count(self, username, increment, move):
+        session = self.Session()
+        user = session.query(User).filter_by(username = username).first()
+        if user:
+            if move == "bomb":
+                user.total_bomb_count += increment
+            elif move == "shield":
+                user.total_shield_count += increment
+            elif move == "win":
+                user.win_count += increment
+            elif move == "lose":
+                user.loss_count += increment
+            session.commit()
+            return True
