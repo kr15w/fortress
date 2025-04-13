@@ -1,0 +1,27 @@
+/* Style for the leaderboard */
+table {
+    width: 100%;
+    border-collapse: collapse; 
+    background-color: #111; 
+    color: #fff; 
+    border: 2px solid #fff; 
+  }
+  
+  th, td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #fff; 
+  }
+  
+  th {
+    background-color: #222; 
+    color: #fff;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #333; 
+  }
+  
+  tr:hover {
+    background-color: #444; 
+  }

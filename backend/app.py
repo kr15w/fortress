@@ -5,7 +5,7 @@ import jwt
 import datetime
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import DatabaseService
+from database import DatabaseService, User
 
 from flask_socketio import SocketIO, emit
 import uuid
@@ -349,6 +349,28 @@ def catch_all(path):
         return response
     except requests.exceptions.RequestException as e:
         return Response(str(e), status=500)
+
+@app.route('/api/user-stats', methods=['GET'])
+def get_user_stats():
+    session = db.Session()
+    try:
+        users = session.query(User).all()
+        user_stats = [
+            {
+                "username": user.username,
+                "win_count": user.win_count,
+                "loss_count": user.loss_count,
+                "total_bomb_count": user.total_bomb_count,
+                "total_shield_count": user.total_shield_count
+            }
+            for user in users
+        ]
+        print(user_stats)  # Debugging line to check the output
+        return jsonify(user_stats)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
 if __name__ == '__main__':
     app.run(host='::', port=5000, debug=True)
