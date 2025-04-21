@@ -8,6 +8,7 @@ import UserConfig from "@/pages/UserConfig"
 import NoMatch from "@/pages/NoMatch"
 //import PrivateRoute from './PrivateRoute';
 import Menu from "@/pages/Menu";
+import Profile from "@/pages/Profile";
 
 const App = () => {
   return (
@@ -16,7 +17,7 @@ const App = () => {
         <Route path="/" element={<Gate/>}/>
         <Route path='/leaderboard' element={<Leaderboard/>}/>
         <Route path='/signup' element={<Signup/>}/>
-
+        <Route path="/profile/:userId" element={<Profile />} />
         <Route path='/menu' element={<Menu/>}/>
         <Route path='/game' element={<Game/>}/>
         <Route path="/user" element={<User/>}>

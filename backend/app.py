@@ -350,13 +350,39 @@ def catch_all(path):
     except requests.exceptions.RequestException as e:
         return Response(str(e), status=500)
 
+@app.route('/api/profile/<int:user_id>/', methods=['GET'])
+def get_user_profile(user_id):
+    session = db.Session()
+    try:
+        user = session.query(User).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Fetch user data
+        profile = {
+            "username": user.username,
+            "email": user.email,
+            "created_at": user.created_at,
+            "win_count": user.win_count,
+            "loss_count": user.loss_count,
+            "total_bomb_count": user.total_bomb_count,
+            "total_shield_count": user.total_shield_count,
+        }
+
+        return jsonify(profile)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
 @app.route('/api/user-stats', methods=['GET'])
 def get_user_stats():
     session = db.Session()
     try:
         users = session.query(User).all()
         user_stats = [
-            {
+            {   
+                "id": user.id,
                 "username": user.username,
                 "win_count": user.win_count,
                 "loss_count": user.loss_count,
@@ -371,6 +397,7 @@ def get_user_stats():
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
+
 
 if __name__ == '__main__':
     app.run(host='::', port=5000, debug=True)

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import TopBar from '@/components/TopBar';
-import '../Leaderboard.css';
+import '../leaderboard.css';
+import { Link } from 'react-router-dom';
+
+
 /**
  * 
  * @todo Fetch data from server (Done)
@@ -11,6 +14,7 @@ import '../Leaderboard.css';
  */
 
 type UserStats = {
+  id: number;
   username: string;
   win_count: number;
   loss_count: number;
@@ -29,7 +33,6 @@ const UserStatsTable: React.FC = () => {
         const data = await response.json();
         // Sort data by win_count in descending order
         const sortedData = data.sort((a: UserStats, b: UserStats) => b.win_count - a.win_count);
-        // Limit to top 20 players
         const topPlayers = sortedData.slice(0, 20);
         setUserStats(topPlayers);
         setLoading(false);
@@ -48,7 +51,7 @@ const UserStatsTable: React.FC = () => {
 
   return (
     <>
-      <TopBar />
+      <TopBar/> 
       <h1>Top 20 Players</h1>
       <table>
         <thead>
@@ -63,9 +66,11 @@ const UserStatsTable: React.FC = () => {
         </thead>
         <tbody>
           {userStats.map((user, index) => (
-            <tr key={index}>
-              <td>{index + 1}</td> {/* Display rank based on position */}
-              <td>{user.username}</td>
+            <tr key={user.id}>
+              <td>{index + 1}</td>
+              <td>
+                <Link to={`/profile/${user.id}`}>{user.username}</Link> {/* Navigate to profile */}
+              </td>
               <td>{user.win_count}</td>
               <td>{user.loss_count}</td>
               <td>{user.total_bomb_count}</td>
