@@ -6,3 +6,5 @@ Werkzeug==2.0.1
 requests==2.26.0
 python-socketio==5.7.2
 Flask-SocketIO==5.3.2
+Flask-OAuthlib
+Flask-mail==0.9.1

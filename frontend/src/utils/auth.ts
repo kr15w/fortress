@@ -13,6 +13,10 @@ interface UserCredentials {
   licenseKey?: string;
 }
 
+interface LicenseKeyOnly{
+  licenseKey?: string;
+}
+
 export const register = async (credentials: UserCredentials): Promise<AuthResponse> => {
   try {
       const payload = {
@@ -32,6 +36,25 @@ export const register = async (credentials: UserCredentials): Promise<AuthRespon
       throw new Error('Registration failed - please try again');
   }
 };
+
+export const license = async (credentials: LicenseKeyOnly): Promise<AuthResponse> => {
+  try {
+      const payload = {
+        license_key: credentials.licenseKey
+      };
+      const response = await axios.post(`${API_BASE}/auth/license`, payload, {
+        withCredentials: true
+      });
+      return response.data;
+  } catch (error: any) {
+      if (error.response && error.response.data && error.response.data.message) {
+          console.log(error.response.data.message);
+          throw new Error(error.response.data.message);
+      }
+      throw new Error(error.response.data.message);
+  }
+};
+
 
 export const login = async (credentials: UserCredentials): Promise<AuthResponse> => {
   try {
