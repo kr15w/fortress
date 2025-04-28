@@ -11,9 +11,15 @@ import License from "./pages/License"
 import Menu from "@/pages/Menu";
 import Profile from "@/pages/Profile";
 import ChangePassword from "./pages/ResetPW";
+import { ThemeProvider } from "@/components/theme-provider"
+import { ModeToggle } from "@/components/mode-toggle";
 
 const App = () => {
   return (
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
+        <ModeToggle />
+      </div>
   <BrowserRouter>  
       <Routes>
         <Route path="/" element={<Gate/>}/>
@@ -31,7 +37,9 @@ const App = () => {
         
         <Route path="*" element={<NoMatch/>}/>
       </Routes>
-  </BrowserRouter>
+  </BrowserRouter>    
+
+  </ThemeProvider>
   )
 }
 

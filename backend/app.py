@@ -25,9 +25,8 @@ clients = {}
 game_rooms = {}
 active_games = {}
 user_tokens = {}  # user_id -> token mapping
-app.secret_key = secrets.token_hex(16)  # Secure random secret key
 app.config['GOOGLE_CLIENT_ID'] = ''
-app.config['GOOGLE_CLIENT_SECRET'] = ''
+app.config['GOOGLE_CLIENT_SECRET'] = '
 app.config['GOOGLE_DISCOVERY_URL'] = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
