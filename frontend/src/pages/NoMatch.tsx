@@ -1,15 +1,15 @@
-import React from 'react';
-import TopBar from '@/components/TopBar';
+import React from "react";
+import TopBar from "@/components/TopBar";
 
 /*
- * 
- * @todo add easter eggs lol
+ *
+ * @todo add easter eggs if u have tiem lol
  */
 const NoMatch: React.FC = () => {
   return (
     <>
-    <TopBar/>
-    <div>oof</div>
+      <TopBar />
+      <div>oof</div>
     </>
   );
 };
