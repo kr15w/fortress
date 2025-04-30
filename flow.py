@@ -42,11 +42,11 @@ class RpsAction:
 class TowerActionTypes:
     BUILD_TOWER = 'bt'
     BUILD_SHIELD = 'bs'
-    BUILD_BOMB = 'bb'
+    BUILD_CANNON = 'bc'
     ATTACK_TOWER = 'at'
-    ATTACK_BOMB = 'ab'
+    ATTACK_CANNON = 'ac'
     UPGRADE_SHIELD = 'us'
-    UPGRADE_BOMB = 'ub'
+    UPGRADE_CANNON = 'ub'
     QUIT = 'q'
 
 # Message object
@@ -58,10 +58,10 @@ class TowerAction:
         action: see TowerActionTypes
         target:
             - build (b): None
-            - attack tower (at): (index_of_atker's_bomb)
-            - attack bomb (ab): (index_of_atker's_bomb, index_of_target's_bomb)
+            - attack tower (at): (index_of_atker's_cannon)
+            - attack cannon (ab): (index_of_atker's_cannon, index_of_target's_cannon)
             - upgrade shield (us): (index_of_shield)
-            - upgrade bomb (ub): (index_of_bomb)
+            - upgrade cannon (ub): (index_of_cannon)
         '''
         assert action in vars(TowerActionTypes).values(), "Invalid action"
         self.source: Player = source #who sent this msg
@@ -82,11 +82,11 @@ class Shield:
         self.hp = 1
     def __repr__(self):
         return f"Shield(hp={self.hp})"
-class Bomb:
+class Cannon:
     def __init__(self):
         self.pow = 1
     def __repr__(self):
-        return f"Bomb(pow={self.pow})"
+        return f"Cannon(pow={self.pow})"
 
 class Player(Observer):
     '''These would probably be stored in the server, so I'm not saving the player choices here '''
@@ -95,10 +95,10 @@ class Player(Observer):
         self.hp = 0
 
         self.shields: List[Shield] = []
-        self.bombs: List[Bomb] = []
+        self.cannons: List[Cannon] = []
 
     def __str__(self):
-        return f"Player(name={self.name}, hp={self.hp}, shields={self.shields}, bombs={self.bombs})"
+        return f"Player(name={self.name}, hp={self.hp}, shields={self.shields}, cannons={self.cannons})"
     def on_notify(self, move: TowerAction):
         '''This is what the frontend would see'''
         debug(f"{self.name} received notification: {move}")
@@ -122,47 +122,47 @@ class Player(Observer):
             
         # tower complete
         #control available options here
-        if (len(table.roundWinner.bombs)==0 and len(table.roundWinner.shields)==0):
-            #no bombs and no shields
+        if (len(table.roundWinner.cannons)==0 and len(table.roundWinner.shields)==0):
+            #no cannons and no shields
             action = input("build: ")
-        elif (len(table.roundWinner.shields)>0 and len(table.roundWinner.bombs)==0):
-            #no bombs AND yes shields, can't atack
+        elif (len(table.roundWinner.shields)>0 and len(table.roundWinner.cannons)==0):
+            #no cannons AND yes shields, can't atack
             action = input("build/upgrade: ")
         else:
-            #bombs and shields, all
+            #cannons and shields, all
             action = input("build/attack/upgrade: ")
         assert action in ['b', 'a', 'u'], "Invalid choice"
 
         match action:
-            case "b":
-                target = input("add a shield/bomb: ")
-                return TowerAction(self, TowerActionTypes.BUILD_SHIELD if target == "s" else TowerActionTypes.BUILD_BOMB, None)
+            case "c":
+                target = input("add a shield/cannon: ")
+                return TowerAction(self, TowerActionTypes.BUILD_SHIELD if target == "s" else TowerActionTypes.BUILD_CANNON, None)
             case "a":
-                target = input("target tower/bomb:")
-                i_atk = int(input("index of your bomb (index):"))
-                assert i_atk >= 0 and i_atk < len(self.bombs), "Invalid self bomb index"
+                target = input("target tower/cannon:")
+                i_atk = int(input("index of your cannon (index):"))
+                assert i_atk >= 0 and i_atk < len(self.cannons), "Invalid self cannon index"
 
                 if target == "t":
                     #attack tower
                     return TowerAction(self, TowerActionTypes.ATTACK_TOWER, [i_atk])
-                elif target == "b":
-                    i_tgt = int(input("target which opponent bomb (index)):"))
-                    assert i_tgt >= 0 and i_tgt < len(self.bombs), "Invalid opp bomb index"
+                elif target == "c":
+                    i_tgt = int(input("target which opponent cannon (index)):"))
+                    assert i_tgt >= 0 and i_tgt < len(self.cannons), "Invalid opp cannon index"
 
-                    return TowerAction(self, TowerActionTypes.ATTACK_BOMB, [i_atk, i_tgt])
+                    return TowerAction(self, TowerActionTypes.ATTACK_CANNON, [i_atk, i_tgt])
             case "u":
-                #can choose upgrade if u have shields, but may or may not have bombs
-                target = input("upgrade shield/bomb:")
+                #can choose upgrade if u have shields, but may or may not have cannons
+                target = input("upgrade shield/cannon:")
                 if target == "s":
                     i = int(input("target which one of your shields(index):"))
                     assert i >= 0 and i < len(self.shields), "Invalid own shield index"
 
                     return TowerAction(self, TowerActionTypes.UPGRADE_SHIELD, [i])
-                elif target == "b":
-                    i = int(input("target which one of your bombs(index):"))
-                    assert i >= 0 and i < len(self.bombs), "Invalid own bomb index"
+                elif target == "c":
+                    i = int(input("target which one of your cannons(index):"))
+                    assert i >= 0 and i < len(self.cannons), "Invalid own cannon index"
 
-                    return TowerAction(self, TowerActionTypes.UPGRADE_BOMB, [i])
+                    return TowerAction(self, TowerActionTypes.UPGRADE_CANNON, [i])
             case 'q':
                 print("Note the actual game doesnt have this")
                 raise Exception("Quit")
@@ -173,7 +173,7 @@ class Player(Observer):
         print(self.name+": ")
         print("HP:", self.hp)
         print("Shields:", self.shields)
-        print("bombs:", self.bombs, "\n")
+        print("cannons:", self.cannons, "\n")
 
 class Table:
     '''
@@ -221,12 +221,12 @@ class Table:
         print("-------type initials only-----------")
         print("p1:", table.players[0].hp, "vs", table.players[1].hp, ":p2")
         print("p1 shields: ", table.players[0].shields, "p2 shields: ", table.players[1].shields)
-        print("p1 bombs: ", table.players[0].bombs, "p2 bombs: ", table.players[1].bombs)
+        print("p1 cannons: ", table.players[0].cannons, "p2 cannons: ", table.players[1].cannons)
         print("----------------------")
     
     def handleBuild(self, bldAction: TowerAction):
         action: str = bldAction.action
-        assert action in [TowerActionTypes.BUILD_BOMB, TowerActionTypes.BUILD_SHIELD, TowerActionTypes.BUILD_TOWER], "Invalid type"
+        assert action in [TowerActionTypes.BUILD_CANNON, TowerActionTypes.BUILD_SHIELD, TowerActionTypes.BUILD_TOWER], "Invalid type"
 
         if (self.roundWinner == None or self.roundLoser == None):
             print("no winner")
@@ -234,8 +234,8 @@ class Table:
         
         if action == TowerActionTypes.BUILD_SHIELD:
             self.roundWinner.shields.append(Shield())
-        elif action == TowerActionTypes.BUILD_BOMB:
-            self.roundWinner.bombs.append(Bomb())
+        elif action == TowerActionTypes.BUILD_CANNON:
+            self.roundWinner.cannons.append(Cannon())
         elif action == TowerActionTypes.BUILD_TOWER:
             assert self.roundWinner.hp < 4, "tower already complete"
             self.roundWinner.hp += 1
@@ -243,8 +243,8 @@ class Table:
     def handleAttack(self, atkAction: TowerAction):
         action: str = atkAction.action
         atkIndex: int = atkAction.target[0]
-        targetIndex: int = atkAction.target[1] if action == TowerActionTypes.ATTACK_BOMB else None
-        assert action in [TowerActionTypes.ATTACK_BOMB, TowerActionTypes.ATTACK_TOWER], "Invalid type"
+        targetIndex: int = atkAction.target[1] if action == TowerActionTypes.ATTACK_CANNON else None
+        assert action in [TowerActionTypes.ATTACK_CANNON, TowerActionTypes.ATTACK_TOWER], "Invalid type"
 
         if (self.roundWinner == None or self.roundLoser == None):
             print("no winner")
@@ -253,7 +253,7 @@ class Table:
         attacker = self.roundWinner
         target = self.roundLoser
         
-        assert len(attacker.bombs) > 0, "no bombs"
+        assert len(attacker.cannons) > 0, "no cannons"
         if action == TowerActionTypes.ATTACK_TOWER:
             if (len(target.shields) > 0):
                 # attack the frontmost shield, then tower
@@ -270,15 +270,15 @@ class Table:
                 self.gameOver = True
                 return
 
-        elif action == TowerActionTypes.ATTACK_BOMB:
-            target.bombs.pop(targetIndex)
+        elif action == TowerActionTypes.ATTACK_CANNON:
+            target.cannons.pop(targetIndex)
 
-        attacker.bombs.pop(atkIndex)
+        ##attacker.cannons.pop(atkIndex)
         
     def handleUpgrade(self, upgAction: TowerAction):
         action: str = upgAction.action
         index: int = upgAction.target[0]
-        assert action in [TowerActionTypes.UPGRADE_BOMB, TowerActionTypes.UPGRADE_SHIELD], "Invalid type"
+        assert action in [TowerActionTypes.UPGRADE_CANNON, TowerActionTypes.UPGRADE_SHIELD], "Invalid type"
         
         if (self.roundWinner == None or self.roundLoser == None):
             print("no winner")
@@ -287,9 +287,9 @@ class Table:
         if action == TowerActionTypes.UPGRADE_SHIELD:
             assert index >=0 and index < len(self.roundWinner.shields), "Invalid index"
             self.roundWinner.shields[index].hp += 1
-        elif action == TowerActionTypes.UPGRADE_BOMB:
-            assert index >=0 and index < len(self.roundWinner.bombs), "Invalid index"
-            self.roundWinner.bombs[index].pow += 1
+        elif action == TowerActionTypes.UPGRADE_CANNON:
+            assert index >=0 and index < len(self.roundWinner.cannons), "Invalid index"
+            self.roundWinner.cannons[index].pow += 1
 
     def startGame(self, player1: Player, player2: Player):
         # call when everything is initialized
@@ -324,11 +324,11 @@ class Table:
             print("tower action:", towerAction)
             
             match towerAction.action:
-                case TowerActionTypes.BUILD_TOWER | TowerActionTypes.BUILD_SHIELD | TowerActionTypes.BUILD_BOMB:
+                case TowerActionTypes.BUILD_TOWER | TowerActionTypes.BUILD_SHIELD | TowerActionTypes.BUILD_CANNON:
                     self.handleBuild(towerAction)
-                case TowerActionTypes.ATTACK_TOWER | TowerActionTypes.ATTACK_BOMB:
+                case TowerActionTypes.ATTACK_TOWER | TowerActionTypes.ATTACK_CANNON:
                     self.handleAttack(towerAction)
-                case TowerActionTypes.UPGRADE_SHIELD | TowerActionTypes.UPGRADE_BOMB:
+                case TowerActionTypes.UPGRADE_SHIELD | TowerActionTypes.UPGRADE_CANNON:
                     self.handleUpgrade(towerAction)
                 case TowerActionTypes.QUIT:
                     print("quit")
