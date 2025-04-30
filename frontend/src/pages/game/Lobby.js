@@ -193,6 +193,7 @@ export default class Lobby extends Phaser.Scene {
         this.startingGame = true;
         console.log("both ready, start in 2 sec");
         this.time.delayedCall(2000, () => {
+          this.scene.stop("Lobby"); // Stop this scene first
           this.scene.start("Match");
         });
       }
