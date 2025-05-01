@@ -24,21 +24,21 @@
       "repeat": -1
     },
     {
-      "key": "rock",
+      "key": "r",
       "start": 1,
       "end": 1,
       "frameRate": 24,
       "repeat": -1
     },
     {
-      "key": "paper",
+      "key": "p",
       "start": 2,
       "end": 2,
       "frameRate": 24,
       "repeat": -1
     },
     {
-      "key": "scissors",
+      "key": "s",
       "start": 3,
       "end": 3,
       "frameRate": 24,
@@ -54,21 +54,21 @@
       "repeat": -1
     },
     {
-      "key": "paper",
+      "key": "r",
       "start": 1,
       "end": 1,
       "frameRate": 24,
       "repeat": -1
     },
     {
-      "key": "scissors",
+      "key": "p",
       "start": 2,
       "end": 2,
       "frameRate": 24,
       "repeat": -1
     },
     {
-      "key": "rock",
+      "key": "s",
       "start": 3,
       "end": 3,
       "frameRate": 24,

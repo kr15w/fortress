@@ -5,6 +5,7 @@ import ANIMS from "./match_anims.json";
 export default class Match extends Phaser.Scene {
   initGame() {
     this.state = {
+      stage: "rps",
       players: [],
       rounds: 0,
       p1Choice: null,
@@ -18,25 +19,14 @@ export default class Match extends Phaser.Scene {
     super("Match");
     this.initGame();
     // I am noogai
-    this.addPlayer(new Player("noogai67"));
+    this.povName = "noogai67";
+
+    this.addPlayer(new Player(this.povName));
     this.addPlayer(new Player("discovry"));
   }
 
   init(data) {
-    // Clean up any previous instance
-    if (this.events) {
-      this.events.removeAllListeners();
-    }
-    // Reset state
     this.initGame();
-    // Remove any existing keyboard listeners
-    if (this.input && this.input.keyboard) {
-      this.input.keyboard.removeAllListeners();
-    }
-    // Clean up any existing sprites
-    if (this.children) {
-      this.children.removeAll();
-    }
   }
 
   preload() {
@@ -84,7 +74,7 @@ export default class Match extends Phaser.Scene {
     this.p1Right.play("match_p1Right_wait");
     this.p2Body.play("match_p2Body_wait");
 
-    this.input.keyboard.on("keydown", this.onKeyDown);
+    this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
   }
   onKeyDown() {
     console.log("owo");
@@ -128,6 +118,8 @@ export default class Match extends Phaser.Scene {
       .setDisplayOrigin(996, 1184)
       .setDepth(999)
       .setName("p1Right");
+
+    //anims arnt loaded yet
   }
 
   _createRpsBtns() {
@@ -140,20 +132,23 @@ export default class Match extends Phaser.Scene {
       .sprite(1929, 564, "match_rps_rock")
       .setOrigin(0, 0)
       .setDepth(999)
-      .setName("RockBtn")
-      .setInteractive()
-      .on("pointerdown", () => {
-        this._handleRpsClick("r");
-      });
+      .setName("RockBtn");
+    this.RockBtn.setInteractive({
+      cursor: "pointer",
+    }).on("pointerdown", () => {
+      this.handleRpsInput("r", this.povName);
+    });
 
     this.PaperBtn = this.add
       .sprite(1584, 709, "match_rps_paper")
       .setOrigin(0, 0)
       .setDepth(9999)
       .setName("PaperBtn")
-      .setInteractive()
+      .setInteractive({
+        cursor: "pointer",
+      })
       .on("pointerdown", () => {
-        this._handleRpsClick("p");
+        this.handleRpsInput("p", this.povName);
       });
 
     this.ScissorsBtn = this.add
@@ -161,10 +156,43 @@ export default class Match extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(9999)
       .setName("ScissorsBtn")
-      .setInteractive()
+      .setInteractive({
+        cursor: "pointer",
+      })
       .on("pointerdown", () => {
-        this._handleRpsClick("s");
+        this.handleRpsInput("s", this.povName);
       });
+  }
+  handleRpsInput(choice, playerName) {
+    if (choice != "r" && choice != "p" && choice != "s") {
+      console.warn("invalid choice");
+      return;
+    }
+    if (this.povName == playerName) {
+      this.state.p1Choice = choice;
+    } else {
+      this.state.p2Choice = choice;
+    }
+    console.log(this.state.p1Choice, this.state.p2Choice);
+
+    if (this.state.p1Choice && this.state.p2Choice) {
+      this._hideRpsButtons();
+      this.rpsText.visible = false;
+      this.p1Right.play("match_p1Right_" + this.state.p1Choice);
+      this.p2Hand.play("match_p2Hand_" + this.state.p2Choice);
+    }
+  }
+  onKeyDown(e) {
+    //Thesea re all temp
+    if (this.state.stage == "rps") {
+      if (e.key == "r") {
+        this.handleRpsInput("r", "discovry");
+      } else if (e.key == "p") {
+        this.handleRpsInput("p", "discovry");
+      } else if (e.key == "s") {
+        this.handleRpsInput("s", "discovry");
+      }
+    }
   }
   _showRpsButtons() {
     this.RockBtn.visible = true;
