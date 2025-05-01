@@ -5,9 +5,9 @@ export function loadAnims(anims, deez) {
    * @param deez just put "this" in here
    */
   for (let s in anims) {
-    console.log("loading anims of " + s);
+    //console.log("loading anims of " + s);
     for (let a in anims[s]) {
-      console.log(anims[s][a]);
+      //console.log(anims[s][a]);
       console.log("anim key:" + s + "_" + anims[s][a].key);
       deez.anims.create({
         key: s + "_" + anims[s][a].key,

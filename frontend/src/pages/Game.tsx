@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { Component } from "react";
 import Phaser from "phaser";
-import { useBeforeUnload } from "react-router-dom";
+
 //all scenes
 import Match from "@/pages/game/Match.js";
 import Lobby from "@/pages/game/Lobby.js";
@@ -11,11 +11,10 @@ import Lobby from "@/pages/game/Lobby.js";
  * @todo reject mobile clietns
  */
 
-function Game() {
-  const gameRef = useRef<Phaser.Game | null>(null);
-  const [pending, setPending] = useState(false);
+class Game extends Component {
+  private game: Phaser.Game | null = null;
 
-  useEffect(() => {
+  componentDidMount() {
     const config: Phaser.Types.Core.GameConfig = {
       title: "Fortress",
       type: Phaser.AUTO,
@@ -23,7 +22,6 @@ function Game() {
       height: 1440,
       parent: "game",
       backgroundColor: "#333333",
-      pixelArt: true,
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -31,27 +29,20 @@ function Game() {
       scene: [Match],
     };
 
-    gameRef.current = new Phaser.Game(config);
+    this.game = new Phaser.Game(config);
+  }
 
-    // exit confirm doesnt work
-    /*
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-*/
-    // The return funciton is called on unmount
-    return () => {
-      //window.removeEventListener("beforeunload", handleBeforeUnload);
-      if (gameRef.current) {
-        gameRef.current.destroy(true);
-        gameRef.current = null;
-        console.log("Game destroyed");
-      }
-    };
-  }, [pending]);
+  componentWillUnmount() {
+    if (this.game) {
+      this.game.destroy(true);
+      this.game = null;
+      console.log("Game destroyed");
+    }
+  }
 
-  return <div id="game" />;
+  render() {
+    return <div id="game"></div>;
+  }
 }
 
 export default Game;

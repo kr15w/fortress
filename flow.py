@@ -293,6 +293,7 @@ class Table:
 
     def startGame(self, player1: Player, player2: Player):
         # call when everything is initialized
+        # coreesponds to create()
         # notify players every step
         while not self.gameOver:
             self.showPlayers()

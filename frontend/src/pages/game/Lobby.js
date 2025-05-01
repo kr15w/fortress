@@ -85,14 +85,14 @@ export default class Lobby extends Phaser.Scene {
 
     loadAnims(ANIMS, this);
 
-    this.p1.play("enter", true);
-    this.p2.play("enter", true);
+    this.p1.play("lobby_player_enter", true);
+    this.p2.play("lobby_player_enter", true);
 
     this.p1.setPosition(-this.p1.width, 1098);
 
     if (this.p2Enter) {
       this.p2.setPosition(1922, 1098);
-      this.p2.play("idle");
+      this.p2.play("lobby_player_idle");
     } else {
       this.p2.setPosition(SCENE_W + this.p2.width, 1098);
     }
@@ -111,7 +111,7 @@ export default class Lobby extends Phaser.Scene {
       yoyo: false,
       onComplete: () => {
         console.log("idle");
-        this.p1.play("idle");
+        this.p1.play("lobby_player_idle");
         this.p1Enter = true;
       },
     });
@@ -130,7 +130,7 @@ export default class Lobby extends Phaser.Scene {
             yoyo: false,
             onComplete: () => {
               console.log("idle");
-              this.p2.play("idle");
+              this.p2.play("lobby_player_idle");
               this.p2Enter = true;
             },
           });
@@ -144,9 +144,9 @@ export default class Lobby extends Phaser.Scene {
         }
         //console.log("p2 RED");
         if (this.p2Ready) {
-          this.p2.play("idle");
+          this.p2.play("lobby_player_idle");
         } else {
-          this.p2.play("ready");
+          this.p2.play("lobby_player_ready");
         }
         this.p2Ready = !this.p2Ready;
       }
@@ -176,11 +176,11 @@ export default class Lobby extends Phaser.Scene {
       if (this.p1Enter && !this.p1Ready) {
         console.log("Player 1 ready");
         this.p1Ready = true;
-        this.p1.play("ready");
+        this.p1.play("lobby_player_ready");
       } else if (this.p1Ready) {
         console.log("Player 1 unready");
         this.p1Ready = false;
-        this.p1.play("idle");
+        this.p1.play("lobby_player_idle");
       }
     });
   }
@@ -193,7 +193,7 @@ export default class Lobby extends Phaser.Scene {
         this.startingGame = true;
         console.log("both ready, start in 2 sec");
         this.time.delayedCall(2000, () => {
-          this.scene.stop("Lobby"); // Stop this scene first
+          this.scene.stop("Lobby");
           this.scene.start("Match");
         });
       }
