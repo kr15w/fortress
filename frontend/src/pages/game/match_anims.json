@@ -27,6 +27,27 @@
       "end": 3,
       "frameRate": 24,
       "repeat": -1
+    },
+    {
+      "key": "think",
+      "start": 4,
+      "end": 4,
+      "frameRate": 24,
+      "repeat": -1
+    },
+    {
+      "key": "rps_lose",
+      "start": 5,
+      "end": 5,
+      "frameRate": 24,
+      "repeat": -1
+    },
+    {
+      "key": "rps_win",
+      "start": 6,
+      "end": 6,
+      "frameRate": 24,
+      "repeat": -1
     }
   ],
   "match_p2Hand": [
@@ -69,6 +90,20 @@
       "key": "win",
       "start": 5,
       "end": 5,
+      "frameRate": 24,
+      "repeat": -1
+    },
+    {
+      "key": "think",
+      "start": 6,
+      "end": 6,
+      "frameRate": 24,
+      "repeat": -1
+    },
+    {
+      "key": "waitTower",
+      "start": 7,
+      "end": 7,
       "frameRate": 24,
       "repeat": -1
     }
@@ -115,6 +150,13 @@
       "end": 5,
       "frameRate": 24,
       "repeat": -1
+    },
+    {
+      "key": "waitTower",
+      "start": 6,
+      "end": 6,
+      "frameRate": 24,
+      "repeat": -1
     }
   ],
   "match_rps_text": [
@@ -122,6 +164,22 @@
       "key": "choose",
       "start": 0,
       "end": 0,
+      "frameRate": 24,
+      "repeat": -1
+    }
+  ],
+  "match_p1Left": [
+    {
+      "key": "wait",
+      "start": 0,
+      "end": 0,
+      "frameRate": 24,
+      "repeat": -1
+    },
+    {
+      "key": "think",
+      "start": 1,
+      "end": 1,
       "frameRate": 24,
       "repeat": -1
     }
