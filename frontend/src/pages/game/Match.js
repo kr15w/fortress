@@ -75,9 +75,18 @@ export default class Match extends Phaser.Scene {
     this.p2Body.play("match_p2Body_wait");
 
     this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
-  }
-  onKeyDown() {
-    console.log("owo");
+
+    this.events.on("roundStart", () => {
+      this.onRoundStart();
+    });
+    this.events.on("rpsResult", () => {
+      this.onRpsResult();
+    });
+    this.events.on("tower", () => {
+      alert("towah");
+    });
+
+    this.events.emit("roundStart");
   }
   _createBackground() {
     this.bg = this.add
@@ -96,14 +105,17 @@ export default class Match extends Phaser.Scene {
   _createPlayers() {
     // Player 2 (opponent)
     this.p2Body = this.add
-      .sprite(1095, 239, "match_p2Body")
-      .setOrigin(0, 0)
+      // weird nums
+      .sprite(968, 205, "match_p2Body")
+      .setDisplayOrigin(0, 0)
       .setDepth(1)
       .setName("p2Body");
 
     this.p2Hand = this.add
-      .sprite(1144, 489, "match_p2Hand")
-      .setDisplayOrigin(318, 184)
+      //why is it all around the place!!!!!!
+      .sprite(995, 486, "match_p2Hand")
+      .setDisplayOrigin(313, 182)
+      .setDepth(999)
       .setName("p2Hand");
 
     // Player 1 (user)
@@ -123,6 +135,7 @@ export default class Match extends Phaser.Scene {
   }
 
   _createRpsBtns() {
+    // adds buttons that triggers RpsInput event
     this.rpsText = this.add
       .sprite(1865, 395, "match_rps_text")
       .setDepth(9999)
@@ -164,10 +177,15 @@ export default class Match extends Phaser.Scene {
       });
   }
   handleRpsInput(choice, playerName) {
+    /**called only during roundStart event.
+     * Sends message to quasi server.
+     */
     if (choice != "r" && choice != "p" && choice != "s") {
       console.warn("invalid choice");
       return;
     }
+
+    // saves input to server.
     if (this.povName == playerName) {
       this.state.p1Choice = choice;
     } else {
@@ -175,15 +193,77 @@ export default class Match extends Phaser.Scene {
     }
     console.log(this.state.p1Choice, this.state.p2Choice);
 
+    /**Quasi server logic.
+     * Called everytime an rps input is received. */
     if (this.state.p1Choice && this.state.p2Choice) {
-      this._hideRpsButtons();
-      this.rpsText.visible = false;
-      this.p1Right.play("match_p1Right_" + this.state.p1Choice);
-      this.p2Hand.play("match_p2Hand_" + this.state.p2Choice);
+      this.state.stage = "rpsResult";
+      this.events.emit("rpsResult");
     }
   }
+  checkRpsProceed() {}
+  onRpsResult() {
+    // Player visuals.
+    this._hideRpsButtons();
+
+    console.log(this._decideWinner(this.state.p1Choice, this.state.p2Choice));
+    // player visuals
+    this.p1Right.play("match_p1Right_" + this.state.p1Choice);
+    this.p2Hand.play("match_p2Hand_" + this.state.p2Choice);
+    this.p2Body.play("match_p2Body_rps");
+
+    this.time.addEvent({
+      delay: 1500,
+      callback: () => {
+        console.log("decide winner", this.state.roundWinner);
+        if (this.state.roundWinner == this.povName) {
+          console.log("i win");
+          //this.p1Left.play("match_p1Left_win");
+          this.p1Right.play("match_p1Right_win");
+          this.p2Body.play("match_p2Body_lose");
+          this.p2Hand.play("match_p2Hand_lose");
+        } else if (this.state.roundWinner == "discovry") {
+          console.log("i lose");
+          //this.p1Left.play("match_p1Left_lose");
+          this.p1Right.play("match_p1Right_lose");
+          this.p2Body.play("match_p2Body_win");
+          this.p2Hand.play("match_p2Hand_win");
+        } else if (this.state.roundWinner == null) {
+          console.log("draw");
+          //this.p1Left.play("match_p1Left_lose");
+          this.p1Right.play("match_p1Right_lose");
+          this.p2Body.play("match_p2Body_lose");
+          this.p2Hand.play("match_p2Hand_lose");
+        }
+        this.time.addEvent({
+          delay: 800,
+          callback: () => {
+            this.events.emit("roundStart");
+          },
+        });
+      },
+      loop: false,
+    });
+  }
+
+  _decideWinner(p1Choice, p2Choice) {
+    if (p1Choice == p2Choice) {
+      this.state.roundWinner = null;
+      return -1;
+    } else if (
+      (p1Choice == "r" && p2Choice == "s") ||
+      (p1Choice == "p" && p2Choice == "r") ||
+      (p1Choice == "s" && p2Choice == "p")
+    ) {
+      this.state.roundWinner = this.povName;
+      return 0;
+    } else {
+      this.state.roundWinner = "discovry";
+      return 1;
+    }
+  }
+
   onKeyDown(e) {
-    //Thesea re all temp
+    //Thesea re all temporareeie
     if (this.state.stage == "rps") {
       if (e.key == "r") {
         this.handleRpsInput("r", "discovry");
@@ -194,12 +274,31 @@ export default class Match extends Phaser.Scene {
       }
     }
   }
+
+  onRoundStart() {
+    this.state.rounds++;
+    this.state.stage = "rps";
+    this.state.p1Choice = null;
+    this.state.p2Choice = null;
+
+    console.log(this.state);
+
+    //this.p1Left;
+    this.p1Right.play("match_p1Right_wait");
+    this.p2Body.play("match_p2Body_wait");
+    this.p2Hand.play("match_p2Hand_wait");
+    this._showRpsButtons();
+  }
+
   _showRpsButtons() {
+    // show buttons that emit rps input event
+    this.rpsText.visible = true;
     this.RockBtn.visible = true;
     this.PaperBtn.visible = true;
     this.ScissorsBtn.visible = true;
   }
   _hideRpsButtons() {
+    this.rpsText.visible = false;
     this.RockBtn.visible = false;
     this.PaperBtn.visible = false;
     this.ScissorsBtn.visible = false;

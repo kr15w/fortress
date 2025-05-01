@@ -13,6 +13,20 @@
       "end": 0,
       "frameRate": 24,
       "repeat": -1
+    },
+    {
+      "key": "lose",
+      "start": 2,
+      "end": 2,
+      "frameRate": 24,
+      "repeat": -1
+    },
+    {
+      "key": "win",
+      "start": 3,
+      "end": 3,
+      "frameRate": 24,
+      "repeat": -1
     }
   ],
   "match_p2Hand": [
@@ -43,6 +57,20 @@
       "end": 3,
       "frameRate": 24,
       "repeat": -1
+    },
+    {
+      "key": "lose",
+      "start": 4,
+      "end": 4,
+      "frameRate": 24,
+      "repeat": -1
+    },
+    {
+      "key": "win",
+      "start": 5,
+      "end": 5,
+      "frameRate": 24,
+      "repeat": -1
     }
   ],
   "match_p1Right": [
@@ -54,21 +82,21 @@
       "repeat": -1
     },
     {
-      "key": "r",
+      "key": "p",
       "start": 1,
       "end": 1,
       "frameRate": 24,
       "repeat": -1
     },
     {
-      "key": "p",
+      "key": "s",
       "start": 2,
       "end": 2,
       "frameRate": 24,
       "repeat": -1
     },
     {
-      "key": "s",
+      "key": "r",
       "start": 3,
       "end": 3,
       "frameRate": 24,
