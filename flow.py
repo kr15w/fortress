@@ -134,7 +134,7 @@ class Player(Observer):
         assert action in ['b', 'a', 'u'], "Invalid choice"
 
         match action:
-            case "c":
+            case "b":
                 target = input("add a shield/cannon: ")
                 return TowerAction(self, TowerActionTypes.BUILD_SHIELD if target == "s" else TowerActionTypes.BUILD_CANNON, None)
             case "a":
