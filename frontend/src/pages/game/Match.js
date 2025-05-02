@@ -55,6 +55,8 @@ export default class Match extends Phaser.Scene {
     this.load.image("match_atkBtn", "assets/match_atkBtn.png");
     this.load.image("match_bldBtn", "assets/match_bldBtn.png");
     this.load.image("match_upgBtn", "assets/match_upgBtn.png");
+    this.load.image("match_cannonBtn", "assets/match_cannonBtn.png");
+    this.load.image("match_shieldBtn", "assets/match_shieldBtn.png");
 
     this.load.atlas(
       "match_p1Base",
@@ -106,6 +108,10 @@ export default class Match extends Phaser.Scene {
     loadAnims(ANIMS, this);
     this.p1Right.play("match_p1Right_wait");
     this.p2Body.play("match_p2Body_wait");
+
+    //debug
+    this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+    this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
 
     this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
 
@@ -226,45 +232,34 @@ export default class Match extends Phaser.Scene {
 
   _createTowerBtns() {
     // adds buttons that triggers TowerInput event
-    //TODO
+    // interactives are added in _showTowerButtons()
 
     this.atkBtn = this.add
       .sprite(546, 389, "match_atkBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("atkBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        // Attack base or cannon?
-        this.handleTowerInput("a", this.povName);
-      });
+      .setName("atkBtn");
     this.bldBtn = this.add
       .sprite(862, 559, "match_bldBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("bldBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        // Build cannon or shield?
-        //Where on the table?
-        this.handleTowerInput("b", this.povName);
-      });
+      .setName("bldBtn");
     this.upgBtn = this.add
       .sprite(710, 922, "match_upgBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("atkBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        //Upgrade what
-        this.handleTowerInput("u", this.povName);
-      });
+      .setName("atkBtn");
+    this.cannonBtn = this.add
+      .sprite(910, 292, "match_cannonBtn")
+      .setOrigin(0, 0)
+      .setDepth(9999)
+      .setName("cannonBtn");
+
+    this.shieldBtn = this.add
+      .sprite(906, 579, "match_shieldBtn")
+      .setOrigin(0, 0)
+      .setDepth(9999)
+      .setName("shieldBtn");
   }
   handleRpsInput(choice, playerName) {
     /**called only during roundStart event.
@@ -421,8 +416,13 @@ export default class Match extends Phaser.Scene {
           y: 294,
           ease: "Linear",
           duration: 300,
+          onComplete: () => {
+            //glow opp tower
+            // glow weapons
+          },
         });
         // Attack base or cannon?
+
         if (null) {
           this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, targetIdk);
         } else {
@@ -435,12 +435,39 @@ export default class Match extends Phaser.Scene {
         cursor: "pointer",
       })
       .on("pointerdown", () => {
-        // canon or shield
-        if (null) {
-          this.handleTowerInput(TowerActionTypes.BUILD_SHIELD, this.povName);
-        } else {
-          this.handleTowerInput(TowerActionTypes.BUILD_CANNON, this.povName);
-        }
+        this.tweens.add({
+          targets: this.bldBtn,
+          x: 607,
+          y: 362,
+          ease: "Linear",
+          duration: 100,
+          onComplete: () => {
+            // canon or shield
+            this.cannonBtn.visible = true;
+            this.shieldBtn.visible = true;
+            this.cannonBtn
+              .setInteractive({
+                cursor: "pointer",
+              })
+              .on("pointerdown", () => {
+                this.handleTowerInput(
+                  TowerActionTypes.BUILD_CANNON,
+                  this.povName
+                );
+              });
+
+            this.shieldBtn
+              .setInteractive({
+                cursor: "pointer",
+              })
+              .on("pointerdown", () => {
+                this.handleTowerInput(
+                  TowerActionTypes.BUILD_SHIELD,
+                  this.povName
+                );
+              });
+          },
+        });
       });
     this.upgBtn
       .setInteractive({
@@ -454,6 +481,11 @@ export default class Match extends Phaser.Scene {
     this.atkBtn.visible = false;
     this.bldBtn.visible = true;
     this.upgBtn.visible = false;
+
+    // Reset positions of buttons to their initial positions
+    this.atkBtn.setPosition(546, 389);
+    this.bldBtn.setPosition(862, 559);
+    this.upgBtn.setPosition(710, 922);
 
     console.log(this.state.roundWinner);
 
@@ -482,6 +514,9 @@ export default class Match extends Phaser.Scene {
     this.atkBtn.visible = false;
     this.bldBtn.visible = false;
     this.upgBtn.visible = false;
+
+    this.cannonBtn.visible = false;
+    this.shieldBtn.visible = false;
   }
 
   _decideWinner(p1RpsChoice, p2RpsChoice) {
@@ -595,7 +630,30 @@ export default class Match extends Phaser.Scene {
 class Player {
   constructor(name) {
     this.name = name;
-    this.hp = 0;
+    /***
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     * change this hp
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     */
+    this.hp = 4;
     this.shields = [];
     this.cannons = [];
     this.choice = null;
