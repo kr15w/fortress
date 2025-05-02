@@ -57,6 +57,16 @@ export default class Match extends Phaser.Scene {
     this.load.image("match_upgBtn", "assets/match_upgBtn.png");
 
     this.load.atlas(
+      "match_p1Base",
+      "assets/match_p1Base.png",
+      "assets/match_p1Base.json"
+    );
+    this.load.atlas(
+      "match_p2Base",
+      "assets/match_p2Base.png",
+      "assets/match_p2Base.json"
+    );
+    this.load.atlas(
       "match_p1Left",
       "assets/match_p1Left.png",
       "assets/match_p1Left.json"
@@ -88,6 +98,7 @@ export default class Match extends Phaser.Scene {
     const SCENE_H = this.sys.game.canvas.height;
 
     this._createBackground();
+    this._createBases();
     this._createPlayers();
     this._createRpsBtns();
     this._createTowerBtns();
@@ -109,6 +120,19 @@ export default class Match extends Phaser.Scene {
     });
 
     this.events.emit("roundStart");
+  }
+  _createBases() {
+    this.p1Base = this.add
+      .sprite(1278, 1342, "match_p1Base")
+      .setOrigin(0, 0)
+      .setDepth(10)
+      .setName("p1Base");
+
+    this.p2Base = this.add
+      .sprite(1153, 649, "match_p2Base")
+      .setOrigin(0, 0)
+      .setDepth(10)
+      .setName("p2Base");
   }
   _createBackground() {
     this.bg = this.add
@@ -306,19 +330,19 @@ export default class Match extends Phaser.Scene {
       callback: () => {
         console.log("decide winner", this.state.roundWinner);
         if (this.state.roundWinner == null) {
-          console.log("draw");
+          //console.log("draw");
           //this.p1Left.play("match_p1Left_lose");
           this.p1Right.play("match_p1Right_lose");
           this.p2Body.play("match_p2Body_lose");
           this.p2Hand.play("match_p2Hand_lose");
         } else if (this.state.roundWinner.name == this.povName) {
-          console.log("i win");
+          //console.log("i win");
           //this.p1Left.play("match_p1Left_win");
           this.p1Right.play("match_p1Right_win");
           this.p2Body.play("match_p2Body_lose");
           this.p2Hand.play("match_p2Hand_lose");
         } else if (this.state.roundWinner.name == "discovry") {
-          console.log("i lose");
+          //console.log("i lose");
           //this.p1Left.play("match_p1Left_lose");
           this.p1Right.play("match_p1Right_lose");
           this.p2Body.play("match_p2Body_win");
@@ -351,12 +375,31 @@ export default class Match extends Phaser.Scene {
       this.p2Body.play("match_p2Body_think");
       this.p2Hand.play("match_p2Hand_think");
       //dont show buttons
+
+      if (this.state.roundWinner.hp < 4) {
+        console.log("auto build");
+        this.handleTowerInput(
+          TowerActionTypes.BUILD_TOWER,
+          this.state.roundWinner.name
+        );
+        return;
+      }
     } else {
       // i win
       this.p1Left.play("match_p1Left_think");
       this.p1Right.visible = false;
       this.p2Body.play("match_p2Body_wait");
       this.p2Hand.play("match_p2Hand_waitTower");
+
+      // how to unrepeat this
+      if (this.state.roundWinner.hp < 4) {
+        console.log("auto build");
+        this.handleTowerInput(
+          TowerActionTypes.BUILD_TOWER,
+          this.state.roundWinner.name
+        );
+        return;
+      }
       this._showTowerButtons();
     }
   }
@@ -440,22 +483,57 @@ export default class Match extends Phaser.Scene {
     QUIT: "q",
   };
 */
-  handleTowerInput(choice, playerName) {
+  handleTowerInput(towerAction) {
     /**called only during towerStart event.
      * Sends message to quasi server.
      */
-    if (choice != "b" && choice != "a" && choice != "u") {
-      console.warn("invalid choice");
+    if (!Object.values(TowerActionTypes).includes(towerAction)) {
+      console.warn("invalid towerAction");
       return;
     }
 
     // saves input to server.
     //both atker and victim should know this actoin
-    alert("tower input: " + choice);
-    this.events.emit("roundStart");
+    console.info("tower input: " + towerAction);
+    //this.events.emit("towerResult", towerAction);
 
     /**Quasi server logic.
      * Called everytime an rps input is received. */
+    switch (towerAction) {
+      case TowerActionTypes.BUILD_TOWER:
+        console.log("build tower");
+        this.state.roundWinner.hp += 1;
+
+        //update visuasl
+        if (this.state.roundWinner.name == this.povName) {
+          this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
+        } else {
+          this.p2Base.setFrame("match_p2Base000" + this.state.roundWinner.hp);
+        }
+        break;
+      case TowerActionTypes.BUILD_SHIELD:
+        console.log("build shield");
+        break;
+      case TowerActionTypes.BUILD_CANNON:
+        console.log("build cannon");
+        break;
+      case TowerActionTypes.ATTACK_TOWER:
+        console.log("attack tower");
+        break;
+      case TowerActionTypes.ATTACK_CANNON:
+        console.log("attack cannon");
+        break;
+      case TowerActionTypes.UPGRADE_SHIELD:
+        console.log("upgrade shield");
+        break;
+      case TowerActionTypes.UPGRADE_CANNON:
+        console.log("upgrade cannon");
+        break;
+      default:
+        alert("Invalid action");
+        break;
+    }
+    this.events.emit("roundStart");
   }
   _showRpsButtons() {
     // show buttons that emit rps input event
