@@ -27,7 +27,7 @@ const ChangePassword: React.FC = () => {
 
     setIsLoading(true)
     try {
-      await axios.post("http://localhost:5000/api/auth/send-reset-code", { email })
+      await axios.post("/api/auth/send-reset-code", { email })
       setStep(2)
       setMessage("Verification code sent to your email.")
       setError("")
@@ -52,7 +52,7 @@ const ChangePassword: React.FC = () => {
 
     setIsLoading(true)
     try {
-      await axios.post("http://localhost:5000/api/auth/change-password", {
+      await axios.post("/api/auth/change-password", {
         email,
         code: verificationCode,
         newPassword,
@@ -60,7 +60,7 @@ const ChangePassword: React.FC = () => {
       setMessage("Password changed successfully. Redirecting to login page...")
       setError("")
       setTimeout(() => {
-        window.location.href = "http://localhost:5173/login"
+        window.location.href = "/login"
       }, 2000)
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to change password. Please check the code and try again.")
