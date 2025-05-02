@@ -86,7 +86,7 @@ def google_login():
 def google_callback():
     resp = google.authorized_response()
     if resp is None or 'access_token' not in resp:
-        return redirect('/license?error=access_denied')
+        return redirect('http://localhost:5173/license?error=access_denied')
     session['google_token'] = (resp['access_token'], '')
     dbSession = db.Session() 
     # Check if the user exists in your database, otherwise prompts for license key
@@ -108,7 +108,7 @@ def google_callback():
         response = jsonify({'message': 'Login successful'})
         response.set_cookie('access_token', access_token, httponly=True, secure=True)
         response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
-        return redirect('/menu')
+        return redirect('http://localhost:5173/menu')
     
     # Generate a JWT token for the user
     payload = {
@@ -119,7 +119,7 @@ def google_callback():
     token = jwt.encode(payload, app.secret_key, algorithm='HS256')
 
     # Attach token to redirect URL
-    redirect_url = f'/license?token={token}'
+    redirect_url = f'http://localhost:5173/license?token={token}'
     return redirect(redirect_url)
 
 
@@ -310,7 +310,7 @@ def catch_all(path):
     if path.startswith('api/'):
         return Response('Not Found', status=404)
     
-    frontend_url = f'/{path}'
+    frontend_url = f'http://localhost:5173/{path}'
     try:
         resp = requests.request(
             method=request.method,
