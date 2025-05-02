@@ -170,6 +170,8 @@ def validate_license():
     except Exception as e:
         return jsonify({'message': str(e)}), 400
 
+
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -251,7 +253,7 @@ def license_check():
     game_token = f"{user.id}_{secrets.token_hex(16)}"
     user_tokens[user.id] = game_token
     
-    response = jsonify({'message': 'Login successful'})
+    response = jsonify({'message': 'Login successful', 'id': user.id})
     response.set_cookie('access_token', access_token, httponly=True, secure=True)
     response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
     
@@ -443,6 +445,36 @@ def get_user_stats():
     finally:
         session.close()
 
+@app.route('/api/edit', methods=['POST'])
+def edit_user():
+    data = request.get_json()
+    # Validate required fields
+    if not all(k in data for k in ['current_username', 'new_username', 'new_email', 'enable_2fa']):
+        return jsonify({'message': 'Missing required fields'}), 400
+    
+    try:
+        # Check if user exists
+        user = db.get_user_by_username(data['current_username'])
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+
+        # Check if new username or email is already taken
+        if db.is_username_taken(data['new_username']) and data['new_username'] != data['current_username']:
+            return jsonify({'message': 'Username already taken'}), 400
+
+        if db.is_email_taken(data['new_email']) and data['new_email'] != user.email:
+            return jsonify({'message': 'Email already registered'}), 400
+
+        # Update user details
+        success = db.update_user(user.id, data['new_username'], data['new_email'], bool(data['enable_2fa']))
+        if not success:
+            raise Exception('Failed to update user details')
+
+        return jsonify({'message': 'User details updated successfully'}), 200
+    
+    except Exception as e:
+        app.logger.error(f"Edit user error: {str(e)}")
+        return jsonify({'message': f'Failed to update user details: {str(e)}'}), 400
 
 if __name__ == '__main__':
     app.run(host='::', port=5000, debug=True)
