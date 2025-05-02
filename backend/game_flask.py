@@ -95,7 +95,7 @@ def handle_message(data):
             
             room_id = message.get('room_id', '')
             if not room_id:
-                room_id = str(uuid.uuid4())[:8]
+                room_id = str(uuid.uuid4())[:4]
                 print(f'Generated room ID: {room_id}')
                 game_rooms[room_id] = {'player1': message['player_name']}
                 print(f'Added room {room_id} with player1: {message["player_name"]}')
