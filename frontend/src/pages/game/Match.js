@@ -183,6 +183,7 @@ export default class Match extends Phaser.Scene {
 
   _createRpsBtns() {
     // adds buttons that triggers RpsInput event
+    // the interractions are added in _showTowerButtons
     this.rpsText = this.add
       .sprite(1762, 414, "match_rps_text")
       .setDepth(9999)
@@ -197,6 +198,7 @@ export default class Match extends Phaser.Scene {
         cursor: "pointer",
       })
       .on("pointerdown", () => {
+        //Upgrade what
         this.handleRpsInput("r", this.povName);
       });
 
@@ -209,6 +211,7 @@ export default class Match extends Phaser.Scene {
         cursor: "pointer",
       })
       .on("pointerdown", () => {
+        //Upgrade what
         this.handleRpsInput("p", this.povName);
       });
 
@@ -233,39 +236,18 @@ export default class Match extends Phaser.Scene {
       .sprite(546, 389, "match_atkBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("atkBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        // Attack base or cannon?
-        this.handleTowerInput("a", this.povName);
-      });
+      .setName("atkBtn");
+
     this.bldBtn = this.add
       .sprite(862, 559, "match_bldBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("bldBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        // Build cannon or shield?
-        //Where on the table?
-        this.handleTowerInput("b", this.povName);
-      });
+      .setName("bldBtn");
     this.upgBtn = this.add
       .sprite(710, 922, "match_upgBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("atkBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        //Upgrade what
-        this.handleTowerInput("u", this.povName);
-      });
+      .setName("atkBtn");
   }
   handleRpsInput(choice, playerName) {
     /**called only during roundStart event.
@@ -406,6 +388,39 @@ export default class Match extends Phaser.Scene {
   _showTowerButtons() {
     //show the arm lel
     this.p1Left.visible = true;
+
+    this.atkBtn
+      .setInteractive({
+        cursor: "pointer",
+      })
+      .on("pointerdown", () => {
+        // Attack base or cannon?
+        if (null) {
+          this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, targetIdk);
+        } else {
+          this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, this.povName);
+        }
+      });
+
+    this.bldBtn
+      .setInteractive({
+        cursor: "pointer",
+      })
+      .on("pointerdown", () => {
+        // canon or shield
+        if (null) {
+          this.handleTowerInput(TowerActionTypes.BUILD_SHIELD, this.povName);
+        } else {
+          this.handleTowerInput(TowerActionTypes.BUILD_CANNON, this.povName);
+        }
+      });
+    this.upgBtn
+      .setInteractive({
+        cursor: "pointer",
+      })
+      .on("pointerdown", () => {
+        this.handleRpsInput("p", this.povName);
+      });
 
     // Hide all buttons first
     this.atkBtn.visible = false;
