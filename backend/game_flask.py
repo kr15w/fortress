@@ -3,6 +3,9 @@ from flask_socketio import SocketIO, emit
 import json
 import uuid
 from game import Game
+import dump_users
+
+
 app = Flask(__name__)
 
 
@@ -47,9 +50,11 @@ def refresh(room_id, player_name, sid,result='Maunal refresh'):
         if player_name == game_rooms[room_id]['player1']:
             current_player = player1
             opponent = player2
+            opponent_name = game_rooms[room_id]['player2']
         elif player_name == game_rooms[room_id]['player2']:
             current_player = player2
             opponent = player1
+            opponent_name = game_rooms[room_id]['player1']
         else:
             print(f'Player {player_name} not found in room {room_id}')
             emit('message_from_server', f'Error: Player not found in room.', room=sid)
@@ -63,7 +68,9 @@ def refresh(room_id, player_name, sid,result='Maunal refresh'):
             'current_player_weaponry': current_player.weaponry,
             'opponent_health': opponent.health,
             'opponent_weaponry': opponent.weaponry,
-        }
+            'opponent_id' : opponent_name,
+            'opponent_name' : dump_users.id_to_name(opponent_name)
+         }
         
         emit('game_state_refresh', game_state, room=sid)
     else:
@@ -80,6 +87,8 @@ def handle_message(data):
             if not message['player_name'] in user_tokens.values():
                 emit('message_from_server', f'Invalid_token', room=request.sid)
                 return
+
+            message['player_name'] = message['player_name'].split('_')[0]
 
             player_names[message['player_name']] = request.sid
             print(f'Player {message["player_name"]} connected with SID: {request.sid}')
@@ -145,7 +154,10 @@ def handle_message(data):
                         game_rooms[room_id]['game'] = Game()
                         print(f'Created game instance for room {room_id}')
                         
+                        result = "Both player joined"
                         emit('message_from_server', f'Joined room: {room_id}', room=request.sid)
+                        refresh(room_id, game_rooms[room_id]['player1'], player_names[game_rooms[room_id]['player1']],result)
+                        refresh(room_id, game_rooms[room_id]['player2'], player_names[game_rooms[room_id]['player2']],result)
                 else:
                     emit('message_from_server', f'Error: Room {room_id} does not exist.', room=request.sid)
         else:
