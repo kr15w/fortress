@@ -129,8 +129,7 @@ export default class Match extends Phaser.Scene {
       .setName("p1Base");
 
     this.p2Base = this.add
-      //weird x
-      .sprite(855, 594, "match_p2Base")
+      .sprite(1022, 594, "match_p2Base")
       .setOrigin(0, 0)
       .setDepth(10)
       .setName("p2Base");
@@ -394,6 +393,17 @@ export default class Match extends Phaser.Scene {
         cursor: "pointer",
       })
       .on("pointerdown", () => {
+        //player visulals
+        this.atkBtn.off("pointerdown");
+        this.atkBtn.removeInteractive();
+
+        this.tweens.add({
+          targets: this.atkBtn,
+          x: 475,
+          y: 294,
+          ease: "Linear",
+          duration: 300,
+        });
         // Attack base or cannon?
         if (null) {
           this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, targetIdk);
