@@ -35,14 +35,13 @@ export default class Match extends Phaser.Scene {
   }
   constructor() {
     super("Match");
-    //this.initGame();
+    this.initGame();
     // I am noogai
     this.povName = "noogai67";
   }
 
   init(data) {
-    console.info("init", data);
-    this.initGame(); //Idk when to add this
+    this.initGame();
     this.addPlayer(new Player(this.povName));
     this.addPlayer(new Player("discovry"));
   }
@@ -57,16 +56,6 @@ export default class Match extends Phaser.Scene {
     this.load.image("match_bldBtn", "assets/match_bldBtn.png");
     this.load.image("match_upgBtn", "assets/match_upgBtn.png");
 
-    this.load.atlas(
-      "match_p1Base",
-      "assets/match_p1Base.png",
-      "assets/match_p1Base.json"
-    );
-    this.load.atlas(
-      "match_p2Base",
-      "assets/match_p2Base.png",
-      "assets/match_p2Base.json"
-    );
     this.load.atlas(
       "match_p1Left",
       "assets/match_p1Left.png",
@@ -102,8 +91,6 @@ export default class Match extends Phaser.Scene {
     this._createPlayers();
     this._createRpsBtns();
     this._createTowerBtns();
-    this._createBase();
-    console.warn(this.state);
 
     loadAnims(ANIMS, this);
     this.p1Right.play("match_p1Right_wait");
@@ -111,20 +98,17 @@ export default class Match extends Phaser.Scene {
 
     this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
 
-    this.events.on("roundStart", this.onRoundStart, this);
-    this.events.on("rpsResult", this.onRpsResult, this);
-    this.events.on("towerStart", this.onTowerStart, this);
-    //this.events.on("towerTarget", this.onTowerTarget, this);
+    this.events.on("roundStart", () => {
+      this.onRoundStart();
+    });
+    this.events.on("rpsResult", () => {
+      this.onRpsResult();
+    });
+    this.events.on("towerStart", () => {
+      this.onTowerStart();
+    });
 
     this.events.emit("roundStart");
-  }
-
-  _createBase() {
-    this.p1Base = this.add
-      .sprite(737, 1176, "match_p1Base")
-      .setOrigin(0, 0)
-      .setDepth(10)
-      .setName("p1Base");
   }
   _createBackground() {
     this.bg = this.add
@@ -138,21 +122,20 @@ export default class Match extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(9)
       .setName("table");
-    this.table.scale = 1;
   }
 
   _createPlayers() {
     // Player 2 (opponent)
     this.p2Body = this.add
-      // weird numswhy is it all around the place!!!!!!
-      .sprite(1095, 76, "match_p2Body")
-      .setDisplayOrigin(17, 92)
+      // weird nums
+      .sprite(968, 205, "match_p2Body")
+      .setDisplayOrigin(0, 0)
       .setDepth(1)
       .setName("p2Body");
 
     this.p2Hand = this.add
-      //
-      .sprite(1143, 346, "match_p2Hand")
+      //why is it all around the place!!!!!!
+      .sprite(995, 486, "match_p2Hand")
       .setDisplayOrigin(313, 182)
       .setDepth(999)
       .setName("p2Hand");
@@ -192,19 +175,7 @@ export default class Match extends Phaser.Scene {
       .on("pointerdown", () => {
         this.handleRpsInput("r", this.povName);
       });
-    /* //buggy
-    this.rockBtn = new Button(
-      this,
-      2105,
-      436,
-      "match_rps_rock",
-      "rockBtn",
-      () => {
-        this.handleRpsInput("r", this.povName);
-      }
-    );
-    this.add.existing(this.rockBtn);
-*/
+
     this.paperBtn = this.add
       .sprite(1748, 520, "match_rps_paper")
       .setOrigin(0, 0)
@@ -232,25 +203,45 @@ export default class Match extends Phaser.Scene {
 
   _createTowerBtns() {
     // adds buttons that triggers TowerInput event
-    // their behavior needs to be toggled, so see _showTowerButtons()
+    //TODO
 
     this.atkBtn = this.add
       .sprite(546, 389, "match_atkBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("atkBtn");
-
+      .setName("atkBtn")
+      .setInteractive({
+        cursor: "pointer",
+      })
+      .on("pointerdown", () => {
+        // Attack base or cannon?
+        this.handleTowerInput("a", this.povName);
+      });
     this.bldBtn = this.add
       .sprite(862, 559, "match_bldBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("bldBtn");
-
+      .setName("bldBtn")
+      .setInteractive({
+        cursor: "pointer",
+      })
+      .on("pointerdown", () => {
+        // Build cannon or shield?
+        //Where on the table?
+        this.handleTowerInput("b", this.povName);
+      });
     this.upgBtn = this.add
       .sprite(710, 922, "match_upgBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("atkBtn");
+      .setName("atkBtn")
+      .setInteractive({
+        cursor: "pointer",
+      })
+      .on("pointerdown", () => {
+        //Upgrade what
+        this.handleTowerInput("u", this.povName);
+      });
   }
   handleRpsInput(choice, playerName) {
     /**called only during roundStart event.
@@ -315,19 +306,19 @@ export default class Match extends Phaser.Scene {
       callback: () => {
         console.log("decide winner", this.state.roundWinner);
         if (this.state.roundWinner == null) {
-          //console.log("draw");
+          console.log("draw");
           //this.p1Left.play("match_p1Left_lose");
           this.p1Right.play("match_p1Right_lose");
           this.p2Body.play("match_p2Body_lose");
           this.p2Hand.play("match_p2Hand_lose");
         } else if (this.state.roundWinner.name == this.povName) {
-          //console.log("i win");
+          console.log("i win");
           //this.p1Left.play("match_p1Left_win");
           this.p1Right.play("match_p1Right_win");
           this.p2Body.play("match_p2Body_lose");
           this.p2Hand.play("match_p2Hand_lose");
         } else if (this.state.roundWinner.name == "discovry") {
-          //console.log("i lose");
+          console.log("i lose");
           //this.p1Left.play("match_p1Left_lose");
           this.p1Right.play("match_p1Right_lose");
           this.p2Body.play("match_p2Body_win");
@@ -360,91 +351,18 @@ export default class Match extends Phaser.Scene {
       this.p2Body.play("match_p2Body_think");
       this.p2Hand.play("match_p2Hand_think");
       //dont show buttons
-
-      //how to unrepeat this
-      if (this.state.roundWinner.hp < 4) {
-        this.handleTowerInput(
-          TowerActionTypes.BUILD_TOWER,
-          this.state.players[1]
-        );
-        this._hideTowerButtons();
-        return;
-      }
     } else {
       // i win
       this.p1Left.play("match_p1Left_think");
       this.p1Right.visible = false;
       this.p2Body.play("match_p2Body_wait");
       this.p2Hand.play("match_p2Hand_waitTower");
-
-      // auto build if hp <4, no buttons needed
-      if (this.state.roundWinner.hp < 4) {
-        this.handleTowerInput(
-          TowerActionTypes.BUILD_TOWER,
-          this.state.players[0]
-        );
-        this._hideTowerButtons();
-        return;
-      }
       this._showTowerButtons();
     }
   }
   _showTowerButtons() {
     //show the arm lel
     this.p1Left.visible = true;
-
-    //button behavior here
-    this.atkBtn
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        // Attack base or cannon?
-        //just handle attack here bruh
-
-        this._hideTowerButtons();
-        console.warn("light up both side canons and p2 base");
-      });
-    this.bldBtn
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        // Build cannon or shield?
-        //Where on the table?
-        console.log("p1 build");
-        this.bldBtn.removeInteractive();
-        this._hideTowerButtons();
-        this.bldBtn.visible = true;
-
-        this.tweens.add({
-          targets: this.bldBtn,
-          x: 1163,
-          y: 388,
-          ease: "Cubic.easeOut",
-          duration: 300,
-          repeat: 0,
-          yoyo: false,
-          onComplete: () => {
-            console.log("show options");
-            this.p1Base
-              .setInteractive({
-                cursor: "pointer",
-              })
-              .on("pointerdown", () => {
-                this.bldBtn.visible = false;
-              });
-          },
-        });
-      });
-    this.upgBtn
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        //Upgrade what
-        this.handleTowerInput("u", this.povName);
-      });
 
     // Hide all buttons first
     this.atkBtn.visible = false;
@@ -526,47 +444,15 @@ export default class Match extends Phaser.Scene {
     /**called only during towerStart event.
      * Sends message to quasi server.
      */
-    if (!Object.values(TowerActionTypes).includes(choice)) {
+    if (choice != "b" && choice != "a" && choice != "u") {
       console.warn("invalid choice");
       return;
     }
 
-    switch (choice) {
-      case TowerActionTypes.BUILD_TOWER:
-        console.log("build tower");
-
-        this.state.roundWinner.hp += 1;
-        console.log(this.state.roundWinner.hp);
-
-        //player visuals
-        this.p1Base.setFrame(this.state.roundWinner.hp);
-        break;
-      case TowerActionTypes.BUILD_SHIELD:
-        console.log("build shield");
-        break;
-      case TowerActionTypes.BUILD_CANNON:
-        console.log("build cannon");
-        break;
-      case TowerActionTypes.ATTACK_TOWER:
-        console.log("attack tower");
-        break;
-      case TowerActionTypes.ATTACK_CANNON:
-        console.log("attack cannon");
-        break;
-      case TowerActionTypes.UPGRADE_SHIELD:
-        console.log("upgrade shield");
-        break;
-      case TowerActionTypes.UPGRADE_CANNON:
-        console.log("upgrade cannon");
-        break;
-      case TowerActionTypes.QUIT:
-        console.log("quit game");
-        break;
-    }
-
-    // sends the choices to server
-
-    this.events.emit("towerTarget", choice, playerName);
+    // saves input to server.
+    //both atker and victim should know this actoin
+    alert("tower input: " + choice);
+    this.events.emit("roundStart");
 
     /**Quasi server logic.
      * Called everytime an rps input is received. */
@@ -600,17 +486,5 @@ class Player {
 
   onNotify(move) {
     console.log(`${this.name} received notification: ${move}`);
-  }
-}
-
-//quick class for all buttons
-class Button extends Phaser.GameObjects.Sprite {
-  constructor(deez, x, y, textureKey, name, onClick) {
-    super(deez, x, y, textureKey);
-    this.setInteractive({
-      cursor: "pointer",
-    }).on("pointerdown", onClick);
-    this.alpha = 0.7;
-    this.setName(name);
   }
 }
