@@ -43,7 +43,7 @@ const Gate: React.FC = () => {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = "/auth/google/login" // Redirect to Google Login
+    window.location.href = "http://localhost:5000/auth/google/login" // Redirect to Google Login
   }
 
   return (
