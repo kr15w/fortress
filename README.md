@@ -8,6 +8,9 @@ Fully playable game at `http://<your ip>:5000/api/match_demo`
 
 - [match_demo.html](backend/templates/match_demo.html) - demonstrates WebSocket communication with the game server
 
+
+If you want bombs to be gone after you used them, change the flag `DESTROY_WEAPON` to `True` at `backend/game.py`
+
 Note: the game logic is not connected to db yet
 
 
