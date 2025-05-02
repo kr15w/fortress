@@ -1,125 +1,173 @@
-from player import Player
-from database import DatabaseService
-'''This is outdated, see flow.py.'''
+MIN_HEALTH_FOR_WEAPON = 4
+DESTROY_WEAPON = False
+
+class Player:
+    def __init__(self, health=0, weaponry=None):
+        self.health = health
+        self.weaponry = weaponry if weaponry is not None else []
+        self.rps_choice = None
+    
+    def build(self, choice):
+        if choice == 'health':
+            self.health += 1
+        elif choice == 'wepond' and self.health >= MIN_HEALTH_FOR_WEAPON:
+            self.weaponry.append(1)
+    
+    def upgrade(self, index):
+        if 0 <= index < len(self.weaponry):
+            self.weaponry[index] += 1
+    
+    def attack(self, weapon_index, target, opponent):
+        if weapon_index >= len(self.weaponry):
+            return False, "Invalid weapon index"
+            
+        max_attacks = self.weaponry[weapon_index]
+        if len(target) > max_attacks:
+            return False, "Too many targets for weapon capacity"
+        
+        for t in target:
+            if t == 'h':
+                opponent.health -= 1
+            elif isinstance(t, int) and 0 <= t < len(opponent.weaponry):
+                opponent.weaponry[t] = 0
+            else:
+                return False, "Invalid target"
+        
+        opponent.weaponry = [i for i in opponent.weaponry if i > 0]
+        
+        if DESTROY_WEAPON:
+            self.weaponry.pop(weapon_index)
+        return True, "Attack successful"
+
 class Game:
     def __init__(self):
         self.player1 = Player()
         self.player2 = Player()
-        self.current_round = 1
-        self.p1_rps = None
-        self.p2_rps = None
-        self.winner_move = None
-        self.round_winner = None
-        self.db = DatabaseService()
-        
-    def submit_rps(self, player_num, choice):
-        """Submit RPS choice for a player, returns True if both players have submitted"""
-        valid_moves = ['rock', 'paper', 'scissors']
-        if choice.lower() not in valid_moves:
-            return False
+        self.state = 0  # 0: RPS, 1: Action, 2: End
+        self.winner = None
+    
+    def get_player(self, player_num):
+        return self.player1 if player_num == 1 else self.player2
+    
+    def update_state(self, player, action, value):
+        validation_result = self._validate_action(player, action, value)
+        if not validation_result[0]:
+            return False, validation_result[1]
+ 
+        if self.state == 0:  # RPS state
+            player.rps_choice = value.lower()
+            print(f"Player {1 if player == self.player1 else 2} set RPS choice: {player.rps_choice}")
             
-        if player_num == 1:
-            self.p1_rps = choice.lower()
-        else:
-            self.p2_rps = choice.lower()
-        return self.p1_rps is not None and self.p2_rps is not None
-
-    def determine_rps_winner(self):
-        """Determine RPS winner when both players have submitted and return result message"""
-        if self.p1_rps is None or self.p2_rps is None:
-            return None
+            if self.player1.rps_choice and self.player2.rps_choice:
+                print("Both players made RPS choices")
+                self._determine_rps_winner()
+                print(f"RPS winner: {self.winner}")
+                
+                if self.winner == 0:  # Tie
+                    print("RPS tie - resetting choices")
+                    self._reset_rps()
+                    return True, "RPS tie - new round starting"
+                
+                winner_player = self.player1 if self.winner == 1 else self.player2
+                if not winner_player.weaponry and winner_player.health < MIN_HEALTH_FOR_WEAPON:
+                    print("Winner has no weapons and low health - auto-building health")
+                    winner_player.build('health')
+                    self._reset_rps()
+                else:
+                    print("Moving to action state")
+                    self.state = 1
+                    self._reset_rps()
+                return True, "RPS round end"
+            else:
+                return False, "RPS choice recorded"
         
-        if self.p1_rps == self.p2_rps:
-            self._clear_round_state()
-            return None
+        elif self.state == 1:  # Action state
+            winner = self.player1 if self.winner == 1 else self.player2
+            loser = self.player2 if self.winner == 1 else self.player1
+            
+            if action == 'build':
+                winner.build(value)
+                self.state = 0
+                return True, f"Player {self.winner} built {value}"
+            elif action == 'attack':
+                success, message = winner.attack(value[0], value[1], loser)
+                if not success:
+                    return False, message
+                if loser.health <= 0:
+                    self.state = 2
+                    return True, "Game ended"
+                else:
+                    self.state = 0
+                    return True, "Attack successful"
+            elif action == 'upgrade':
+                winner.upgrade(value)
+                self.state = 0
+                return True, f"Player {self.winner} upgraded weapon {value}"
+        return False, "Invalid game state"
+    
+    def _validate_action(self, player, action, value):
+        if self.state == 0:  # RPS state
+            if action != 'RPS':
+                return False, "Invalid action for current state"
+            if value.lower() not in ['rock', 'paper', 'scissors']:
+                return False, "Invalid RPS choice (must be rock/paper/scissors)"
+            if player.rps_choice is not None:
+                return False, "Player already made RPS choice"
+            return True, "Valid RPS action"
         
-        win_conditions = {
-            'rock': 'scissors',
-            'paper': 'rock',
-            'scissors': 'paper'
+        elif self.state == 1:  # Action state
+            opponent = (self.player1 if self.player2 == player else self.player2)
+            if player != (self.player1 if self.winner == 1 else self.player2):
+                return False, "Not winner's turn"
+            
+            if action == 'build':
+                if value not in ['health', 'wepond']:
+                    return False, "Invalid build choice"
+                if value == 'wepond' and player.health < MIN_HEALTH_FOR_WEAPON:
+                    return False, "Not enough health to build weapon"
+                return True, "Valid build action"
+            
+            elif action == 'attack':
+                if not isinstance(value, list) or len(value) != 2:
+                    return False, f"Invalid attack format {type(value)} {value}"
+                weapon_idx, targets = value
+                if weapon_idx >= len(player.weaponry):
+                    return False, "Invalid weapon index"
+                for t in targets:
+                    if t != 'h' and (not isinstance(t, int) or t >= len(opponent.weaponry)):
+                        return False, "Invalid target"
+                return True, "Valid attack action"
+            
+            elif action == 'upgrade':
+                if not isinstance(value, int) or value < 0:
+                    return False, "Invalid weapon index"
+                if value >= len(player.weaponry):
+                    return False, "Weapon index out of range"
+                return True, "Valid upgrade action"
+        
+        return False, "Invalid game state"
+    
+    def _determine_rps_winner(self):
+        choice = {
+            'rock': 0,
+            'paper': 1,
+            'scissors': 2
         }
+        p1 = choice.get(self.player1.rps_choice, -1)
+        p2 = choice.get(self.player2.rps_choice, -1)
         
-        if win_conditions[self.p1_rps] == self.p2_rps:
-            self.round_winner = self.player1
+        if p1 == (p2 + 1) % 3:
+            self.winner = 1
+        elif p2 == (p1 + 1) % 3:
+            self.winner = 2
         else:
-            self.round_winner = self.player2
-        
-        return self.round_winner
+            self.winner = 0  # Tie
+    
+    def _reset_rps(self):
+        self.player1.rps_choice = None
+        self.player2.rps_choice = None
+        if self.state != 1:  # Only clear winner if not moving to action state
+            self.winner = None
 
-    def submit_move(self, player_num, move):
-        """
-        Submit move from player, returns True if:
-        - Player is the round winner
-        - Move is valid
-        """
-        if self.round_winner is None:
-            return False
-            
-        # Check if submitting player is the winner
-        is_player1 = player_num == 1
-        if (is_player1 and self.round_winner != self.player1) or \
-           (not is_player1 and self.round_winner != self.player2):
-            return False
-            
-        self.winner_move = move
-        return True
-
-    def process_round(self):
-        """Process the round when all moves are submitted"""
-        if self.round_winner is None or self.winner_move is None:
-            return False
-        
-        if self.winner_move == 'shield':
-            self.round_winner.build_shield()
-            self.db.increment_count(self.round_winner.username, 1, 'shield')
-        elif self.winner_move == 'cannon':
-            self.round_winner.build_cannon()
-            self.db.increment_count(self.round_winner.username, 1, 'bomb')
-        elif self.winner_move == 'attack':
-            self._process_attack()
-        
-        self._clear_round_state()
-        self.current_round += 1
-        return True
-
-    def _process_attack(self):
-        """Process attack from round winner"""
-        defender = self.player2 if self.round_winner == self.player1 else self.player1
-        cannons = sum(1 for item in self.round_winner.get_stack() if item == 'C')
-        damage = cannons
-        
-        defender.take_damage(damage)
-
-    def _clear_round_state(self):
-        """Clear round-specific state"""
-        self.p1_rps = None
-        self.p2_rps = None
-        self.winner_move = None
-        self.round_winner = None
-
-    def get_state(self):
-        """Return current game state"""
-        return {
-            'round': self.current_round,
-            'player1_stack': self.player1.get_stack(),
-            'player2_stack': self.player2.get_stack(),
-            'p1_rps': self.p1_rps,
-            'p2_rps': self.p2_rps,
-            'winner_move': self.winner_move
-        }
-
-    def is_game_over(self):
-        """Check if game has ended"""
-        return self.player1.is_defeated() or self.player2.is_defeated()
-
-    def get_winner(self):
-        """Get winning player if game is over"""
-        if self.player1.is_defeated():
-            self.db.increment_count(self.player2.username, 1, 'win')
-            self.db.increment_count(self.player1.username, 1, 'lose')
-            return 2
-        elif self.player2.is_defeated():
-            self.db.increment_count(self.player1.username, 1, 'win')
-            self.db.increment_count(self.player2.username, 1, 'lose')
-            return 1
-        return None
+if __name__ == "__main__":
+    print("Game module loaded")

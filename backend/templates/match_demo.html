@@ -1,64 +1,179 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Flask WebSocket Demo</title>
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .input-group { margin-bottom: 15px; }
-        input[type="text"] { width: 100%; padding: 8px; margin-bottom: 5px; }
-        button { padding: 10px 15px; margin-right: 10px; }
-        .response { margin-top: 20px; padding: 10px; background: #f0f0f0; }
-    </style>
-</head>
-<body>
-    <h1>WebSocket Demo</h1>
-    
-    <div class="input-group">
-        <label for="user-token">User & Token:</label>
-        <input type="text" id="user-token" placeholder="token">
-    </div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var socket = io();
 
-    <div class="button-group">
-        <div>
-            <input type="text" id="rps_move_text" placeholder="RPS move">
-            <button onclick="sendData('rps_move')">rps_move</button>
-        </div>
-        <div>
-            <input type="text" id="game_move_text" placeholder="Game move">
-            <button onclick="sendData('game_move')">game_move</button>
-        </div>
-        <div>
-            <input type="text" id="room_id_text" placeholder="Room ID">
-            <button onclick="sendData('room_id')">room_id</button>
-        </div>
-    </div>
+            document.getElementById('joinRoomButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
 
-    <div class="response">
-        <p><strong>Response:</strong> <span id="response-text"></span></p>
-        <p><strong>Status:</strong> <span id="status-text"></span></p>
-    </div>
+            document.getElementById('upgradeButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var weaponIndex = document.getElementById('weaponIndex').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'upgrade',
+                    value: parseInt(weaponIndex)
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
 
-    <script>
-        const socket = io();
-        
-        // Handle updates from server
-        socket.on('update', function(data) {
-            document.getElementById('response-text').textContent = data.response;
-            document.getElementById('status-text').textContent = data.status;
+            document.getElementById('attackButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var weaponIndex = document.getElementById('weaponIndex').value;
+                var targetList = document.getElementById('targetList').value.split(',').map(item => {
+                    var trimmedItem = item.trim();
+                    return !isNaN(trimmedItem) ? parseInt(trimmedItem) : trimmedItem;
+                });
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'attack',
+                    value: [parseInt(weaponIndex), targetList]
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
+
+            document.getElementById('rockButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'RPS',
+                    value: 'rock'
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
+
+            document.getElementById('paperButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'RPS',
+                    value: 'paper'
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
+
+            document.getElementById('scissorsButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'RPS',
+                    value: 'scissors'
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
+            
+            document.getElementById('buildHealthButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'build',
+                    value: 'health'
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
+            
+            document.getElementById('buildWeaponButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'build',
+                    value: 'wepond'
+                });
+                socket.emit('message_from_client', message);
+                document.getElementById('sentJson').value = message;
+            });
+
+            document.getElementById('refreshButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                socket.emit('message_from_client', JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'refresh',
+                    value: 'refresh'
+                }));
+            });
+
+            socket.on('game_state_refresh', function(gameState) {
+                document.getElementById('gameState').value = JSON.stringify(gameState, null, 2);
+            });
+
+            socket.on('message_from_server', function(msg) {
+                if (msg.startsWith('Room Created: ')) {
+                    document.getElementById('roomId').value = msg.substring('Room Created: '.length);
+                }
+                document.getElementById('serverMessage').innerText = msg;
+            });
         });
 
-        // Send data when button is clicked
-        function sendData(buttonId) {
-            const mainText = document.getElementById('user-token').value;
-            const subText = document.getElementById(`${buttonId}_text`).value;
-            
-            socket.emit('button_click', {
-                button_id: buttonId,
-                main_text: mainText,
-                sub_text: subText
-            });
-        }
+        fetch('/api/token')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('playerName').value = data.token;
+            })
+            .catch(error => console.error('Error fetching token:', error));
+
     </script>
+</head>
+<body>
+    <h1>Game demo</h1>
+    <div id="serverMessage"></div><br>
+    Use toke at /api/token as player name<br>
+    <label for="playerName">Player Name(token):</label>
+    <input type="text" id="playerName" name="playerName"><br><br>
+    <label for="roomId">Room ID:</label>
+    <input type="text" id="roomId" name="roomId"><br><br>
+    <button id="joinRoomButton">Join or Create Room</button><br><br>
+    <button id="rockButton">Rock</button>
+    <button id="paperButton">Paper</button>
+    <button id="scissorsButton">Scissors</button><br><br>
+    <button id="buildHealthButton">Build Health</button>
+    <button id="buildWeaponButton">Build Weapon</button><br><br>
+    <label for="weaponIndex">Weapon Index:</label>
+    <input type="number" id="weaponIndex" name="weaponIndex"><br><br>
+    <label for="targetList">Target List (comma separated):</label>
+    <input type="text" id="targetList" name="targetList"><br><br>
+    <button id="upgradeButton">Upgrade</button><br><br>
+    <button id="attackButton">Attack</button><br><br>
+    <button id="refreshButton">Manual Refresh</button><br><br>
+    <h3>Game Status</h3>
+    <textarea id="gameState" rows="10" cols="50" placeholder="Game State"></textarea>
+    <h3>Last json sent to server</h3>
+    <textarea id="sentJson" rows="10" cols="50" placeholder="Sent JSON" readonly></textarea>
+
 </body>
 </html>

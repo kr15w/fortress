@@ -2,6 +2,15 @@
 
 ## Development Setup
 
+### Game Logic
+
+Fully playable game at `http://<your ip>:5000/api/match_demo`
+
+- [match_demo.html](backend/templates/match_demo.html) - demonstrates WebSocket communication with the game server
+
+Note: the game logic is not connected to db yet
+
+
 ### Frontend
 
 1. Navigate to frontend directory: `cd frontend`
@@ -72,17 +81,6 @@ The game is a turn-based tower defense where players:
 - Damage is applied on shields or the target's tower if shields are depleted
 
 For detailed implementation, see [game_logic.md](game_logic.md)
-
-## Frontend Development
-
-For WebSocket configuration and token handling examples, see:
-
-- [match_demo.html](backend/templates/match_demo.html) - demonstrates WebSocket communication with the game server
-
-Two new links have been added to the manual page:
-
-1. Token fetching endpoint
-2. WebSocket demo connected to game logic
 
 ## Production Deployment
 
