@@ -6,12 +6,17 @@ class Player:
         self.health = health
         self.weaponry = weaponry if weaponry is not None else []
         self.rps_choice = None
+        self.weapond_deployed = 0
+        self.shields_deployed = 0
     
     def build(self, choice):
         if choice == 'health':
+            if self.health >= MIN_HEALTH_FOR_WEAPON:
+                self.shields_deployed += 1
             self.health += 1
         elif choice == 'wepond' and self.health >= MIN_HEALTH_FOR_WEAPON:
             self.weaponry.append(1)
+            self.weapond_deployed += 1
     
     def upgrade(self, index):
         if 0 <= index < len(self.weaponry):
@@ -28,6 +33,7 @@ class Player:
         for t in target:
             if t == 'h':
                 opponent.health -= 1
+
             elif isinstance(t, int) and 0 <= t < len(opponent.weaponry):
                 opponent.weaponry[t] = 0
             else:

@@ -4,8 +4,9 @@ import json
 import uuid
 from game import Game
 import dump_users
+from database import DatabaseService
 
-
+db = DatabaseService('sqlite:///users.db')
 app = Flask(__name__)
 
 
@@ -128,6 +129,28 @@ def handle_message(data):
                             if 'game' in game_rooms[room_id]:
                                 game = game_rooms[room_id]['game']
                                 need_refresh, result = game.update_state(player, action, value)
+
+                                # Check if game has ended
+                                if game.state == 2:
+                                    if game.winner == 1:
+                                        winner_username = dump_users.id_to_name(game_rooms[room_id]['player1'])
+                                        loser_username = dump_users.id_to_name(game_rooms[room_id]['player2'])
+                                        winner_player = game.player1
+                                        loser_player = game.player2
+                                    elif game.winner == 2:
+                                        winner_username = dump_users.id_to_name(game_rooms[room_id]['player2'])
+                                        loser_username = dump_users.id_to_name(game_rooms[room_id]['player1'])
+                                        winner_player = game.player2
+                                        loser_player = game.player1
+                                    for username, player in [(winner_username, winner_player), (loser_username, loser_player)]:
+                                        db.increment_count(username, getattr(player, 'weapond_deployed', 0), 'bomb')
+                                        db.increment_count(username, getattr(player, 'shields_deployed', 0), 'shield')
+                                    
+                                    # Update win/loss counts
+                                    db.increment_count(winner_username, 1, 'win')
+                                    db.increment_count(loser_username, 1, 'lose')
+
+
                                 if need_refresh:
                                     refresh(room_id, game_rooms[room_id]['player1'], player_names[game_rooms[room_id]['player1']],result)
                                     refresh(room_id, game_rooms[room_id]['player2'], player_names[game_rooms[room_id]['player2']],result)
