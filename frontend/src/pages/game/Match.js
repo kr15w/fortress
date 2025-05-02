@@ -123,13 +123,14 @@ export default class Match extends Phaser.Scene {
   }
   _createBases() {
     this.p1Base = this.add
-      .sprite(1278, 1342, "match_p1Base")
+      .sprite(736, 1176, "match_p1Base")
       .setOrigin(0, 0)
       .setDepth(10)
       .setName("p1Base");
 
     this.p2Base = this.add
-      .sprite(1153, 649, "match_p2Base")
+      //weird x
+      .sprite(855, 594, "match_p2Base")
       .setOrigin(0, 0)
       .setDepth(10)
       .setName("p2Base");
@@ -151,30 +152,29 @@ export default class Match extends Phaser.Scene {
   _createPlayers() {
     // Player 2 (opponent)
     this.p2Body = this.add
-      // weird nums
-      .sprite(968, 205, "match_p2Body")
-      .setDisplayOrigin(0, 0)
+      .sprite(1095, 76, "match_p2Body")
+      .setDisplayOrigin(17, 93)
       .setDepth(1)
       .setName("p2Body");
 
     this.p2Hand = this.add
       //why is it all around the place!!!!!!
-      .sprite(995, 486, "match_p2Hand")
-      .setDisplayOrigin(313, 182)
+      .sprite(1124, 359, "match_p2Hand")
+      .setDisplayOrigin(313, 212)
       .setDepth(999)
       .setName("p2Hand");
 
     // Player 1 (user)
     this.p1Left = this.add
-      .sprite(-440, 2090, "match_p1Left")
-      .setDisplayOrigin(0, 1728)
+      .sprite(-496, 1208, "match_p1Left")
+      .setDisplayOrigin(0, 759)
       .setDepth(999)
       .setAlpha(0.7, 0.7, 0.9, 0.7)
       .setName("p1Left");
 
     this.p1Right = this.add
-      .sprite(2476, 1677, "match_p1Right")
-      .setDisplayOrigin(996, 1184)
+      .sprite(1663, 520, "match_p1Right")
+      .setDisplayOrigin(0, 65)
       .setDepth(999)
       .setName("p1Right");
 
