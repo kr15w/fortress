@@ -4,6 +4,7 @@ import ANIMS from "./match_anims.json";
 
 /**
  * done add tie anim
+ * @todo show more clearly what rps is chosen
  * @todo make everything prettier
  * @todo put buttons in a container
  * done buttons glow on hover
@@ -50,6 +51,10 @@ export default class Match extends Phaser.Scene {
     this.initGame();
     this.addPlayer(new Player(this.povName));
     this.addPlayer(new Player("discovry"));
+
+    this.input.on("pointerdown", (pointer) => {
+      console.log("lmb 1 or rmb 2:", pointer.buttons);
+    });
   }
 
   preload() {
@@ -491,7 +496,7 @@ export default class Match extends Phaser.Scene {
                   .setInteractive()
                   .setVisible(true);
 
-                const resizeHandler = (pointer) => {
+                const handleResize = (pointer) => {
                   const distance = Phaser.Math.Distance.Between(
                     shield.x,
                     shield.y,
@@ -503,22 +508,36 @@ export default class Match extends Phaser.Scene {
                     Math.max(0.85, Math.min(1.5, distance / 500)),
                     0.05
                   );
+
+                  this.cantAddShield = this.p1Shields.some(
+                    (scale) => Math.abs(scale - newScale) <= 0.001
+                  );
+
+                  if (this.cantAddShield) {
+                    console.log("dont overlap shields");
+                    shield.setTint(0xff0000);
+                    //return;r
+                  } else {
+                    shield.clearTint();
+                  }
                   shield.setScale(newScale);
                 };
 
-                this.input.on("pointermove", resizeHandler);
+                this.input.on("pointermove", handleResize);
 
                 this.time.addEvent({
                   delay: 50, //stupid code
                   callback: () => {
                     const handleConfirm = () => {
-                      this.input.off("pointermove", resizeHandler);
-                      this.input.off("pointerdown", handleConfirm);
-                      this.p1Shields.push(shield.scale); // this is for visuals only
-                      this.handleTowerInput(
-                        TowerActionTypes.BUILD_SHIELD,
-                        shield.scale
-                      );
+                      if (!this.cantAddShield) {
+                        this.input.off("pointermove", handleResize);
+                        this.input.off("pointerdown", handleConfirm);
+                        this.p1Shields.push(shield.scale); // this is for visuals only
+                        this.handleTowerInput(
+                          TowerActionTypes.BUILD_SHIELD,
+                          shield.scale
+                        );
+                      }
                     };
 
                     this.input.on("pointerdown", handleConfirm);
