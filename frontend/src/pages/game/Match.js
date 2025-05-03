@@ -518,7 +518,7 @@ export default class Match extends Phaser.Scene {
                   .setDisplayOrigin(817, 519)
                   .setDepth(10)
                   .setInteractive()
-                  .setVisible(false);
+                  .setVisible(true);
 
                 const resizeHandler = (pointer) => {
                   const distance = Phaser.Math.Distance.Between(
@@ -535,24 +535,23 @@ export default class Match extends Phaser.Scene {
                   shield.setScale(newScale);
                 };
 
-                // stupidass code
-                const bindRH = (p) => resizeHandler(p);
-                shield.setVisible(true);
-                //this.input.on("pointermove", resizeHandler);
-                this.input.on(
-                  "pointermove",
-                  bindRH // okay for some reason this works, looks like it needs its argument
-                  //okay for some reason this works, looks like it needs its argument
-                );
-                const confirmHandler = () => {
-                  this.input.off("pointermove", resizeHandler);
-                  this.input.off("pointerdown");
-                  this.p1Shields.push(shield.scale);
+                this.input.on("pointermove", resizeHandler);
 
-                  //alert(shield.scale);
-                };
+                // Use a slight delay before adding the confirm handler
+                this.time.addEvent({
+                  delay: 50, //stupid code
+                  callback: () => {
+                    const confirmHandler = () => {
+                      console.log("confirmo");
+                      this.input.off("pointermove", resizeHandler);
+                      this.input.off("pointerdown", confirmHandler);
+                      this.p1Shields.push(shield.scale);
+                    };
 
-                this.input.on("pointerdown", confirmHandler);
+                    this.input.on("pointerdown", confirmHandler);
+                  },
+                  loop: false,
+                });
               });
           },
         });
