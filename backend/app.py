@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, Response, render_template, session, request, url_for, redirect
+import flask
 import requests
 from flask_cors import CORS
 import jwt
@@ -71,7 +72,7 @@ try:
 
     @google.tokengetter
     def get_google_oauth_token():
-        return session.get('google_token')
+        return flask.session.get('google_token')
 except:
     google = None
     print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -87,7 +88,7 @@ def google_callback():
     resp = google.authorized_response()
     if resp is None or 'access_token' not in resp:
         return redirect('http://localhost:5173/license?error=access_denied')
-    session['google_token'] = (resp['access_token'], '')
+    flask.session['google_token'] = (resp['access_token'], '')
     dbSession = db.Session() 
     # Check if the user exists in your database, otherwise prompts for license key
     user_info = google.get('userinfo').data
@@ -208,12 +209,13 @@ def license_check():
     
     req_data = request.get_json()
     user_info = google.get('userinfo').data
+    username = user_info['name']
     if 'license_key' not in req_data:
-        return jsonify({'error': 'License key required.'}), 400
+        return jsonify({'error': 'License key required.', 'username': username}), 400
     try:
         # First validate license key
         if not db.validate_license_key(req_data['license_key']):
-            return jsonify({'error': 'Invalid or already used license key.'}), 400    
+            return jsonify({'error': 'Invalid or already used license key.', 'username': username}), 400    
         # Check if the user exists in your database, otherwise create a new user
         session_obj = db.Session()
             # Create a new user if not found
@@ -234,10 +236,10 @@ def license_check():
     except Exception as e:
         app.logger.error(f"Registration error: {str(e)}")
         if "UNIQUE constraint failed" in str(e) and "users.email" in str(e):
-            return jsonify({'message': 'Email or username already registered. Please use another Google account.'}), 400
+            return jsonify({'message': 'Email or username already registered. Please use another Google account.', 'username': username}), 400
         elif "license_key" in str(e):
-            return jsonify({'message': 'Invalid or already used license key.'}), 400
-        return jsonify({'message': f'Registration failed: {str(e)}'}), 400
+            return jsonify({'message': 'Invalid or already used license key.', 'username': username}), 400
+        return jsonify({'message': f'Registration failed: {str(e)}', 'username': username}), 400
     access_token = jwt.encode({
         'user': user_info['name'],
         'exp': datetime.datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']

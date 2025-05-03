@@ -89,7 +89,7 @@ export const license = async (credentials: LicenseKeyOnly): Promise<AuthResponse
       withCredentials: true,
     });
 
-    storeUsername(response.data.id); // Store encrypted username from response
+    storeUsername(response.data.username); // Store encrypted username from response
 
     return response.data.message;
   } catch (error: any) {
