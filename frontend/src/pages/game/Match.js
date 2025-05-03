@@ -6,7 +6,7 @@ import ANIMS from "./match_anims.json";
  * @todo add tie anim
  * @todo make everything prettier
  * @todo put buttons in a container
- * @todo buttons glow on hover
+ * done buttons glow on hover
  */
 
 const TowerActionTypes = {
@@ -241,19 +241,24 @@ export default class Match extends Phaser.Scene {
 
   _createRpsBtns() {
     // adds buttons that triggers RpsInput event
+
     this.rpsText = this.add
       .sprite(1762, 414, "match_rps_text")
       .setDepth(9999)
       .setName("rpsText");
 
-    this.rockBtn = new Button(this, 2105, 436, "match_rps_rock");
-    this.rockBtn.setOrigin(0, 0).setDepth(9999).setName("rockBtn");
+    this.rockBtn = new Button(this, 2105, 436, "match_rps_rock")
+      .setOrigin(0, 0)
+      .setDepth(9999)
+      .setName("rockBtn");
     this.rockBtn.on("pointerdown", () => {
       this.handleRpsInput("r", this.povName);
     });
 
-    this.paperBtn = new Button(this, 1748, 520, "match_rps_paper");
-    this.paperBtn.setOrigin(0, 0).setDepth(9999).setName("paperBtn");
+    this.paperBtn = new Button(this, 1748, 520, "match_rps_paper")
+      .setOrigin(0, 0)
+      .setDepth(9999)
+      .setName("paperBtn");
     this.paperBtn.on("pointerdown", () => {
       this.handleRpsInput("p", this.povName);
     });
