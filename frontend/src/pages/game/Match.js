@@ -5,6 +5,8 @@ import ANIMS from "./match_anims.json";
 /**
  * @todo add tie anim
  * @todo make everything prettier
+ * @todo put buttons in a container
+ * @todo buttons glow on hover
  */
 
 const TowerActionTypes = {
@@ -116,6 +118,8 @@ export default class Match extends Phaser.Scene {
     this._createTowerBtns();
     this._createShields();
 
+    //this.add.existing(new Button(this, 0, 0, "match_rps_rock"));
+
     loadAnims(ANIMS, this);
     this.p1Right.play("match_p1Right_wait");
     this.p2Body.play("match_p2Body_wait");
@@ -213,7 +217,7 @@ export default class Match extends Phaser.Scene {
 
     this.p2Hand = this.add
       //why is it all around the place!!!!!!
-      .sprite(1124, 359, "match_p2Hand")
+      .sprite(1130, 350, "match_p2Hand")
       .setDisplayOrigin(313, 212)
       .setDepth(999)
       .setName("p2Hand");
@@ -242,7 +246,12 @@ export default class Match extends Phaser.Scene {
       .setDepth(9999)
       .setName("rpsText");
 
-    this.rockBtn = this.add
+    this.rockBtn = new Button(this, 2105, 436, "match_rps_rock");
+    this.rockBtn.setOrigin(0, 0).setDepth(9999).setName("rockBtn");
+    this.rockBtn.on("pointerdown", () => {
+      this.handleRpsInput("r", this.povName);
+    });
+    /*this.rockBtn = this.add
       .sprite(2105, 436, "match_rps_rock")
       .setOrigin(0, 0)
       .setDepth(999)
@@ -252,7 +261,7 @@ export default class Match extends Phaser.Scene {
       })
       .on("pointerdown", () => {
         this.handleRpsInput("r", this.povName);
-      });
+      });*/
 
     this.paperBtn = this.add
       .sprite(1748, 520, "match_rps_paper")
@@ -537,18 +546,20 @@ export default class Match extends Phaser.Scene {
 
                 this.input.on("pointermove", resizeHandler);
 
-                // Use a slight delay before adding the confirm handler
                 this.time.addEvent({
                   delay: 50, //stupid code
                   callback: () => {
-                    const confirmHandler = () => {
-                      console.log("confirmo");
+                    const handleConfirm = () => {
                       this.input.off("pointermove", resizeHandler);
-                      this.input.off("pointerdown", confirmHandler);
-                      this.p1Shields.push(shield.scale);
+                      this.input.off("pointerdown", handleConfirm);
+                      this.p1Shields.push(shield.scale); // this is for visuals only
+                      this.handleTowerInput(
+                        TowerActionTypes.BUILD_SHIELD,
+                        shield.scale
+                      );
                     };
 
-                    this.input.on("pointerdown", confirmHandler);
+                    this.input.on("pointerdown", handleConfirm);
                   },
                   loop: false,
                 });
@@ -653,7 +664,7 @@ export default class Match extends Phaser.Scene {
 
     /**Quasi server logic.
      * Called everytime an rps input is received. */
-    switch (towerAction) {
+    switch ((towerAction, info)) {
       case TowerActionTypes.BUILD_TOWER:
         console.log("build tower");
         this.state.roundWinner.hp += 1;
@@ -666,26 +677,11 @@ export default class Match extends Phaser.Scene {
         }
         break;
       case TowerActionTypes.BUILD_SHIELD:
-        console.log("build shield");
+        console.log("build shield, scale: " + info);
         this.state.roundWinner.hp += 1;
 
-        //update visulasdfjlaksljf
-        if (this.state.roundWinner.name == this.povName) {
-          if (this.state.roundWinner.hp < 7) {
-            //not all shields are out
-            for (let i = 0; i < this.p1Shields.length; i++) {
-              this.p1Shields[i].visible = i < this.state.roundWinner.hp - 4;
-            }
-          } else {
-            // change their appearance starting from the insnermostsald;jf
-            const improveShield = (this.state.roundWinner.hp - 4) % 3;
-            this.p1Shields[improveShield].anims.nextFrame();
-          }
+        // shield upgrades are SCRAPPED!!!
 
-          this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
-        } else {
-          this.p2Base.setFrame("match_p2Base000" + this.state.roundWinner.hp);
-        }
         break;
       case TowerActionTypes.BUILD_CANNON:
         console.log("build cannon");
@@ -760,5 +756,20 @@ class Player {
 
   onNotify(move) {
     console.log(`${this.name} received notification: ${move}`);
+  }
+}
+class Button extends Phaser.GameObjects.Sprite {
+  constructor(scene, x, y, texture) {
+    super(scene, x, y, texture);
+    this.setInteractive({ cursor: "pointer" });
+    this.setAlpha(0.7);
+    this.on("pointerover", () => {
+      this.setAlpha(1);
+    });
+    this.on("pointerout", () => {
+      this.setAlpha(0.7);
+    });
+
+    scene.add.existing(this);
   }
 }
