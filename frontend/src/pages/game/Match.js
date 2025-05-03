@@ -330,8 +330,9 @@ export default class Match extends Phaser.Scene {
     console.info(this.state.players);
     /*
     console.log(
-      this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice)
+      
     );*/
+    this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
     // player visuals
     this.p1Right.play("match_p1Right_" + this.state.p1RpsChoice);
     this.p2Hand.play("match_p2Hand_" + this.state.p2RpsChoice);
@@ -570,6 +571,7 @@ export default class Match extends Phaser.Scene {
 
   _decideWinner(p1RpsChoice, p2RpsChoice) {
     console.info(this.state.players);
+
     if (p1RpsChoice == p2RpsChoice) {
       this.state.roundWinner = null;
       return -1;
