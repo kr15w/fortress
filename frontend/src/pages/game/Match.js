@@ -3,7 +3,7 @@ import { loadAnims } from "./loadAnims";
 import ANIMS from "./match_anims.json";
 
 /**
- * @todo add tie anim
+ * done add tie anim
  * @todo make everything prettier
  * @todo put buttons in a container
  * done buttons glow on hover
@@ -303,30 +303,6 @@ export default class Match extends Phaser.Scene {
       .setDepth(9999)
       .setName("shieldBtn");
   }
-  handleRpsInput(choice, playerName) {
-    /**called only during roundStart event.
-     * Sends message to quasi server.
-     */
-    if (choice != "r" && choice != "p" && choice != "s") {
-      console.warn("invalid choice");
-      return;
-    }
-
-    // saves input to server.
-    if (this.povName == playerName) {
-      this.state.p1RpsChoice = choice;
-    } else {
-      this.state.p2RpsChoice = choice;
-    }
-    console.log(this.state.p1RpsChoice, this.state.p2RpsChoice);
-
-    /**Quasi server logic.
-     * Called everytime an rps input is received. */
-    if (this.state.p1RpsChoice && this.state.p2RpsChoice) {
-      this.state.stage = "rpsResult";
-      this.events.emit("rpsResult");
-    }
-  }
 
   onRoundStart() {
     this.state.rounds++;
@@ -352,10 +328,10 @@ export default class Match extends Phaser.Scene {
     this._hideRpsButtons();
 
     console.info(this.state.players);
-
+    /*
     console.log(
       this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice)
-    );
+    );*/
     // player visuals
     this.p1Right.play("match_p1Right_" + this.state.p1RpsChoice);
     this.p2Hand.play("match_p2Hand_" + this.state.p2RpsChoice);
@@ -622,17 +598,31 @@ export default class Match extends Phaser.Scene {
       }
     }
   }
-  /*
-  const TowerActionTypes = {
-    BUILD_TOWER: "bt",
-    BUILD_SHIELD: "bs",
-    BUILD_CANNON: "bc",
-    ATTACK_TOWER: "at",
-    ATTACK_CANNON: "ac",
-    UPGRADE_SHIELD: "us",
-    UPGRADE_CANNON: "ub",
-  };
-*/
+
+  handleRpsInput(choice, playerName) {
+    /**called only during roundStart event.
+     * Sends message to quasi server.
+     */
+    if (choice != "r" && choice != "p" && choice != "s") {
+      console.warn("invalid choice");
+      return;
+    }
+
+    // saves input to server.
+    if (this.povName == playerName) {
+      this.state.p1RpsChoice = choice;
+    } else {
+      this.state.p2RpsChoice = choice;
+    }
+    console.log(this.state.p1RpsChoice, this.state.p2RpsChoice);
+
+    /**Quasi server logic.
+     * Called everytime an rps input is received. */
+    if (this.state.p1RpsChoice && this.state.p2RpsChoice) {
+      this.state.stage = "rpsResult";
+      this.events.emit("rpsResult");
+    }
+  }
   handleTowerInput(towerAction, info) {
     /**called only during towerStart event.
      * Sends message to quasi server.
