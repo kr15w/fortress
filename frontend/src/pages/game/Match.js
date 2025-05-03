@@ -15,8 +15,12 @@ const TowerActionTypes = {
   ATTACK_CANNON: "ac",
   UPGRADE_SHIELD: "us",
   UPGRADE_CANNON: "ub",
-  QUIT: "q",
 };
+
+function roundToNearest(num, nearest) {
+  if (nearest === 0) return num;
+  return Math.round(num / nearest) * nearest;
+}
 
 export default class Match extends Phaser.Scene {
   initGame() {
@@ -59,6 +63,11 @@ export default class Match extends Phaser.Scene {
     this.load.image("match_shieldBtn", "assets/match_shieldBtn.png");
 
     this.load.atlas(
+      "match_p1Shield",
+      "assets/match_p1Shield.png",
+      "assets/match_p1Shield.json"
+    );
+    this.load.atlas(
       "match_p1Base",
       "assets/match_p1Base.png",
       "assets/match_p1Base.json"
@@ -100,10 +109,12 @@ export default class Match extends Phaser.Scene {
     const SCENE_H = this.sys.game.canvas.height;
 
     this._createBackground();
+    //this.createTable(); // optimize later
     this._createBases();
     this._createPlayers();
     this._createRpsBtns();
     this._createTowerBtns();
+    this._createShields();
 
     loadAnims(ANIMS, this);
     this.p1Right.play("match_p1Right_wait");
@@ -129,16 +140,54 @@ export default class Match extends Phaser.Scene {
   }
   _createBases() {
     this.p1Base = this.add
-      .sprite(736, 1176, "match_p1Base")
+      .sprite(736, 1107, "match_p1Base")
       .setOrigin(0, 0)
       .setDepth(10)
       .setName("p1Base");
 
     this.p2Base = this.add
-      .sprite(1022, 594, "match_p2Base")
+      .sprite(1022, 525, "match_p2Base")
       .setOrigin(0, 0)
       .setDepth(10)
       .setName("p2Base");
+  }
+  _createShields() {
+    this.p1Shields = [];
+    /*
+    // a working shield DDDDD:
+    let shield = this.add
+      .sprite(1280, 1438, "match_p1Shield")
+      .setDisplayOrigin(817, 519)
+      .setDepth(10)
+      .setInteractive()
+      .setVisible(false);
+
+    const resizeHandler = (pointer) => {
+      const distance = Phaser.Math.Distance.Between(
+        shield.x,
+        shield.y,
+        pointer.x,
+        pointer.y
+      );
+      const newScale = roundToNearest(
+        Math.max(0.85, Math.min(1.5, distance / 500)),
+        0.05
+      );
+      shield.setScale(newScale);
+    };
+    shield.setVisible(true);
+    this.input.on("pointermove", resizeHandler);
+
+    const confirmHandler = () => {
+      this.input.off("pointermove", resizeHandler);
+      this.input.off("pointerdown", confirmHandler);
+      this.p1Shields.push(shield.scale);
+
+      //alert(shield.scale);
+    };
+
+    this.input.once("pointerdown", confirmHandler);
+    */
   }
   _createBackground() {
     this.bg = this.add
@@ -148,7 +197,7 @@ export default class Match extends Phaser.Scene {
       .setName("bg");
 
     this.table = this.add
-      .sprite(-80, 592, "match_table")
+      .sprite(-80, 523, "match_table")
       .setOrigin(0, 0)
       .setDepth(9)
       .setName("table");
@@ -418,6 +467,8 @@ export default class Match extends Phaser.Scene {
           duration: 300,
           onComplete: () => {
             //glow opp tower
+            this.p2Base.tint(0xffffff);
+            //this.p2Weapons.tine(0xffffff);
             // glow weapons
           },
         });
@@ -461,10 +512,47 @@ export default class Match extends Phaser.Scene {
                 cursor: "pointer",
               })
               .on("pointerdown", () => {
-                this.handleTowerInput(
-                  TowerActionTypes.BUILD_SHIELD,
-                  this.povName
+                // a working shield DDDDD:
+                let shield = this.add
+                  .sprite(1280, 1438, "match_p1Shield")
+                  .setDisplayOrigin(817, 519)
+                  .setDepth(10)
+                  .setInteractive()
+                  .setVisible(false);
+
+                const resizeHandler = (pointer) => {
+                  const distance = Phaser.Math.Distance.Between(
+                    shield.x,
+                    shield.y,
+                    pointer.x,
+                    pointer.y
+                  );
+                  //Phaser.Math.Clamp(distance/500, 0.85, 1.5)
+                  const newScale = roundToNearest(
+                    Math.max(0.85, Math.min(1.5, distance / 500)),
+                    0.05
+                  );
+                  shield.setScale(newScale);
+                };
+
+                // stupidass code
+                const bindRH = (p) => resizeHandler(p);
+                shield.setVisible(true);
+                //this.input.on("pointermove", resizeHandler);
+                this.input.on(
+                  "pointermove",
+                  bindRH // okay for some reason this works, looks like it needs its argument
+                  //okay for some reason this works, looks like it needs its argument
                 );
+                const confirmHandler = () => {
+                  this.input.off("pointermove", resizeHandler);
+                  this.input.off("pointerdown");
+                  this.p1Shields.push(shield.scale);
+
+                  //alert(shield.scale);
+                };
+
+                this.input.on("pointerdown", confirmHandler);
               });
           },
         });
@@ -490,21 +578,11 @@ export default class Match extends Phaser.Scene {
     console.log(this.state.roundWinner);
 
     // Show buttons based on available options
-    if (
-      this.state.roundWinner.cannons.length === 0 &&
-      this.state.roundWinner.shields.length === 0
-    ) {
-      // No cannons and no shields - can only build
+    if (this.state.roundWinner.cannons.length === 0) {
+      // No cannons - can only build
       this.bldBtn.visible = true;
-    } else if (
-      this.state.roundWinner.shields.length > 0 &&
-      this.state.roundWinner.cannons.length === 0
-    ) {
-      // Has shields but no cannons - can build or upgrade
-      this.bldBtn.visible = true;
-      this.upgBtn.visible = true;
     } else {
-      // Has both cannons and shields - can do everything
+      // Yes cannons - can do everything
       this.atkBtn.visible = true;
       this.bldBtn.visible = true;
       this.upgBtn.visible = true;
@@ -558,7 +636,6 @@ export default class Match extends Phaser.Scene {
     ATTACK_CANNON: "ac",
     UPGRADE_SHIELD: "us",
     UPGRADE_CANNON: "ub",
-    QUIT: "q",
   };
 */
   handleTowerInput(towerAction) {
@@ -591,6 +668,25 @@ export default class Match extends Phaser.Scene {
         break;
       case TowerActionTypes.BUILD_SHIELD:
         console.log("build shield");
+        this.state.roundWinner.hp += 1;
+
+        //update visulasdfjlaksljf
+        if (this.state.roundWinner.name == this.povName) {
+          if (this.state.roundWinner.hp < 7) {
+            //not all shields are out
+            for (let i = 0; i < this.p1Shields.length; i++) {
+              this.p1Shields[i].visible = i < this.state.roundWinner.hp - 4;
+            }
+          } else {
+            // change their appearance starting from the insnermostsald;jf
+            const improveShield = (this.state.roundWinner.hp - 4) % 3;
+            this.p1Shields[improveShield].anims.nextFrame();
+          }
+
+          this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
+        } else {
+          this.p2Base.setFrame("match_p2Base000" + this.state.roundWinner.hp);
+        }
         break;
       case TowerActionTypes.BUILD_CANNON:
         console.log("build cannon");
@@ -654,13 +750,13 @@ class Player {
      *
      */
     this.hp = 4;
-    this.shields = [];
+    //this.shields = [];
     this.cannons = [];
     this.choice = null;
   }
 
   toString() {
-    return `Player(name=${this.name}, hp=${this.hp}, shields=${this.shields}, cannons=${this.cannons})`;
+    return `Player(name=${this.name}, hp=${this.hp}, cannons=${this.cannons})`;
   }
 
   onNotify(move) {
