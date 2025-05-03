@@ -240,34 +240,38 @@ export default class Match extends Phaser.Scene {
   }
 
   _createRpsBtns() {
-    // adds buttons that triggers RpsInput event
+    // Create container for RPS elements
+    this.rpsContainer = this.add.container(0, 0);
+    this.rpsContainer.setDepth(9999);
 
     this.rpsText = this.add
       .sprite(1762, 414, "match_rps_text")
-      .setDepth(9999)
       .setName("rpsText");
+    this.rpsContainer.add(this.rpsText);
 
     this.rockBtn = new Button(this, 2105, 436, "match_rps_rock")
       .setOrigin(0, 0)
-      .setDepth(9999)
       .setName("rockBtn");
     this.rockBtn.on("pointerdown", () => {
       this.handleRpsInput("r", this.povName);
     });
+    this.rpsContainer.add(this.rockBtn);
 
     this.paperBtn = new Button(this, 1748, 520, "match_rps_paper")
       .setOrigin(0, 0)
-      .setDepth(9999)
       .setName("paperBtn");
     this.paperBtn.on("pointerdown", () => {
       this.handleRpsInput("p", this.povName);
     });
+    this.rpsContainer.add(this.paperBtn);
 
-    this.scissorsBtn = new Button(this, 1663, 845, "match_rps_scissors");
-    this.scissorsBtn.setOrigin(0, 0).setDepth(9999).setName("scissorsBtn");
+    this.scissorsBtn = new Button(this, 1663, 845, "match_rps_scissors")
+      .setOrigin(0, 0)
+      .setName("scissorsBtn");
     this.scissorsBtn.on("pointerdown", () => {
       this.handleRpsInput("s", this.povName);
     });
+    this.rpsContainer.add(this.scissorsBtn);
   }
 
   _createTowerBtns() {
@@ -362,11 +366,12 @@ export default class Match extends Phaser.Scene {
       callback: () => {
         console.log("decide winner", this.state.roundWinner);
         if (this.state.roundWinner == null) {
-          //console.log("draw");
+          //console.log("tie");
           //this.p1Left.play("match_p1Left_lose");
-          this.p1Right.play("match_p1Right_lose");
-          this.p2Body.play("match_p2Body_lose");
-          this.p2Hand.play("match_p2Hand_lose");
+          //this.p1Right.play("match_p1Right_tie");
+          this.p1Right.visible = false;
+          this.p2Body.play("match_p2Body_tie");
+          this.p2Hand.play("match_p2Hand_tie");
         } else if (this.state.roundWinner.name == this.povName) {
           //console.log("i win");
           //this.p1Left.play("match_p1Left_win");
@@ -685,17 +690,13 @@ export default class Match extends Phaser.Scene {
     this.events.emit("roundStart");
   }
   _showRpsButtons() {
-    // show buttons that emit rps input event
-    this.rpsText.visible = true;
-    this.rockBtn.visible = true;
-    this.paperBtn.visible = true;
-    this.scissorsBtn.visible = true;
+    // Update to show container instead of individual elements
+    this.rpsContainer.visible = true;
   }
+
   _hideRpsButtons() {
-    this.rpsText.visible = false;
-    this.rockBtn.visible = false;
-    this.paperBtn.visible = false;
-    this.scissorsBtn.visible = false;
+    // Update to hide container instead of individual elements
+    this.rpsContainer.visible = false;
   }
 }
 class Player {
