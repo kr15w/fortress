@@ -251,70 +251,45 @@ export default class Match extends Phaser.Scene {
     this.rockBtn.on("pointerdown", () => {
       this.handleRpsInput("r", this.povName);
     });
-    /*this.rockBtn = this.add
-      .sprite(2105, 436, "match_rps_rock")
-      .setOrigin(0, 0)
-      .setDepth(999)
-      .setName("rockBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        this.handleRpsInput("r", this.povName);
-      });*/
 
-    this.paperBtn = this.add
-      .sprite(1748, 520, "match_rps_paper")
-      .setOrigin(0, 0)
-      .setDepth(9999)
-      .setName("paperBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        this.handleRpsInput("p", this.povName);
-      });
+    this.paperBtn = new Button(this, 1748, 520, "match_rps_paper");
+    this.paperBtn.setOrigin(0, 0).setDepth(9999).setName("paperBtn");
+    this.paperBtn.on("pointerdown", () => {
+      this.handleRpsInput("p", this.povName);
+    });
 
-    this.scissorsBtn = this.add
-      .sprite(1663, 845, "match_rps_scissors")
-      .setOrigin(0, 0)
-      .setDepth(9999)
-      .setName("scissorsBtn")
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        this.handleRpsInput("s", this.povName);
-      });
+    this.scissorsBtn = new Button(this, 1663, 845, "match_rps_scissors");
+    this.scissorsBtn.setOrigin(0, 0).setDepth(9999).setName("scissorsBtn");
+    this.scissorsBtn.on("pointerdown", () => {
+      this.handleRpsInput("s", this.povName);
+    });
   }
 
   _createTowerBtns() {
     // adds buttons that triggers TowerInput event
     // interactives are added in _showTowerButtons()
 
-    this.atkBtn = this.add
-      .sprite(546, 389, "match_atkBtn")
+    this.atkBtn = new Button(this, 546, 389, "match_atkBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
       .setName("atkBtn");
-    this.bldBtn = this.add
-      .sprite(862, 559, "match_bldBtn")
+
+    this.bldBtn = new Button(this, 862, 559, "match_bldBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
       .setName("bldBtn");
-    this.upgBtn = this.add
-      .sprite(710, 922, "match_upgBtn")
+
+    this.upgBtn = new Button(this, 710, 922, "match_upgBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
-      .setName("atkBtn");
-    this.cannonBtn = this.add
-      .sprite(910, 292, "match_cannonBtn")
+      .setName("upgBtn");
+
+    this.cannonBtn = new Button(this, 910, 292, "match_cannonBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
       .setName("cannonBtn");
 
-    this.shieldBtn = this.add
-      .sprite(906, 579, "match_shieldBtn")
+    this.shieldBtn = new Button(this, 906, 579, "match_shieldBtn")
       .setOrigin(0, 0)
       .setDepth(9999)
       .setName("shieldBtn");
@@ -648,7 +623,7 @@ export default class Match extends Phaser.Scene {
     UPGRADE_CANNON: "ub",
   };
 */
-  handleTowerInput(towerAction) {
+  handleTowerInput(towerAction, info) {
     /**called only during towerStart event.
      * Sends message to quasi server.
      */
@@ -664,7 +639,7 @@ export default class Match extends Phaser.Scene {
 
     /**Quasi server logic.
      * Called everytime an rps input is received. */
-    switch ((towerAction, info)) {
+    switch (towerAction) {
       case TowerActionTypes.BUILD_TOWER:
         console.log("build tower");
         this.state.roundWinner.hp += 1;
@@ -684,19 +659,19 @@ export default class Match extends Phaser.Scene {
 
         break;
       case TowerActionTypes.BUILD_CANNON:
-        console.log("build cannon");
+        console.log("info: ", info);
         break;
       case TowerActionTypes.ATTACK_TOWER:
-        console.log("attack tower");
+        console.log("info: ", info);
         break;
       case TowerActionTypes.ATTACK_CANNON:
-        console.log("attack cannon");
+        console.log("info: ", info);
         break;
       case TowerActionTypes.UPGRADE_SHIELD:
-        console.log("upgrade shield");
+        console.log("info: ", info);
         break;
       case TowerActionTypes.UPGRADE_CANNON:
-        console.log("upgrade cannon");
+        console.log("info: ", info);
         break;
       default:
         alert("Invalid action");
