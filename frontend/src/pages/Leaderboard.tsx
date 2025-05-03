@@ -24,7 +24,7 @@ type UserStats = {
 const UserStatsTable: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats[]>([])
   const [loading, setLoading] = useState(true)
-  const { setTheme, theme } = useTheme()
+  const { setTheme } = useTheme()
 
   useEffect(() => {
     const fetchUserStats = async () => {

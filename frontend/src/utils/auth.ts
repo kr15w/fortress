@@ -32,7 +32,7 @@ export const decryptUsername = (encryptedUsername: string | null): string | null
 };
 
 // Store Encrypted Username in SessionStorage
-const storeUsername = (username: string) => {
+export const storeUsername = (username: string) => {
   const encryptedUsername = encryptUsername(username);
   sessionStorage.setItem("currentUser", encryptedUsername);
 };

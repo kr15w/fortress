@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { Trophy, Medal, Shield, Bomb, Loader2, Swords, Skull, User, Moon, Sun, Home } from "lucide-react"
 import { useTheme } from "next-themes"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -23,7 +23,7 @@ const UserProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>()
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null)
   const [loading, setLoading] = useState(true)
-  const { setTheme, theme } = useTheme()
+  const { setTheme } = useTheme()
   const [currentUser, setCurrentUser] = useState<string | null>(null)
 
   useEffect(() => {
@@ -166,7 +166,6 @@ const UserProfile: React.FC = () => {
                           variant="outline"
                           className="text-green-600 dark:text-green-500 border-green-400 dark:border-green-800 px-3 py-1"
                         >
-                          <Swords className="h-4 w-4 mr-1" /> {userProfile.win_count} Wins
                         </Badge>
                       )}
                       {userProfile.total_bomb_count > 20 && (
@@ -191,7 +190,7 @@ const UserProfile: React.FC = () => {
                   {currentUser === userProfile.username && (
                     <div className="mt-4 md:mt-0 md:ml-auto">
                       <Button variant="outline" asChild>
-                        <Link to={`/profile/edit/${userProfile.username}`}>Edit Profile</Link>
+                        <Link to={`/profile/edit/${userId}`}>Edit Identifiers</Link>
                       </Button>
                     </div>
                   )}

@@ -144,3 +144,34 @@ class DatabaseService:
                 user.loss_count += increment
             session.commit()
             return True
+        
+    def is_username_taken(self, username):
+        """Check if the username already exists in the database."""
+        session = self.Session()
+        exists = session.query(User).filter_by(username=username).first() is not None
+        session.close()
+        return exists
+
+    def is_email_taken(self, email):
+        """Check if the email is already registered."""
+        session = self.Session()
+        exists = session.query(User).filter_by(email=email).first() is not None
+        session.close()
+        return exists
+
+    def update_user(self, current_username, new_username, new_email):
+        """Update the username and email of a user."""
+        session = self.Session()
+        try:
+            user = session.query(User).filter_by(username = current_username).first()
+            if user:
+                user.username = new_username
+                user.email = new_email
+                session.commit()
+                session.close()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            print(f"Error updating user: {e}")
+            return False

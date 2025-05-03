@@ -448,17 +448,20 @@ def get_user_stats():
 @app.route('/api/edit', methods=['POST'])
 def edit_user():
     data = request.get_json()
+    db = DatabaseService('sqlite:///users.db')  
+
     # Validate required fields
-    if not all(k in data for k in ['current_username', 'new_username', 'new_email', 'enable_2fa']):
+    if not all(k in data for k in ['current_username', 'new_username', 'new_email']):
         return jsonify({'message': 'Missing required fields'}), 400
-    
+
     try:
-        # Check if user exists
-        user = db.get_user_by_username(data['current_username'])
+        # Use `db` to check if the user exists
+        session = db.Session()
+        user = session.query(User).filter_by(username=data['current_username']).first()
         if not user:
             return jsonify({'message': 'User not found'}), 404
 
-        # Check if new username or email is already taken
+        # **IMPORTANT:** Call `db.is_username_taken()` instead of `session.is_username_taken()`
         if db.is_username_taken(data['new_username']) and data['new_username'] != data['current_username']:
             return jsonify({'message': 'Username already taken'}), 400
 
@@ -466,7 +469,7 @@ def edit_user():
             return jsonify({'message': 'Email already registered'}), 400
 
         # Update user details
-        success = db.update_user(user.id, data['new_username'], data['new_email'], bool(data['enable_2fa']))
+        success = db.update_user(data['current_username'], data['new_username'], data['new_email'])
         if not success:
             raise Exception('Failed to update user details')
 
@@ -475,6 +478,6 @@ def edit_user():
     except Exception as e:
         app.logger.error(f"Edit user error: {str(e)}")
         return jsonify({'message': f'Failed to update user details: {str(e)}'}), 400
-
+    
 if __name__ == '__main__':
     app.run(host='::', port=5000, debug=True)
