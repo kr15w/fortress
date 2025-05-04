@@ -502,10 +502,10 @@ export default class Match extends Phaser.Scene {
                   pointer.x,
                   pointer.y
                 );
-                //Phaser.Math.Clamp(distance/500, 0.85, 1.5)
+
                 const newScale = roundToNearest(
-                  Math.max(0.85, Math.min(1.5, distance / 500)),
-                  0.05
+                  Phaser.Math.Clamp(distance / 500, 0.85, 1.5),
+                  0.04
                 );
 
                 this.cantAddShield = this.p1Shields.some(
@@ -513,15 +513,14 @@ export default class Match extends Phaser.Scene {
                 );
 
                 if (this.cantAddShield) {
-                  console.log("dont overlap shields");
                   shield.setTint(0xff0000);
-                  //return;r
                 } else {
                   shield.clearTint();
                 }
                 shield.setScale(newScale);
               };
 
+              //you cant add a shield when overlap!!!!!
               this.input.on("pointermove", handleResize);
 
               this.time.addEvent({
@@ -529,6 +528,7 @@ export default class Match extends Phaser.Scene {
                 callback: () => {
                   const handleConfirm = () => {
                     if (!this.cantAddShield) {
+                      this.input.off("pointermove", handleAddShield);
                       this.input.off("pointermove", handleResize);
                       this.input.off("pointerdown", handleConfirm);
                       this.p1Shields.push(shield.scale); // this is for visuals only
