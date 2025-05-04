@@ -526,24 +526,30 @@ export default class Match extends Phaser.Scene {
                   }
                 };
 
+                //why is it all funky when i add right mouse button detection wtf
+                /*
                 const handleCancel = () => {
                   console.warn("cajncellll");
                   this.input.off("pointermove", handleMove);
                   cannon.destroy();
                   this._showTowerButtons();
                 };
+                /*
                 this.input.on(
                   "pointerdown",
                   (p) => {
+                    this.input.off("pointermove", handleMove);
+                    this.input.off("pointerdown", handleConfirm);
                     console.log("pointer down", p.buttons);
                     if (p.buttons == 1) {
                       handleConfirm();
-                    } /* else if (p.buttons == 2) {
+                    } else if (p.buttons == 2) {
                       handleCancel();
-                    }*/
+                    }
                   },
                   this
-                );
+                );*/
+                this.input.on("pointerdown", handleConfirm, this);
               },
               loop: false,
             });
