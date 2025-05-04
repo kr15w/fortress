@@ -4,7 +4,8 @@ import json
 import uuid
 from game import Game
 import dump_users
-from database import DatabaseService
+from database import DatabaseService, BattleHistory, User
+from sqlalchemy.orm import Session
 from decimal import Decimal
 db = DatabaseService('sqlite:///users.db')
 app = Flask(__name__)
@@ -21,6 +22,33 @@ player_names = {}
 game_rooms = {}
 user_tokens= {}
 
+def anti_cheat(session: Session, username: str):
+    """Detects if a user has played against the same player 3 times in a row with a high win rate (> 0.9)."""
+    # Get last 3 battles for the user (either player1 or player2)
+    battles = session.query(BattleHistory).filter(
+        (BattleHistory.player1 == username) | (BattleHistory.player2 == username)
+    ).order_by(BattleHistory.match_id.desc()).limit(3).all()
+
+    if len(battles) < 3:
+        return False  # Not enough matches to detect patterns
+
+    # Extract player opponent information
+    opponent = battles[0].player2 if battles[0].player1 == username else battles[0].player1
+
+    # Check if the same opponent appears in all 3 matches
+    if all(
+        (battle.player1 == username and battle.player2 == opponent) or
+        (battle.player2 == username and battle.player1 == opponent)
+        for battle in battles
+    ):
+        # Verify high win rate condition (> 0.9)
+        if all(
+            battle.player1_rpsWinrate > 0.9 or battle.player2_rpsWinrate > 0.9
+            for battle in battles
+        ):
+            return True  # Potential cheating detected
+
+    return False  # No suspicious behavior
 
 @app.route('/api/match_demo')
 def index():
@@ -133,12 +161,24 @@ def handle_message(data):
                                 # Check if game has ended
                                 if game.state == 2:
                                     if game.winner == 1:
+                                        dbSession = db.Session()
                                         winner_username = dump_users.id_to_name(game_rooms[room_id]['player1'])
                                         loser_username = dump_users.id_to_name(game_rooms[room_id]['player2'])
                                         player1_rpsWinrate = round(Decimal(game.player1.rpsWin) / Decimal(game.player1.rpsWin + game.player2.rpsWin), 2)
                                         player2_rpsWinrate = round(Decimal(game.player2.rpsWin) / Decimal(game.player1.rpsWin + game.player2.rpsWin), 2)
                                         db.add_match_history(winner_username, loser_username, player1_rpsWinrate, player2_rpsWinrate, winner_username)
-
+                                        if anti_cheat(dbSession, winner_username):
+                                            victim = dbSession.query(User).filter_by(username=winner_username).first()
+                                            if victim:
+                                                victim.banned = True  
+                                                dbSession.commit()  
+                                                print(f"User {victim.username} is now banned.")
+                                        if anti_cheat(dbSession, loser_username):
+                                            victim = dbSession.query(User).filter_by(username=loser_username).first()
+                                            if victim:
+                                                victim.banned = True  
+                                                dbSession.commit()  
+                                                print(f"User {victim.username} is now banned.")
 
                                     elif game.winner == 2:
                                         winner_username = dump_users.id_to_name(game_rooms[room_id]['player2'])
@@ -188,7 +228,7 @@ def handle_message(data):
                     emit('message_from_server', f'Error: Room {room_id} does not exist.', room=request.sid)
         else:
             print(f'Received message from {request.sid} without player_name: {message}')
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
         print(f'Invalid JSON received from {request.sid}: {e}')
         emit('message_from_server', f'Invalid JSON received: {data}', room=request.sid)
 

@@ -92,6 +92,8 @@ def google_callback():
     user_info = google.get('userinfo').data
     user = dbSession.query(User).filter_by(email=user_info['email'], username=user_info['name']).first()
     if user:
+        if user.banned == True:
+            return redirect('http://localhost:5173/account-banned')
         access_token = jwt.encode({
         'user': user_info['name'],
         'exp': datetime.datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']
@@ -266,7 +268,8 @@ def login():
     user = db.verify_user(auth['username'], auth['password'])
     if not user:
         return jsonify({'message': 'Invalid credentials'}), 401
-    
+    if user.banned == True:
+        return redirect('http://localhost:5173/account-banned')
     # Create tokens
     access_token = jwt.encode({
         'user': auth['username'],

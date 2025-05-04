@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Numeric, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Numeric, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -26,6 +26,7 @@ class User(Base):
     loss_count = Column(Integer, default=0)
     total_bomb_count = Column(Integer, default=0)
     total_shield_count = Column(Integer, default=0)
+    banned = Column(Boolean, default=False)
 
 class BattleHistory(Base):
     __tablename__ = 'battle_history'

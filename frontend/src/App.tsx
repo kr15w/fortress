@@ -11,7 +11,8 @@ import Menu from "@/pages/Menu";
 import Profile from "@/pages/Profile";
 import ChangePassword from "./pages/ResetPW";
 import EditProfile from "@/pages/Edit"; 
-import BattleHistory from "@/pages/BattleHistory"; // ✅ Import BattleHistory page
+import BattleHistory from "@/pages/BattleHistory"; 
+import AccountBanned from "./pages/AccountBanned";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
 
@@ -32,9 +33,7 @@ const App = () => {
           <Route path="/license" element={<License />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/game" element={<Game />} />
-          <Route path="/user" element={<User />}>
-            <Route path=":userId" element={<UserConfig />} />
-          </Route>
+          <Route path="account-banned" element={<AccountBanned />} />
           <Route path="/battle-history/:userId" element={<BattleHistory />} />  
           <Route path="*" element={<NoMatch />} />
         </Routes>
