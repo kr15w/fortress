@@ -483,68 +483,72 @@ export default class Match extends Phaser.Scene {
                 );
               });
 
+            //disable later to avoid double clickin
+            const handleAddShield = () => {
+              this.shieldBtn.off("pointerdown", handleAddShield);
+              this.shieldBtn.removeInteractive();
+              // a working shield DDDDD:
+              let shield = this.add
+                .sprite(1280, 1438, "match_p1Shield")
+                .setDisplayOrigin(817, 519)
+                .setDepth(10)
+                .setInteractive()
+                .setVisible(true);
+
+              const handleResize = (pointer) => {
+                const distance = Phaser.Math.Distance.Between(
+                  shield.x,
+                  shield.y,
+                  pointer.x,
+                  pointer.y
+                );
+                //Phaser.Math.Clamp(distance/500, 0.85, 1.5)
+                const newScale = roundToNearest(
+                  Math.max(0.85, Math.min(1.5, distance / 500)),
+                  0.05
+                );
+
+                this.cantAddShield = this.p1Shields.some(
+                  (scale) => Math.abs(scale - newScale) <= 0.001
+                );
+
+                if (this.cantAddShield) {
+                  console.log("dont overlap shields");
+                  shield.setTint(0xff0000);
+                  //return;r
+                } else {
+                  shield.clearTint();
+                }
+                shield.setScale(newScale);
+              };
+
+              this.input.on("pointermove", handleResize);
+
+              this.time.addEvent({
+                delay: 50, //stupid code
+                callback: () => {
+                  const handleConfirm = () => {
+                    if (!this.cantAddShield) {
+                      this.input.off("pointermove", handleResize);
+                      this.input.off("pointerdown", handleConfirm);
+                      this.p1Shields.push(shield.scale); // this is for visuals only
+                      this.handleTowerInput(
+                        TowerActionTypes.BUILD_SHIELD,
+                        shield.scale
+                      );
+                    }
+                  };
+
+                  this.input.on("pointerdown", handleConfirm);
+                },
+                loop: false,
+              });
+            };
             this.shieldBtn
               .setInteractive({
                 cursor: "pointer",
               })
-              .on("pointerdown", () => {
-                // a working shield DDDDD:
-                let shield = this.add
-                  .sprite(1280, 1438, "match_p1Shield")
-                  .setDisplayOrigin(817, 519)
-                  .setDepth(10)
-                  .setInteractive()
-                  .setVisible(true);
-
-                const handleResize = (pointer) => {
-                  const distance = Phaser.Math.Distance.Between(
-                    shield.x,
-                    shield.y,
-                    pointer.x,
-                    pointer.y
-                  );
-                  //Phaser.Math.Clamp(distance/500, 0.85, 1.5)
-                  const newScale = roundToNearest(
-                    Math.max(0.85, Math.min(1.5, distance / 500)),
-                    0.05
-                  );
-
-                  this.cantAddShield = this.p1Shields.some(
-                    (scale) => Math.abs(scale - newScale) <= 0.001
-                  );
-
-                  if (this.cantAddShield) {
-                    console.log("dont overlap shields");
-                    shield.setTint(0xff0000);
-                    //return;r
-                  } else {
-                    shield.clearTint();
-                  }
-                  shield.setScale(newScale);
-                };
-
-                this.input.on("pointermove", handleResize);
-
-                this.time.addEvent({
-                  delay: 50, //stupid code
-                  callback: () => {
-                    const handleConfirm = () => {
-                      if (!this.cantAddShield) {
-                        this.input.off("pointermove", handleResize);
-                        this.input.off("pointerdown", handleConfirm);
-                        this.p1Shields.push(shield.scale); // this is for visuals only
-                        this.handleTowerInput(
-                          TowerActionTypes.BUILD_SHIELD,
-                          shield.scale
-                        );
-                      }
-                    };
-
-                    this.input.on("pointerdown", handleConfirm);
-                  },
-                  loop: false,
-                });
-              });
+              .on("pointerdown", handleAddShield);
           },
         });
       });
