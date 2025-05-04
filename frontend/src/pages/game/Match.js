@@ -329,6 +329,8 @@ export default class Match extends Phaser.Scene {
 		this.p1Right.play("match_p1Right_wait");
 		this.p2Body.play("match_p2Body_wait");
 		this.p2Hand.play("match_p2Hand_wait");
+
+		//this.events.removeAllListeners();
 		this._showRpsButtons();
 		this._hideTowerButtons();
 	}
@@ -550,11 +552,13 @@ export default class Match extends Phaser.Scene {
 						};
 						this.input.on("pointermove", handleMove);
 
+						//buggy
 						this.time.addEvent({
 							delay: 50,
 							callback: () => {
 								const handleConfirm = () => {
 									if (!this.cantAddCannon) {
+										console.warn("this should stop STOP");
 										this.input.off("pointermove", handleMove);
 										this.input.off("pointerdown", handleConfirm);
 										this.p1Cannons.push(cannon);
@@ -764,6 +768,7 @@ export default class Match extends Phaser.Scene {
 		}
 	}
 	handleTowerInput(towerAction, info) {
+		console.debug("state: ", this.state);
 		/**called only during towerStart event.
 		 * Sends message to quasi server.
 		 */
