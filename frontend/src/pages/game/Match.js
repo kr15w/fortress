@@ -503,29 +503,13 @@ export default class Match extends Phaser.Scene {
             const handleAddShield = () => {
               this.shieldBtn.off("pointerdown", handleAddShield);
               this.shieldBtn.removeInteractive();
-              // a working shield DDDDD:
-              let shield = this.add
-                .sprite(1280, 1438, "match_p1Shield")
-                .setDisplayOrigin(817, 519)
-                .setDepth(10)
-                .setInteractive()
-                .setVisible(true);
+
+              let shield = new Shield(this, this.input.mousePointer);
 
               const handleResize = (pointer) => {
-                const distance = Phaser.Math.Distance.Between(
-                  shield.x,
-                  shield.y,
-                  pointer.x,
-                  pointer.y
-                );
-
-                const newScale = roundToNearest(
-                  Phaser.Math.Clamp(distance / 500, 0.85, 1.5),
-                  0.04
-                );
-
+                shield.handleResize(pointer);
                 this.cantAddShield = this.p1Shields.some(
-                  (scale) => Math.abs(scale - newScale) <= 0.001
+                  (scale) => Math.abs(scale - shield.scale) <= 0.001
                 );
 
                 if (this.cantAddShield) {
@@ -533,21 +517,19 @@ export default class Match extends Phaser.Scene {
                 } else {
                   shield.clearTint();
                 }
-                shield.setScale(newScale);
               };
 
-              //you cant add a shield when overlap!!!!!
               this.input.on("pointermove", handleResize);
 
               this.time.addEvent({
-                delay: 50, //stupid code
+                delay: 50,
                 callback: () => {
                   const handleConfirm = () => {
                     if (!this.cantAddShield) {
                       this.input.off("pointermove", handleAddShield);
                       this.input.off("pointermove", handleResize);
                       this.input.off("pointerdown", handleConfirm);
-                      this.p1Shields.push(shield.scale); // this is for visuals only
+                      this.p1Shields.push(shield.scale);
                       console.log(this.p1Shields);
                       this.handleTowerInput(
                         TowerActionTypes.BUILD_SHIELD,
@@ -555,7 +537,6 @@ export default class Match extends Phaser.Scene {
                       );
                     }
                   };
-
                   this.input.on("pointerdown", handleConfirm);
                 },
                 loop: false,
@@ -798,5 +779,31 @@ class Cannon extends Phaser.GameObjects.Sprite {
       .setInteractive()
       .setVisible(true);
     scene.add.existing(this);
+  }
+}
+class Shield extends Phaser.GameObjects.Sprite {
+  constructor(scene, pointer) {
+    super(scene, 1280, 1438, "match_p1Shield");
+    this.setDisplayOrigin(817, 519)
+      .setDepth(10)
+      .setInteractive()
+      .setVisible(true);
+    scene.add.existing(this);
+  }
+
+  handleResize(pointer) {
+    const distance = Phaser.Math.Distance.Between(
+      this.x,
+      this.y,
+      pointer.x,
+      pointer.y
+    );
+
+    const newScale = roundToNearest(
+      Phaser.Math.Clamp(distance / 500, 0.85, 1.5),
+      0.04
+    );
+
+    this.setScale(newScale);
   }
 }
