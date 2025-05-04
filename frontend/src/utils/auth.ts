@@ -121,8 +121,8 @@ export const getProfile = async (): Promise<any> => {
 
 export const isAuthenticated = async (): Promise<boolean> => {
   try {
-    await getProfile();
-    return true;
+    const user = await getCurrentUser();
+    return user !== null; 
   } catch {
     return false;
   }

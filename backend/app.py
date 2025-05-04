@@ -86,43 +86,45 @@ def google_callback():
     resp = google.authorized_response()
     if resp is None or 'access_token' not in resp:
         return redirect('http://localhost:5173/license?error=access_denied')
+
     flask.session['google_token'] = (resp['access_token'], '')
-    dbSession = db.Session() 
-    # Check if the user exists in your database, otherwise prompts for license key
+    dbSession = db.Session()
+
+    # Get user info from Google OAuth
     user_info = google.get('userinfo').data
     user = dbSession.query(User).filter_by(email=user_info['email'], username=user_info['name']).first()
+
     if user:
-        if user.banned == True:
+        if user.banned:
             return redirect('http://localhost:5173/account-banned')
+
         access_token = jwt.encode({
-        'user': user_info['name'],
-        'exp': datetime.datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']
-    }, app.config['SECRET_KEY'])
-    
+            'user': user_info['name'],
+            'exp': datetime.datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']
+        }, app.config['SECRET_KEY'])
+
         refresh_token = jwt.encode({
             'user': user_info['name'],
             'exp': datetime.datetime.utcnow() + app.config['JWT_REFRESH_TOKEN_EXPIRES']
         }, app.config['SECRET_KEY'])
-        # Generate and store game token
+
+        # Generate game token
         game_token = f"{user.id}_{secrets.token_hex(16)}"
         user_tokens[user.id] = game_token
-        response = jsonify({'message': 'Login successful'})
-        response.set_cookie('access_token', access_token, httponly=True, secure=True)
-        response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
-        return redirect('http://localhost:5173/menu')
-    
-    # Generate a JWT token for the user
+
+        # Redirect to /processing and pass username
+        redirect_url = f"http://localhost:5173/processing?username={user_info['name']}"
+        return redirect(redirect_url)
+
+    # Generate JWT for license check
     payload = {
         'user_id': user_info["id"],
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
     }
-
     token = jwt.encode(payload, app.secret_key, algorithm='HS256')
 
-    # Attach token to redirect URL
-    redirect_url = f'http://localhost:5173/license?token={token}'
-    return redirect(redirect_url)
-
+    # Attach token to redirect URL for licensing
+    return redirect(f'http://localhost:5173/license?token={token}')
 
 '''
 @app.route('/api/match_demo')
