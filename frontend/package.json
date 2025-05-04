@@ -18,22 +18,19 @@
     "axios": "^1.8.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "crypto-js": "^4.1.1",
-    "data-fns": "^1.1.0",
-    "date-fns": "^4.1.0",
     "lucide-react": "^0.503.0",
     "next-themes": "lastest",
     "phaser": "^3.88.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.1",
-    "tailwind-merge": "^3.2.0"
-  
+    "tailwind-merge": "^3.2.0",
+    "crypto-js": "^4.1.1"
+
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@tailwindcss/vite": "^4.1.4",
-    "@types/crypto-js": "4.2.2",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -49,6 +46,6 @@
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "vite": "^6.2.0",
-    "@type/datefns": "latest"
+    "@types/crypto-js": "4.2.2"
   }
 }

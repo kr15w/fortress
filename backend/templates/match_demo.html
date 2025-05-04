@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rock Paper Scissors Game</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        .shield {
+            width: 20px;
+            height: 20px;
+            background-color: blue;
+            display: inline-block;
+            margin: 2px;
+        }
+        .weapon {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            display: inline-block;
+            margin: 2px;
+            cursor: pointer;
+        }
+        .opponent-weapon {
+            background-color: darkred;
+        }
+        .hp-slot {
+            width: 20px;
+            height: 20px;
+            border: 1px solid grey;
+            display: inline-block;
+            margin: 2px;
+        }
+        .hp-slot.filled {
+            background-color: grey;
+        }
+        .clickable {
+            cursor: pointer;
+        }
+        #arena {
+            margin-top: 20px;
+        }
+        #gameEndOptions {
+            margin-top: 20px;
+        }
+    </style>
     <script type="text/javascript" charset="utf-8">
         document.addEventListener('DOMContentLoaded', (event) => {
             var socket = io();
@@ -18,6 +57,34 @@
                 });
                 socket.emit('message_from_client', message);
                 document.getElementById('sentJson').value = message;
+            });
+
+            document.getElementById('readyButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var isReady = this.textContent === 'Ready';
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'ready',
+                    value: isReady
+                });
+                socket.emit('message_from_client', message);
+                this.textContent = isReady ? 'Unready' : 'Ready';
+            });
+
+            document.getElementById('rematchButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var isRematch = this.textContent === 'Rematch';
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'rematch',
+                    value: isRematch
+                });
+                socket.emit('message_from_client', message);
+                this.textContent = isRematch ? 'Cancel Rematch' : 'Rematch';
             });
 
             document.getElementById('upgradeButton').addEventListener('click', function() {
@@ -90,7 +157,7 @@
                 socket.emit('message_from_client', message);
                 document.getElementById('sentJson').value = message;
             });
-            
+
             document.getElementById('buildHealthButton').addEventListener('click', function() {
                 var playerName = document.getElementById('playerName').value;
                 var roomId = document.getElementById('roomId').value;
@@ -103,7 +170,7 @@
                 socket.emit('message_from_client', message);
                 document.getElementById('sentJson').value = message;
             });
-            
+
             document.getElementById('buildWeaponButton').addEventListener('click', function() {
                 var playerName = document.getElementById('playerName').value;
                 var roomId = document.getElementById('roomId').value;
@@ -128,8 +195,53 @@
                 }));
             });
 
+            document.getElementById('joinAnotherRoomButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'leave_room'
+                });
+                socket.emit('message_from_client', message);
+                location.reload();
+            });
+
+            document.getElementById('returnToMenuButton').addEventListener('click', function() {
+                var playerName = document.getElementById('playerName').value;
+                var roomId = document.getElementById('roomId').value;
+                var message = JSON.stringify({
+                    player_name: playerName,
+                    room_id: roomId,
+                    action: 'leave_room'
+                });
+                socket.emit('message_from_client', message);
+                window.location.href = 'http://localhost:5173/menu';
+            });
+
             socket.on('game_state_refresh', function(gameState) {
                 document.getElementById('gameState').value = JSON.stringify(gameState, null, 2);
+                if (gameState.game_started) {
+                    if (gameState.state == 2) {
+                        document.getElementById('preGameOptions').style.display = 'none';
+                        document.getElementById('gameControls').style.display = 'none';
+                        document.getElementById('gameEndOptions').style.display = 'block';
+                        var rematchButton = document.getElementById('rematchButton');
+                        rematchButton.textContent = gameState.current_player_rematch ? 'Cancel Rematch' : 'Rematch';
+                    } else {
+                        document.getElementById('preGameOptions').style.display = 'none';
+                        document.getElementById('gameControls').style.display = 'block';
+                        document.getElementById('gameEndOptions').style.display = 'none';
+                    }
+                    updateArena(gameState);
+                } else {
+                    document.getElementById('preGameOptions').style.display = 'block';
+                    document.getElementById('gameControls').style.display = 'none';
+                    document.getElementById('gameEndOptions').style.display = 'none';
+                    var readyButton = document.getElementById('readyButton');
+                    readyButton.textContent = gameState.current_player_ready ? 'Unready' : 'Ready';
+                    document.getElementById('opponentReadyStatus').textContent = gameState.opponent_ready ? 'Opponent is ready' : 'Opponent is not ready';
+                }
             });
 
             socket.on('message_from_server', function(msg) {
@@ -137,6 +249,74 @@
                     document.getElementById('roomId').value = msg.substring('Room Created: '.length);
                 }
                 document.getElementById('serverMessage').innerText = msg;
+            });
+
+            function updateArena(gameState) {
+                var currentBaseHP = Math.min(gameState.current_player_health, 4);
+                var currentShields = Math.max(0, gameState.current_player_health - 4);
+                var currentBaseHPSlots = document.querySelectorAll('#currentPlayerBaseHP .hp-slot');
+                currentBaseHPSlots.forEach((slot, index) => {
+                    if (index < currentBaseHP) {
+                        slot.classList.add('filled');
+                    } else {
+                        slot.classList.remove('filled');
+                    }
+                });
+                var currentShieldsDiv = document.getElementById('currentPlayerShields');
+                currentShieldsDiv.innerHTML = '';
+                for (var i = 0; i < currentShields; i++) {
+                    var shield = document.createElement('div');
+                    shield.className = 'shield';
+                    currentShieldsDiv.appendChild(shield);
+                }
+
+                var currentWeaponsDiv = document.getElementById('currentPlayerWeapons');
+                currentWeaponsDiv.innerHTML = '';
+                gameState.current_player_weaponry.forEach(function(weapon, index) {
+                    var weaponDiv = document.createElement('div');
+                    weaponDiv.className = 'weapon';
+                    weaponDiv.textContent = weapon;
+                    weaponDiv.dataset.index = index;
+                    weaponDiv.addEventListener('click', function() {
+                        document.getElementById('weaponIndex').value = index;
+                    });
+                    currentWeaponsDiv.appendChild(weaponDiv);
+                });
+
+                var opponentBaseHP = Math.min(gameState.opponent_health, 4);
+                var opponentShields = Math.max(0, gameState.opponent_health - 4);
+                var opponentBaseHPSlots = document.querySelectorAll('#opponentBaseHP .hp-slot');
+                opponentBaseHPSlots.forEach((slot, index) => {
+                    if (index < opponentBaseHP) {
+                        slot.classList.add('filled');
+                    } else {
+                        slot.classList.remove('filled');
+                    }
+                });
+                var opponentShieldsDiv = document.getElementById('opponentShields');
+                opponentShieldsDiv.innerHTML = '';
+                for (var i = 0; i < opponentShields; i++) {
+                    var shield = document.createElement('div');
+                    shield.className = 'shield';
+                    opponentShieldsDiv.appendChild(shield);
+                }
+
+                var opponentWeaponsDiv = document.getElementById('opponentWeapons');
+                opponentWeaponsDiv.innerHTML = '';
+                gameState.opponent_weaponry.forEach(function(weapon, index) {
+                    var weaponDiv = document.createElement('div');
+                    weaponDiv.className = 'weapon opponent-weapon';
+                    weaponDiv.textContent = weapon;
+                    weaponDiv.dataset.index = index;
+                    weaponDiv.addEventListener('click', function() {
+                        document.getElementById('targetList').value = index;
+                    });
+                    opponentWeaponsDiv.appendChild(weaponDiv);
+                });
+            }
+
+            document.getElementById('opponentHealth').addEventListener('click', function() {
+                document.getElementById('targetList').value = 'h';
             });
         });
 
@@ -146,34 +326,72 @@
                 document.getElementById('playerName').value = data.token;
             })
             .catch(error => console.error('Error fetching token:', error));
-
     </script>
 </head>
 <body>
     <h1>Game demo</h1>
     <div id="serverMessage"></div><br>
-    Use toke at /api/token as player name<br>
+    Use token at /api/token as player name<br>
     <label for="playerName">Player Name(token):</label>
     <input type="text" id="playerName" name="playerName"><br><br>
     <label for="roomId">Room ID:</label>
     <input type="text" id="roomId" name="roomId"><br><br>
     <button id="joinRoomButton">Join or Create Room</button><br><br>
-    <button id="rockButton">Rock</button>
-    <button id="paperButton">Paper</button>
-    <button id="scissorsButton">Scissors</button><br><br>
-    <button id="buildHealthButton">Build Health</button>
-    <button id="buildWeaponButton">Build Weapon</button><br><br>
-    <label for="weaponIndex">Weapon Index:</label>
-    <input type="number" id="weaponIndex" name="weaponIndex"><br><br>
-    <label for="targetList">Target List (comma separated):</label>
-    <input type="text" id="targetList" name="targetList"><br><br>
-    <button id="upgradeButton">Upgrade</button><br><br>
-    <button id="attackButton">Attack</button><br><br>
-    <button id="refreshButton">Manual Refresh</button><br><br>
+    <div id="preGameOptions">
+        <button id="readyButton">Ready</button>
+        <div id="opponentReadyStatus"></div>
+    </div>
+    <div id="gameControls" style="display: none;">
+        <button id="rockButton">Rock</button>
+        <button id="paperButton">Paper</button>
+        <button id="scissorsButton">Scissors</button><br><br>
+        <button id="buildHealthButton">Build Health</button>
+        <button id="buildWeaponButton">Build Weapon</button><br><br>
+        <label for="weaponIndex">Weapon Index:</label>
+        <input type="number" id="weaponIndex" name="weaponIndex"><br><br>
+        <label for="targetList">Target List (comma separated):</label>
+        <input type="text" id="targetList" name="targetList"><br><br>
+        <button id="upgradeButton">Upgrade</button><br><br>
+        <button id="attackButton">Attack</button><br><br>
+        <button id="refreshButton">Manual Refresh</button><br><br>
+    </div>
     <h3>Game Status</h3>
     <textarea id="gameState" rows="10" cols="50" placeholder="Game State"></textarea>
     <h3>Last json sent to server</h3>
     <textarea id="sentJson" rows="10" cols="50" placeholder="Sent JSON" readonly></textarea>
-
+    <div id="arena">
+        <h3>Arena</h3>
+        <div id="currentPlayerZone">
+            <h4>Current Player</h4>
+            <div id="currentPlayerHealth">
+                <div id="currentPlayerBaseHP">
+                    <div class="hp-slot"></div>
+                    <div class="hp-slot"></div>
+                    <div class="hp-slot"></div>
+                    <div class="hp-slot"></div>
+                </div>
+                <div id="currentPlayerShields"></div>
+            </div>
+            <div id="currentPlayerWeapons"></div>
+        </div>
+        <div id="opponentZone">
+            <h4>Opponent</h4>
+            <div id="opponentHealth" class="clickable">
+                <div id="opponentBaseHP">
+                    <div class="hp-slot"></div>
+                    <div class="hp-slot"></div>
+                    <div class="hp-slot"></div>
+                    <div class="hp-slot"></div>
+                </div>
+                <div id="opponentShields"></div>
+            </div>
+            <div id="opponentWeapons"></div>
+        </div>
+    </div>
+    <div id="gameEndOptions" style="display: none;">
+        <button id="rematchButton">Rematch</button>
+        <button id="joinAnotherRoomButton">Join another room</button>
+        <button id="returnToMenuButton">Return to menu</button>
+    </div>
 </body>
 </html>

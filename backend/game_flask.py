@@ -27,7 +27,7 @@ def anti_cheat(session: Session, username: str):
     # Get last 3 battles for the user (either player1 or player2)
     battles = session.query(BattleHistory).filter(
         (BattleHistory.player1 == username) | (BattleHistory.player2 == username)
-    ).order_by(BattleHistory.match_id.desc()).limit(3).all()
+    ).order_by(BattleHistory.MatchId.desc()).limit(3).all()
 
     if len(battles) < 3:
         return False  # Not enough matches to detect patterns
@@ -98,7 +98,12 @@ def refresh(room_id, player_name, sid,result='Maunal refresh'):
             'opponent_health': opponent.health,
             'opponent_weaponry': opponent.weaponry,
             'opponent_id' : opponent_name,
-            'opponent_name' : dump_users.id_to_name(opponent_name)
+            'opponent_name' : dump_users.id_to_name(opponent_name),
+            'current_player_ready': game_rooms[room_id]['ready'].get(player_name, False),
+            'opponent_ready': game_rooms[room_id]['ready'].get(opponent_name, False),
+            'current_player_rematch': game_rooms[room_id]['rematch'].get(player_name, False),
+            'opponent_rematch': game_rooms[room_id]['rematch'].get(opponent_name, False),
+            'game_started': game_rooms[room_id].get('game_started', False)
          }
         
         emit('game_state_refresh', game_state, room=sid)
@@ -138,7 +143,43 @@ def handle_message(data):
                         action = message.get('action')
                         value = message.get('value')
                         
-                        if action == 'refresh':
+
+                        if action == 'ready':
+                            if 'ready' in game_rooms[room_id]:
+                                game_rooms[room_id]['ready'][message['player_name']] = value
+                                if all(game_rooms[room_id]['ready'].values()) and not game_rooms[room_id].get('game_started', False):
+                                    game_rooms[room_id]['game_started'] = True
+                                    game_rooms[room_id]['game'] = Game()
+                                    result = "Both players are ready, game started"
+                                    for p in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
+                                        refresh(room_id, p, player_names[p], result)
+                                else:
+                                    result = f"Player {message['player_name']} set ready to {value}"
+                                    for p in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
+                                        refresh(room_id, p, player_names[p], result)
+                            else:
+                                emit('message_from_server', "Error: Ready status not initialized", room=request.sid)
+
+                        elif action == 'rematch':
+                            if 'game' in game_rooms[room_id] and game_rooms[room_id]['game'].state == 2:
+                                if 'rematch' in game_rooms[room_id]:
+                                    game_rooms[room_id]['rematch'][message['player_name']] = value
+                                    if all(game_rooms[room_id]['rematch'].values()):
+                                        game_rooms[room_id]['game'] = Game()
+                                        game_rooms[room_id]['rematch'] = {game_rooms[room_id]['player1']: False, game_rooms[room_id]['player2']: False}
+                                        result = "Both players agreed to rematch, game reset"
+                                        for p in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
+                                            refresh(room_id, p, player_names[p], result)
+                                    else:
+                                        result = f"Player {message['player_name']} set rematch to {value}"
+                                        for p in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
+                                            refresh(room_id, p, player_names[p], result)
+                                else:
+                                    emit('message_from_server', "Error: Rematch status not initialized", room=request.sid)
+                            else:
+                                emit('message_from_server', "Error: Game is not ended", room=request.sid)
+
+                        elif action == 'refresh':
                             player_name = message['player_name']
                             refresh(room_id, player_name, request.sid)
 
@@ -164,8 +205,10 @@ def handle_message(data):
                                         dbSession = db.Session()
                                         winner_username = dump_users.id_to_name(game_rooms[room_id]['player1'])
                                         loser_username = dump_users.id_to_name(game_rooms[room_id]['player2'])
-                                        player1_rpsWinrate = round(Decimal(game.player1.rpsWin) / Decimal(game.player1.rpsWin + game.player2.rpsWin), 2)
-                                        player2_rpsWinrate = round(Decimal(game.player2.rpsWin) / Decimal(game.player1.rpsWin + game.player2.rpsWin), 2)
+                                        winner_player = game.player2
+                                        loser_player = game.player1
+                                        player1_rpsWinrate = round(Decimal(game.player1_rps_win) / Decimal(game.player1_rps_win + game.player2_rps_win), 2)
+                                        player2_rpsWinrate = round(Decimal(game.player2_rps_win) / Decimal(game.player1_rps_win + game.player2_rps_win), 2)
                                         db.add_match_history(winner_username, loser_username, player1_rpsWinrate, player2_rpsWinrate, winner_username)
                                         if anti_cheat(dbSession, winner_username):
                                             victim = dbSession.query(User).filter_by(username=winner_username).first()
@@ -214,6 +257,9 @@ def handle_message(data):
                         emit('message_from_server', f'Error: Room {room_id} already has two players.', room=request.sid)
                     else:
                         game_rooms[room_id]['player2'] = message['player_name']
+                        game_rooms[room_id]['ready'] = {game_rooms[room_id]['player1']: False, game_rooms[room_id]['player2']: False}
+                        game_rooms[room_id]['rematch'] = {game_rooms[room_id]['player1']: False, game_rooms[room_id]['player2']: False}
+                        game_rooms[room_id]['game_started'] = False
                         print(f'Added player2 {message["player_name"]} to room {room_id}')
                         
                         # Create a Game instance and store it in game_rooms

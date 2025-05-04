@@ -190,7 +190,7 @@ class DatabaseService:
         session = self.Session()
         try:
             history = BattleHistory(
-            matchId=None,  # Auto-incremented by the database
+            MatchId=None,  # Auto-incremented by the database
             match_end_time=datetime.utcnow(),  
             player1=player1,
             player2=player2,
