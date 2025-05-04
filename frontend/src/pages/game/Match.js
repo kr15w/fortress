@@ -446,22 +446,27 @@ export default class Match extends Phaser.Scene {
 				duration: 300,
 				onComplete: () => {
 					this.atkBtn.off("pointerdown", chooseAtk, this);
-					this.p2Base.setTintFill(0xffffff);
+					//this.p2Base.setTintFill(0xffffff);
 					this.targets.removeAll();
 
-					//add base target
-
-					//add cannon targets
+					//add base+cannon targets
+					this.targets.add(
+						this.add
+							.sprite(this.p2Base.x, this.p2Base.y, "match_targetBase")
+							.setDisplayOrigin(32, 38)
+					);
 					for (const c of this.p2Cannons) {
 						console.log("add target at", c.x, c.y);
 
 						this.targets.add(new TargetCannon(this, c.x, c.y));
 					}
+					this.targets.setVisible(true);
+					this.targets.setDepth(9999);
 
-					this.p2Base
+					this.targets.first
 						.setInteractive({ cursor: "pointer" })
 						.on("pointerdown", () => {
-							this.p2Base.removeInteractive();
+							this.targets.first.removeInteractive();
 							//this.p2Base.off("pointerdown");
 							this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
 								target: "tower",
@@ -695,7 +700,8 @@ export default class Match extends Phaser.Scene {
 		this.bldBtn.hide();
 		this.upgBtn.hide();
 
-		this.p2Base.clearTint();
+		//this.p2Base.clearTint();
+		this.targets.setVisible(false);
 
 		this.cannonBtn.hide();
 		this.shieldBtn.hide();
