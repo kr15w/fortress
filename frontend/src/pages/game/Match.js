@@ -70,6 +70,11 @@ export default class Match extends Phaser.Scene {
     this.load.image("match_shieldBtn", "assets/match_shieldBtn.png");
 
     this.load.atlas(
+      "match_p1Cannon",
+      "assets/match_p1Cannon.png",
+      "assets/match_p1Cannon.json"
+    );
+    this.load.atlas(
       "match_p1Shield",
       "assets/match_p1Shield.png",
       "assets/match_p1Shield.json"
@@ -121,7 +126,10 @@ export default class Match extends Phaser.Scene {
     this._createPlayers();
     this._createRpsBtns();
     this._createTowerBtns();
-    this._createShields();
+
+    this.p1Cannons = [];
+    this.p1Shields = []; // for visuals only
+    //adjust cannon offsetrs and add its y pos
 
     //this.add.existing(new Button(this, 0, 0, "match_rps_rock"));
 
@@ -147,6 +155,7 @@ export default class Match extends Phaser.Scene {
 
     this.events.emit("roundStart");
   }
+
   _createBases() {
     this.p1Base = this.add
       .sprite(736, 1107, "match_p1Base")
@@ -159,44 +168,6 @@ export default class Match extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(10)
       .setName("p2Base");
-  }
-  _createShields() {
-    this.p1Shields = [];
-    /*
-    // a working shield DDDDD:
-    let shield = this.add
-      .sprite(1280, 1438, "match_p1Shield")
-      .setDisplayOrigin(817, 519)
-      .setDepth(10)
-      .setInteractive()
-      .setVisible(false);
-
-    const resizeHandler = (pointer) => {
-      const distance = Phaser.Math.Distance.Between(
-        shield.x,
-        shield.y,
-        pointer.x,
-        pointer.y
-      );
-      const newScale = roundToNearest(
-        Math.max(0.85, Math.min(1.5, distance / 500)),
-        0.05
-      );
-      shield.setScale(newScale);
-    };
-    shield.setVisible(true);
-    this.input.on("pointermove", resizeHandler);
-
-    const confirmHandler = () => {
-      this.input.off("pointermove", resizeHandler);
-      this.input.off("pointerdown", confirmHandler);
-      this.p1Shields.push(shield.scale);
-
-      //alert(shield.scale);
-    };
-
-    this.input.once("pointerdown", confirmHandler);
-    */
   }
   _createBackground() {
     this.bg = this.add
@@ -472,16 +443,61 @@ export default class Match extends Phaser.Scene {
             // canon or shield
             this.cannonBtn.visible = true;
             this.shieldBtn.visible = true;
+
+            //if add canon
+            const handleAddCannon = () => {
+              let cannon = new Cannon(this, this.input.mousePointer);
+              //console.log("owo");
+              /*
+              let cannon = this.add
+                .sprite(
+                  this.input.mousePointer.x,
+                  this.input.mousePointer.y,
+                  "match_p1Cannon"
+                )
+                .setDepth(10)
+                .setInteractive()
+                .setVisible(true);*/
+
+              this.shieldBtn.off("pointerdown", handleAddShield);
+              this.shieldBtn.removeInteractive();
+
+              const handleMoveCannon = (pointer) => {
+                console.log("owo");
+                cannon.setX(pointer.x);
+              };
+
+              //you cant add a shield when overlap with other cannons. shields idk
+              this.input.on("pointermove", handleMoveCannon);
+              console.log("owo2");
+
+              this.time.addEvent({
+                delay: 50, //stupid code
+                callback: () => {
+                  const handleConfirm = () => {
+                    if (!this.cantAddCannon) {
+                      this.input.off("pointermove", handleAddCannon);
+                      this.input.off("pointermove", handleMoveCannon);
+                      this.input.off("pointerdown", handleConfirm);
+                      this.p1Cannons.push(cannon.x);
+                      console.log("cannons: ", this.p1Cannons);
+                      this.handleTowerInput(
+                        TowerActionTypes.BUILD_CANNON,
+                        cannon.x
+                      );
+                    }
+                  };
+
+                  this.input.on("pointerdown", handleConfirm);
+                },
+                loop: false,
+              });
+            };
             this.cannonBtn
               .setInteractive({
                 cursor: "pointer",
               })
-              .on("pointerdown", () => {
-                this.handleTowerInput(
-                  TowerActionTypes.BUILD_CANNON,
-                  this.povName
-                );
-              });
+              .on("pointerdown", handleAddCannon);
 
             //disable later to avoid double clickin
             const handleAddShield = () => {
@@ -532,6 +548,7 @@ export default class Match extends Phaser.Scene {
                       this.input.off("pointermove", handleResize);
                       this.input.off("pointerdown", handleConfirm);
                       this.p1Shields.push(shield.scale); // this is for visuals only
+                      console.log(this.p1Shields);
                       this.handleTowerInput(
                         TowerActionTypes.BUILD_SHIELD,
                         shield.scale
@@ -766,6 +783,20 @@ class Button extends Phaser.GameObjects.Sprite {
       this.setAlpha(0.7);
     });
 
+    scene.add.existing(this);
+  }
+}
+class Cannon extends Phaser.GameObjects.Sprite {
+  constructor(scene, pointer) {
+    // y was 1443
+    super(scene, pointer.x, 1430, "match_p1Cannon");
+    this.pow = 1;
+    this.placed = false;
+
+    this.setDisplayOrigin(129, 281)
+      .setDepth(10)
+      .setInteractive()
+      .setVisible(true);
     scene.add.existing(this);
   }
 }
