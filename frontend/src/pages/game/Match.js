@@ -4,6 +4,7 @@ import ANIMS from "./match_anims.json";
 
 /**
  * done add tie anim
+ * @todo add rmb to cansel
  * @todo show more clearly what rps is chosen
  * @todo make everything prettier
  * @todo put buttons in a container
@@ -716,14 +717,17 @@ export default class Match extends Phaser.Scene {
 
         // server sends the x pos of pov, calculte opponent x pos
         let oppX = ((info.x - 27) / (2580 - 27)) * 830 + 880;
+
         oppX += 2 * (1280 - oppX);
-        if (oppX > 1026 && oppX < 1531) {
-          if (oppX < 1280) {
-            oppX = 1531;
+        console.log("oppX: ", oppX);
+        if (oppX > 1026 && oppX < 1541) {
+          if (oppX > 1280) {
+            oppX = 1541;
           } else {
             oppX = 1026;
           }
         }
+        console.log("oppX: ", oppX);
 
         let oppCannon = this.add
           .sprite(oppX, 549, "match_p2Cannon")
@@ -791,7 +795,6 @@ class Player {
     this.hp = 4;
     //this.shields = [];
     this.cannons = [];
-    this.choice = null;
   }
 
   toString() {
