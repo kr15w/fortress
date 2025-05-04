@@ -1,22 +1,21 @@
-import { Preloader } from './Preloader';
-import { Lobby } from './Lobby';
-import Phaser from 'phaser';
+import { Preloader } from "./Preloader";
+import { Lobby } from "./Lobby";
+import Phaser from "phaser";
 
 const config = {
-    title: 'Fortress',
+    title: "Fortress",
     type: Phaser.AUTO,
     width: 2560,
     height: 1440,
-    parent: 'game-container',
-    backgroundColor: '#192a56',
+    parent: "game-container",
+
+    backgroundColor: "#192a56",
     pixelArt: true,
     scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [
-        Lobby,
-    ]
+    scene: [Lobby],
 };
 
 new Phaser.Game(config);

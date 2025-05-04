@@ -21,6 +21,7 @@ class Game extends Component {
       width: 2560,
       height: 1440,
       parent: "game",
+      disableContextMenu: true, //yay
       backgroundColor: "#333333",
       scale: {
         mode: Phaser.Scale.FIT,

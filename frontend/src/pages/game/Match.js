@@ -19,7 +19,7 @@ const TowerActionTypes = {
   BUILD_CANNON: "bc",
   ATTACK_TOWER: "at",
   ATTACK_CANNON: "ac",
-  UPGRADE_SHIELD: "us",
+  //UPGRADE_SHIELD: "us",
   UPGRADE_CANNON: "ub",
 };
 
@@ -137,7 +137,8 @@ export default class Match extends Phaser.Scene {
 
     this.p1Cannons = [];
     this.p1Shields = []; // for visuals only
-    //adjust cannon offsetrs and add its y pos
+
+    //Phaser.Input.Mouse.MouseManager.disableContextMenu();
 
     //this.add.existing(new Button(this, 0, 0, "match_rps_rock"));
 
@@ -402,191 +403,232 @@ export default class Match extends Phaser.Scene {
     }
   }
   _showTowerButtons() {
+    // The build/atk/up buttons only
     //show the arm lel
     this.p1Left.visible = true;
 
+    const chooseAtk = () => {
+      this.bldBtn.hide();
+      this.upgBtn.hide();
+      this.cannonBtn.hide();
+      this.shieldBtn.hide();
+      //player visulals
+      this.atkBtn.off("pointerdown");
+      this.atkBtn.removeInteractive();
+
+      this.tweens.add({
+        targets: this.atkBtn,
+        x: 475,
+        y: 294,
+        ease: "Linear",
+        duration: 300,
+        onComplete: () => {
+          //glow opp tower
+          this.p2Base.setTint(0xffffff);
+
+          // glow weapons
+        },
+      });
+      // Attack base or cannon?
+
+      if (null) {
+        this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, targetIdk);
+      } else {
+        this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, this.povName);
+      }
+    };
     this.atkBtn
       .setInteractive({
         cursor: "pointer",
       })
-      .on("pointerdown", () => {
-        //player visulals
-        this.atkBtn.off("pointerdown");
-        this.atkBtn.removeInteractive();
-
-        this.tweens.add({
-          targets: this.atkBtn,
-          x: 475,
-          y: 294,
-          ease: "Linear",
-          duration: 300,
-          onComplete: () => {
-            //glow opp tower
-            this.p2Base.setTint(0xffffff);
-
-            // glow weapons
-          },
-        });
-        // Attack base or cannon?
-
-        if (null) {
-          this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, targetIdk);
-        } else {
-          this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, this.povName);
+      .on("pointerdown", (p) => {
+        if (p.buttons == 1) {
+          chooseAtk();
         }
       });
 
-    this.bldBtn
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", () => {
-        this.tweens.add({
-          targets: this.bldBtn,
-          x: 607,
-          y: 362,
-          ease: "Linear",
-          duration: 100,
-          onComplete: () => {
-            // canon or shield
-            this.cannonBtn.visible = true;
-            this.shieldBtn.visible = true;
+    const chooseBld = () => {
+      this.atkBtn.hide();
+      this.upgBtn.hide();
+      this.cannonBtn.hide();
+      this.shieldBtn.hide();
 
-            const handleAddCannon = () => {
-              let cannon = new Cannon(this, this.input.mousePointer);
-              /*let debugPoint = this.add
+      this.tweens.add({
+        targets: this.bldBtn,
+        x: 607,
+        y: 362,
+        ease: "Linear",
+        duration: 100,
+        onComplete: () => {
+          // canon or shield
+          this.cannonBtn.visible = true;
+          this.shieldBtn.visible = true;
+
+          const handleAddCannon = () => {
+            let cannon = new Cannon(this, this.input.mousePointer);
+            /*let debugPoint = this.add
               .sprite(oppX, 549, "match_p2Cannon")
               .setDisplayOrigin(49, 79)
               .setDepth(10)
               .setVisible(true);
 */
-              this.cannonBtn.off("pointerdown", handleAddCannon);
-              this.cannonBtn.removeInteractive();
+            this.cannonBtn.off("pointerdown", handleAddCannon);
+            this.cannonBtn.removeInteractive();
 
-              const handleMove = (pointer) => {
-                cannon.setX(pointer.x);
-                if (cannon.x < SCENE_W / 2) {
-                  cannon.flipX = false;
-                } else {
-                  cannon.flipX = true;
-                }
-                /*
+            const handleMove = (pointer) => {
+              cannon.setX(pointer.x);
+              if (cannon.x < SCENE_W / 2) {
+                cannon.flipX = false;
+              } else {
+                cannon.flipX = true;
+              }
+              /*
                 // Update debug point position
                 let oppX = ((pointer.x - 27) / (2580 - 27)) * 830 + 880;
                 oppX += 2 * (1280 - oppX);
                 debugPoint.setPosition(oppX, 549);
 */
-                // dont overlap existing cannons AND da base(what about shields)
-                this.cantAddCannon =
-                  this.p1Cannons.some((builtC) => {
-                    let bounds1 = cannon.getBounds();
-                    let bounds2 = builtC.getBounds();
-                    return Phaser.Geom.Intersects.RectangleToRectangle(
-                      bounds1,
-                      bounds2
-                    );
-                  }) ||
-                  Phaser.Geom.Intersects.RectangleToRectangle(
-                    cannon.getBounds(),
-                    this.p1Base.getBounds()
+              // dont overlap existing cannons AND da base(what about shields)
+              this.cantAddCannon =
+                this.p1Cannons.some((builtC) => {
+                  let bounds1 = cannon.getBounds();
+                  let bounds2 = builtC.getBounds();
+                  return Phaser.Geom.Intersects.RectangleToRectangle(
+                    bounds1,
+                    bounds2
                   );
-
-                if (this.cantAddCannon) {
-                  cannon.setTint(0xff0000);
-                } else {
-                  cannon.clearTint();
-                }
-              };
-              this.input.on("pointermove", handleMove);
-
-              this.time.addEvent({
-                delay: 50,
-                callback: () => {
-                  const handleConfirm = () => {
-                    if (!this.cantAddCannon) {
-                      this.input.off("pointermove", handleMove);
-                      this.input.off("pointerdown", handleConfirm);
-                      this.p1Cannons.push(cannon);
-                      console.log("cannons: ", this.p1Cannons);
-                      this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
-                        x: cannon.x,
-                      });
-                    }
-                  };
-                  this.input.on("pointerdown", handleConfirm, this);
-                },
-                loop: false,
-              });
-            };
-            this.cannonBtn
-              .setInteractive({
-                cursor: "pointer",
-              })
-              .on("pointerdown", handleAddCannon);
-
-            //disable later to avoid double clickin
-            const handleAddShield = () => {
-              this.shieldBtn.off("pointerdown", handleAddShield);
-              this.shieldBtn.removeInteractive();
-
-              let shield = new Shield(this, this.input.mousePointer);
-
-              const handleResize = (pointer) => {
-                shield.handleResize(pointer);
-                this.cantAddShield = this.p1Shields.some(
-                  (scale) => Math.abs(scale - shield.scale) <= 0.001
+                }) ||
+                Phaser.Geom.Intersects.RectangleToRectangle(
+                  cannon.getBounds(),
+                  this.p1Base.getBounds()
                 );
 
-                if (this.cantAddShield) {
-                  shield.setTint(0xff0000);
-                } else {
-                  shield.clearTint();
-                }
-              };
-
-              this.input.on("pointermove", handleResize);
-
-              this.time.addEvent({
-                delay: 50,
-                callback: () => {
-                  const handleConfirm = () => {
-                    if (!this.cantAddShield) {
-                      this.input.off("pointermove", handleAddShield);
-                      this.input.off("pointermove", handleResize);
-                      this.input.off("pointerdown", handleConfirm);
-                      this.p1Shields.push(shield);
-                      console.log(this.p1Shields);
-                      this.handleTowerInput(
-                        TowerActionTypes.BUILD_SHIELD,
-                        shield.scale
-                      );
-                    }
-                  };
-                  this.input.on("pointerdown", handleConfirm);
-                },
-                loop: false,
-              });
+              if (this.cantAddCannon) {
+                cannon.setTint(0xff0000);
+              } else {
+                cannon.clearTint();
+              }
             };
-            this.shieldBtn
-              .setInteractive({
-                cursor: "pointer",
-              })
-              .on("pointerdown", handleAddShield);
-          },
-        });
+            this.input.on("pointermove", handleMove);
+
+            this.time.addEvent({
+              delay: 50,
+              callback: () => {
+                const handleConfirm = () => {
+                  if (!this.cantAddCannon) {
+                    this.input.off("pointermove", handleMove);
+                    this.input.off("pointerdown", handleConfirm);
+                    this.p1Cannons.push(cannon);
+                    console.log("cannons: ", this.p1Cannons);
+                    this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
+                      x: cannon.x,
+                    });
+                  }
+                };
+
+                const handleCancel = () => {
+                  console.warn("cajncellll");
+                  this.input.off("pointermove", handleMove);
+                  cannon.destroy();
+                  this._showTowerButtons();
+                };
+                this.input.on(
+                  "pointerdown",
+                  (p) => {
+                    console.log("pointer down", p.buttons);
+                    if (p.buttons == 1) {
+                      handleConfirm();
+                    } /* else if (p.buttons == 2) {
+                      handleCancel();
+                    }*/
+                  },
+                  this
+                );
+              },
+              loop: false,
+            });
+          };
+          this.cannonBtn
+            .setInteractive({
+              cursor: "pointer",
+            })
+            .on("pointerdown", handleAddCannon);
+
+          //disable later to avoid double clickin
+          const handleAddShield = () => {
+            this.shieldBtn.off("pointerdown", handleAddShield);
+            this.shieldBtn.removeInteractive();
+
+            let shield = new Shield(this, this.input.mousePointer);
+
+            const handleResize = (pointer) => {
+              shield.handleResize(pointer);
+              this.cantAddShield = this.p1Shields.some(
+                (scale) => Math.abs(scale - shield.scale) <= 0.001
+              );
+
+              if (this.cantAddShield) {
+                shield.setTint(0xff0000);
+              } else {
+                shield.clearTint();
+              }
+            };
+
+            this.input.on("pointermove", handleResize);
+
+            this.time.addEvent({
+              delay: 50,
+              callback: () => {
+                const handleConfirm = () => {
+                  if (!this.cantAddShield) {
+                    this.input.off("pointermove", handleAddShield);
+                    this.input.off("pointermove", handleResize);
+                    this.input.off("pointerdown", handleConfirm);
+                    this.p1Shields.push(shield);
+                    console.log(this.p1Shields);
+                    this.handleTowerInput(
+                      TowerActionTypes.BUILD_SHIELD,
+                      shield.scale
+                    );
+                  }
+                };
+                this.input.on("pointerdown", handleConfirm);
+              },
+              loop: false,
+            });
+          };
+          this.shieldBtn
+            .setInteractive({
+              cursor: "pointer",
+            })
+            .on("pointerdown", handleAddShield);
+        },
       });
+    };
+    this.bldBtn
+      .setInteractive({
+        cursor: "pointer",
+      })
+      .on("pointerdown", chooseBld);
+
+    const chooseUpg = () => {
+      this.atkBtn.hide();
+      this.bldBtn.hide();
+      this.cannonBtn.hide();
+      this.shieldBtn.hide();
+      this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, this.povName);
+    };
     this.upgBtn
       .setInteractive({
         cursor: "pointer",
       })
-      .on("pointerdown", () => {
-        this.handleRpsInput("p", this.povName);
-      });
+      .on("pointerdown", chooseUpg);
 
     // Hide all buttons first
-    this.atkBtn.visible = false;
+    this.atkBtn.hide();
     this.bldBtn.visible = true;
-    this.upgBtn.visible = false;
+    this.upgBtn.hide();
+    this.cannonBtn.hide();
 
     // Reset positions of buttons to their initial positions
     this.atkBtn.setPosition(546, 389);
@@ -607,18 +649,12 @@ export default class Match extends Phaser.Scene {
     }
   }
   _hideTowerButtons() {
-    this.atkBtn.visible = false;
-    this.bldBtn.visible = false;
-    this.upgBtn.visible = false;
+    this.atkBtn.hide();
+    this.bldBtn.hide();
+    this.upgBtn.hide();
 
-    this.cannonBtn.visible = false;
-    this.shieldBtn.visible = false;
-
-    this.atkBtn.removeAllListeners();
-    this.bldBtn.removeAllListeners();
-    this.upgBtn.removeAllListeners();
-    this.cannonBtn.removeAllListeners();
-    this.shieldBtn.removeAllListeners();
+    this.cannonBtn.hide();
+    this.shieldBtn.hide();
   }
 
   _decideWinner(p1RpsChoice, p2RpsChoice) {
@@ -743,9 +779,9 @@ export default class Match extends Phaser.Scene {
       case TowerActionTypes.ATTACK_CANNON:
         console.log("info: ", info);
         break;
-      case TowerActionTypes.UPGRADE_SHIELD:
+      /*case TowerActionTypes.UPGRADE_SHIELD:
         console.log("info: ", info);
-        break;
+        break;*/
       case TowerActionTypes.UPGRADE_CANNON:
         console.log("info: ", info);
         break;
@@ -818,6 +854,11 @@ class Button extends Phaser.GameObjects.Sprite {
     });
 
     scene.add.existing(this);
+  }
+  hide() {
+    this.setVisible(false);
+    this.removeAllListeners();
+    this.removeInteractive();
   }
 }
 class Cannon extends Phaser.GameObjects.Sprite {
