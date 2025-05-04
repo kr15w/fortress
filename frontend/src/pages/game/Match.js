@@ -5,6 +5,7 @@ import ANIMS from "./match_anims.json";
 /**
  * done add tie anim
  * @todo add rmb to cansel
+ * @todo how to calculate p2 shield?
  * @todo show more clearly what rps is chosen
  * @todo make everything prettier
  * @todo put buttons in a container
@@ -14,520 +15,555 @@ const SCENE_H = 1440;
 const SCENE_W = 2560;
 
 const TowerActionTypes = {
-  BUILD_TOWER: "bt",
-  BUILD_SHIELD: "bs",
-  BUILD_CANNON: "bc",
-  ATTACK_TOWER: "at",
-  ATTACK_CANNON: "ac",
-  //UPGRADE_SHIELD: "us",
-  UPGRADE_CANNON: "ub",
+	BUILD_TOWER: "bt",
+	BUILD_SHIELD: "bs",
+	BUILD_CANNON: "bc",
+	ATTACK_TOWER: "at",
+	ATTACK_CANNON: "ac",
+	//UPGRADE_SHIELD: "us",
+	UPGRADE_CANNON: "ub",
 };
 
 function roundToNearest(num, nearest) {
-  if (nearest === 0) return num;
-  return Math.round(num / nearest) * nearest;
+	if (nearest === 0) return num;
+	return Math.round(num / nearest) * nearest;
 }
 
 export default class Match extends Phaser.Scene {
-  initGame() {
-    this.state = {
-      roundWinner: null,
-      stage: "rpsStart",
-      players: [],
-      rounds: 0,
-      p1RpsChoice: null,
-      p2RpsChoice: null,
-      roundWinnerChoice: null,
-    };
-  }
-  addPlayer(p) {
-    this.state.players.push(p);
-  }
-  constructor() {
-    super("Match");
-    this.initGame();
-    // I am noogai
-    this.povName = "noogai67";
-  }
+	initGame() {
+		this.state = {
+			roundWinner: null,
+			stage: "rpsStart",
+			players: [],
+			rounds: 0,
+			p1RpsChoice: null,
+			p2RpsChoice: null,
+			roundWinnerChoice: null,
+		};
+	}
+	addPlayer(p) {
+		this.state.players.push(p);
+	}
+	constructor() {
+		super("Match");
+		this.initGame();
+		// I am noogai
+		this.povName = "noogai67";
+	}
 
-  init(data) {
-    this.initGame();
-    this.addPlayer(new Player(this.povName));
-    this.addPlayer(new Player("discovry"));
+	init(data) {
+		this.initGame();
+		this.addPlayer(new Player(this.povName));
+		this.addPlayer(new Player("discovry"));
 
+		/*
     this.input.on("pointerdown", (pointer) => {
       console.log("lmb 1 or rmb 2:", pointer.buttons);
-    });
-  }
+    });*/
+	}
 
-  preload() {
-    this.load.image("match_bg", "assets/match_bg.png");
-    this.load.image("match_table", "assets/match_table.png");
-    this.load.image("match_rps_rock", "assets/match_rps_rock.png");
-    this.load.image("match_rps_paper", "assets/match_rps_paper.png");
-    this.load.image("match_rps_scissors", "assets/match_rps_scissors.png");
-    this.load.image("match_atkBtn", "assets/match_atkBtn.png");
-    this.load.image("match_bldBtn", "assets/match_bldBtn.png");
-    this.load.image("match_upgBtn", "assets/match_upgBtn.png");
-    this.load.image("match_cannonBtn", "assets/match_cannonBtn.png");
-    this.load.image("match_shieldBtn", "assets/match_shieldBtn.png");
+	preload() {
+		this.load.image("match_bg", "assets/match_bg.png");
+		this.load.image("match_table", "assets/match_table.png");
+		this.load.image("match_rps_rock", "assets/match_rps_rock.png");
+		this.load.image("match_rps_paper", "assets/match_rps_paper.png");
+		this.load.image("match_rps_scissors", "assets/match_rps_scissors.png");
+		this.load.image("match_atkBtn", "assets/match_atkBtn.png");
+		this.load.image("match_bldBtn", "assets/match_bldBtn.png");
+		this.load.image("match_upgBtn", "assets/match_upgBtn.png");
+		this.load.image("match_cannonBtn", "assets/match_cannonBtn.png");
+		this.load.image("match_shieldBtn", "assets/match_shieldBtn.png");
 
-    this.load.atlas(
-      "match_p2Cannon",
-      "assets/match_p2Cannon.png",
-      "assets/match_p2Cannon.json"
-    );
-    this.load.atlas(
-      "match_p1Cannon",
-      "assets/match_p1Cannon.png",
-      "assets/match_p1Cannon.json"
-    );
-    this.load.atlas(
-      "match_p1Shield",
-      "assets/match_p1Shield.png",
-      "assets/match_p1Shield.json"
-    );
-    this.load.atlas(
-      "match_p1Base",
-      "assets/match_p1Base.png",
-      "assets/match_p1Base.json"
-    );
-    this.load.atlas(
-      "match_p2Base",
-      "assets/match_p2Base.png",
-      "assets/match_p2Base.json"
-    );
-    this.load.atlas(
-      "match_p1Left",
-      "assets/match_p1Left.png",
-      "assets/match_p1Left.json"
-    );
-    this.load.atlas(
-      "match_p1Right",
-      "assets/match_p1Right.png",
-      "assets/match_p1Right.json"
-    );
-    this.load.atlas(
-      "match_rps_text",
-      "assets/match_rps_text.png",
-      "assets/match_rps_text.json"
-    );
-    this.load.atlas(
-      "match_p2Body",
-      "assets/match_p2Body.png",
-      "assets/match_p2Body.json"
-    );
-    this.load.atlas(
-      "match_p2Hand",
-      "assets/match_p2Hand.png",
-      "assets/match_p2Hand.json"
-    );
-  }
+		this.load.atlas(
+			"match_targetCannon",
+			"assets/match_targetCannon.png",
+			"assets/match_targetCannon.json"
+		);
 
-  create() {
-    const SCENE_W = this.sys.game.canvas.width;
-    const SCENE_H = this.sys.game.canvas.height;
+		this.load.atlas(
+			"match_targetBase",
+			"assets/match_targetBase.png",
+			"assets/match_targetBase.json"
+		);
 
-    this._createBackground();
-    //this.createTable(); // optimize later
-    this._createBases();
-    this._createPlayers();
-    this._createRpsBtns();
-    this._createTowerBtns();
+		this.load.atlas(
+			"match_p2Cannon",
+			"assets/match_p2Cannon.png",
+			"assets/match_p2Cannon.json"
+		);
+		this.load.atlas(
+			"match_p1Cannon",
+			"assets/match_p1Cannon.png",
+			"assets/match_p1Cannon.json"
+		);
+		this.load.atlas(
+			"match_p1Shield",
+			"assets/match_p1Shield.png",
+			"assets/match_p1Shield.json"
+		);
+		this.load.atlas(
+			"match_p1Base",
+			"assets/match_p1Base.png",
+			"assets/match_p1Base.json"
+		);
+		this.load.atlas(
+			"match_p2Base",
+			"assets/match_p2Base.png",
+			"assets/match_p2Base.json"
+		);
+		this.load.atlas(
+			"match_p1Left",
+			"assets/match_p1Left.png",
+			"assets/match_p1Left.json"
+		);
+		this.load.atlas(
+			"match_p1Right",
+			"assets/match_p1Right.png",
+			"assets/match_p1Right.json"
+		);
+		this.load.atlas(
+			"match_rps_text",
+			"assets/match_rps_text.png",
+			"assets/match_rps_text.json"
+		);
+		this.load.atlas(
+			"match_p2Body",
+			"assets/match_p2Body.png",
+			"assets/match_p2Body.json"
+		);
+		this.load.atlas(
+			"match_p2Hand",
+			"assets/match_p2Hand.png",
+			"assets/match_p2Hand.json"
+		);
+	}
 
-    this.p1Cannons = [];
-    this.p1Shields = []; // for visuals only
+	create() {
+		const SCENE_W = this.sys.game.canvas.width;
+		const SCENE_H = this.sys.game.canvas.height;
 
-    //Phaser.Input.Mouse.MouseManager.disableContextMenu();
+		this._createBackground();
+		//this.createTable(); // optimize later
+		this._createBases();
+		this._createPlayers();
+		this._createRpsBtns();
+		this._createTowerBtns();
 
-    //this.add.existing(new Button(this, 0, 0, "match_rps_rock"));
+		const debugC = new Cannon(this, 1, 500);
+		const debugC2 = new Cannon(this, 1, 1000);
+		this.state.players[0].cannons.push(debugC);
+		this.state.players[1].cannons.push(debugC2);
 
-    loadAnims(ANIMS, this);
-    this.p1Right.play("match_p1Right_wait");
-    this.p2Body.play("match_p2Body_wait");
+		// for visuals only
+		this.p1Cannons = [debugC];
+		this.p1Shields = [];
+		this.p2Cannons = [debugC2];
+		this.p2Shields = [];
 
-    //debug
-    this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-    this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+		//aaaaaaaaaaaaaaaa
+		this.targets = this.add.container(0, 0);
 
-    this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
+		/*****also remove the debug c lol */
 
-    this.events.on("roundStart", () => {
-      this.onRoundStart();
-    });
-    this.events.on("rpsResult", () => {
-      this.onRpsResult();
-    });
-    this.events.on("towerStart", () => {
-      this.onTowerStart();
-    });
+		//this.add.existing(new Button(this, 0, 0, "match_rps_rock"));
 
-    this.events.emit("roundStart");
-  }
+		loadAnims(ANIMS, this);
+		this.p1Right.play("match_p1Right_wait");
+		this.p2Body.play("match_p2Body_wait");
 
-  _createBases() {
-    this.p1Base = this.add
-      .sprite(736, 1107, "match_p1Base")
-      .setOrigin(0, 0)
-      .setDepth(10)
-      .setName("p1Base");
+		//debug
+		this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+		this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
 
-    this.p2Base = this.add
-      .sprite(1022, 525, "match_p2Base")
-      .setOrigin(0, 0)
-      .setDepth(10)
-      .setName("p2Base");
-  }
-  _createBackground() {
-    this.bg = this.add
-      .sprite(-19, -95, "match_bg")
-      .setOrigin(0, 0)
-      .setDepth(-99)
-      .setName("bg");
+		this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
 
-    this.table = this.add
-      .sprite(-80, 523, "match_table")
-      .setOrigin(0, 0)
-      .setDepth(9)
-      .setName("table");
-  }
+		this.events.on("roundStart", () => {
+			this.onRoundStart();
+		});
+		this.events.on("rpsResult", () => {
+			this.onRpsResult();
+		});
+		this.events.on("towerStart", () => {
+			this.onTowerStart();
+		});
 
-  _createPlayers() {
-    // Player 2 (opponent)
-    this.p2Body = this.add
-      .sprite(1095, 76, "match_p2Body")
-      .setDisplayOrigin(17, 93)
-      .setDepth(1)
-      .setName("p2Body");
+		this.events.emit("roundStart");
+	}
 
-    this.p2Hand = this.add
-      //why is it all around the place!!!!!!
-      .sprite(1130, 350, "match_p2Hand")
-      .setDisplayOrigin(313, 212)
-      .setDepth(999)
-      .setName("p2Hand");
+	_createBases() {
+		this.p1Base = this.add
+			.sprite(736, 1107, "match_p1Base")
+			.setOrigin(0, 0)
+			.setDepth(10)
+			.setName("p1Base");
 
-    // Player 1 (user)
-    this.p1Left = this.add
-      .sprite(-496, 1208, "match_p1Left")
-      .setDisplayOrigin(0, 759)
-      .setDepth(999)
-      .setAlpha(0.7, 0.7, 0.9, 0.7)
-      .setName("p1Left");
+		this.p2Base = this.add
+			.sprite(1022, 525, "match_p2Base")
+			.setOrigin(0, 0)
+			.setDepth(10)
+			.setName("p2Base");
+	}
+	_createBackground() {
+		this.bg = this.add
+			.sprite(-19, -95, "match_bg")
+			.setOrigin(0, 0)
+			.setDepth(-99)
+			.setName("bg");
 
-    this.p1Right = this.add
-      .sprite(1663, 520, "match_p1Right")
-      .setDisplayOrigin(0, 65)
-      .setDepth(999)
-      .setName("p1Right");
+		this.table = this.add
+			.sprite(-80, 523, "match_table")
+			.setOrigin(0, 0)
+			.setDepth(9)
+			.setName("table");
+	}
 
-    //anims arnt loaded yet
-  }
+	_createPlayers() {
+		// Player 2 (opponent)
+		this.p2Body = this.add
+			.sprite(1095, 76, "match_p2Body")
+			.setDisplayOrigin(17, 93)
+			.setDepth(1)
+			.setName("p2Body");
 
-  _createRpsBtns() {
-    // Create container for RPS elements
-    this.rpsContainer = this.add.container(0, 0);
-    this.rpsContainer.setDepth(9999);
+		this.p2Hand = this.add
+			//why is it all around the place!!!!!!
+			.sprite(1130, 350, "match_p2Hand")
+			.setDisplayOrigin(313, 212)
+			.setDepth(999)
+			.setName("p2Hand");
 
-    this.rpsText = this.add
-      .sprite(1762, 414, "match_rps_text")
-      .setName("rpsText");
-    this.rpsContainer.add(this.rpsText);
+		// Player 1 (user)
+		this.p1Left = this.add
+			.sprite(-496, 1208, "match_p1Left")
+			.setDisplayOrigin(0, 759)
+			.setDepth(999)
+			.setAlpha(0.7, 0.7, 0.9, 0.7)
+			.setName("p1Left");
 
-    this.rockBtn = new Button(this, 2105, 436, "match_rps_rock")
-      .setOrigin(0, 0)
-      .setName("rockBtn");
-    this.rockBtn.on("pointerdown", () => {
-      this.handleRpsInput("r", this.povName);
-    });
-    this.rpsContainer.add(this.rockBtn);
+		this.p1Right = this.add
+			.sprite(1663, 520, "match_p1Right")
+			.setDisplayOrigin(0, 65)
+			.setDepth(999)
+			.setName("p1Right");
 
-    this.paperBtn = new Button(this, 1748, 520, "match_rps_paper")
-      .setOrigin(0, 0)
-      .setName("paperBtn");
-    this.paperBtn.on("pointerdown", () => {
-      this.handleRpsInput("p", this.povName);
-    });
-    this.rpsContainer.add(this.paperBtn);
+		//anims arnt loaded yet
+	}
 
-    this.scissorsBtn = new Button(this, 1663, 845, "match_rps_scissors")
-      .setOrigin(0, 0)
-      .setName("scissorsBtn");
-    this.scissorsBtn.on("pointerdown", () => {
-      this.handleRpsInput("s", this.povName);
-    });
-    this.rpsContainer.add(this.scissorsBtn);
-  }
+	_createRpsBtns() {
+		// Create container for RPS elements
+		this.rpsContainer = this.add.container(0, 0);
+		this.rpsContainer.setDepth(9999);
 
-  _createTowerBtns() {
-    // adds buttons that triggers TowerInput event
-    // interactives are added in _showTowerButtons()
+		this.rpsText = this.add
+			.sprite(1762, 414, "match_rps_text")
+			.setName("rpsText");
+		this.rpsContainer.add(this.rpsText);
 
-    this.atkBtn = new Button(this, 546, 389, "match_atkBtn")
-      .setOrigin(0, 0)
-      .setDepth(9999)
-      .setName("atkBtn");
+		this.rockBtn = new Button(this, 2105, 436, "match_rps_rock")
+			.setOrigin(0, 0)
+			.setName("rockBtn");
+		this.rockBtn.on("pointerdown", () => {
+			this.handleRpsInput("r", this.povName);
+		});
+		this.rpsContainer.add(this.rockBtn);
 
-    this.bldBtn = new Button(this, 862, 559, "match_bldBtn")
-      .setOrigin(0, 0)
-      .setDepth(9999)
-      .setName("bldBtn");
+		this.paperBtn = new Button(this, 1748, 520, "match_rps_paper")
+			.setOrigin(0, 0)
+			.setName("paperBtn");
+		this.paperBtn.on("pointerdown", () => {
+			this.handleRpsInput("p", this.povName);
+		});
+		this.rpsContainer.add(this.paperBtn);
 
-    this.upgBtn = new Button(this, 710, 922, "match_upgBtn")
-      .setOrigin(0, 0)
-      .setDepth(9999)
-      .setName("upgBtn");
+		this.scissorsBtn = new Button(this, 1663, 845, "match_rps_scissors")
+			.setOrigin(0, 0)
+			.setName("scissorsBtn");
+		this.scissorsBtn.on("pointerdown", () => {
+			this.handleRpsInput("s", this.povName);
+		});
+		this.rpsContainer.add(this.scissorsBtn);
+	}
 
-    this.cannonBtn = new Button(this, 910, 292, "match_cannonBtn")
-      .setOrigin(0, 0)
-      .setDepth(9999)
-      .setName("cannonBtn");
+	_createTowerBtns() {
+		// adds buttons that triggers TowerInput event
+		// interactives are added in _showTowerButtons() {
 
-    this.shieldBtn = new Button(this, 906, 579, "match_shieldBtn")
-      .setOrigin(0, 0)
-      .setDepth(9999)
-      .setName("shieldBtn");
-  }
+		this.atkBtn = new Button(this, 546, 389, "match_atkBtn")
+			.setOrigin(0, 0)
+			.setDepth(9999)
+			.setName("atkBtn");
 
-  onRoundStart() {
-    this.state.rounds++;
-    this.state.stage = "rpsStart";
-    this.state.p1RpsChoice = null;
-    this.state.p2RpsChoice = null;
-    this.state.roundWinner = null;
+		this.bldBtn = new Button(this, 862, 559, "match_bldBtn")
+			.setOrigin(0, 0)
+			.setDepth(9999)
+			.setName("bldBtn");
 
-    console.log(this.state);
+		this.upgBtn = new Button(this, 710, 922, "match_upgBtn")
+			.setOrigin(0, 0)
+			.setDepth(9999)
+			.setName("upgBtn");
 
-    this.p1Left.play("match_p1Left_wait"); //yea no
-    this.p1Left.visible = false;
-    this.p1Right.visible = true;
-    this.p1Right.play("match_p1Right_wait");
-    this.p2Body.play("match_p2Body_wait");
-    this.p2Hand.play("match_p2Hand_wait");
-    this._showRpsButtons();
-    this._hideTowerButtons();
-  }
+		this.cannonBtn = new Button(this, 910, 292, "match_cannonBtn")
+			.setOrigin(0, 0)
+			.setDepth(9999)
+			.setName("cannonBtn");
 
-  onRpsResult() {
-    // Player visuals.
-    this._hideRpsButtons();
+		this.shieldBtn = new Button(this, 906, 579, "match_shieldBtn")
+			.setOrigin(0, 0)
+			.setDepth(9999)
+			.setName("shieldBtn");
+	}
 
-    console.info(this.state.players);
-    /*
+	onRoundStart() {
+		this.state.rounds++;
+		this.state.stage = "rpsStart";
+		this.state.p1RpsChoice = null;
+		this.state.p2RpsChoice = null;
+		this.state.roundWinner = null;
+
+		console.log(this.state);
+
+		this.p1Left.play("match_p1Left_wait"); //yea no
+		this.p1Left.visible = false;
+		this.p1Right.visible = true;
+		this.p1Right.play("match_p1Right_wait");
+		this.p2Body.play("match_p2Body_wait");
+		this.p2Hand.play("match_p2Hand_wait");
+		this._showRpsButtons();
+		this._hideTowerButtons();
+	}
+
+	onRpsResult() {
+		// Player visuals.
+		this._hideRpsButtons();
+
+		console.info(this.state.players);
+		/*
     console.log(
       
     );*/
-    this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
-    // player visuals
-    this.p1Right.play("match_p1Right_" + this.state.p1RpsChoice);
-    this.p2Hand.play("match_p2Hand_" + this.state.p2RpsChoice);
-    this.p2Body.play("match_p2Body_rps");
+		this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
+		// player visuals
+		this.p1Right.play("match_p1Right_" + this.state.p1RpsChoice);
+		this.p2Hand.play("match_p2Hand_" + this.state.p2RpsChoice);
+		this.p2Body.play("match_p2Body_rps");
 
-    this.time.addEvent({
-      delay: 1500,
-      callback: () => {
-        console.log("decide winner", this.state.roundWinner);
-        if (this.state.roundWinner == null) {
-          //console.log("tie");
-          //this.p1Left.play("match_p1Left_lose");
-          //this.p1Right.play("match_p1Right_tie");
-          this.p1Right.visible = false;
-          this.p2Body.play("match_p2Body_tie");
-          this.p2Hand.play("match_p2Hand_tie");
-        } else if (this.state.roundWinner.name == this.povName) {
-          //console.log("i win");
-          //this.p1Left.play("match_p1Left_win");
-          this.p1Right.play("match_p1Right_win");
-          this.p2Body.play("match_p2Body_lose");
-          this.p2Hand.play("match_p2Hand_lose");
-        } else if (this.state.roundWinner.name == "discovry") {
-          //console.log("i lose");
-          //this.p1Left.play("match_p1Left_lose");
-          this.p1Right.play("match_p1Right_lose");
-          this.p2Body.play("match_p2Body_win");
-          this.p2Hand.play("match_p2Hand_win");
-        }
-        this.time.addEvent({
-          delay: 800,
-          callback: () => {
-            if (this.state.roundWinner == null) {
-              this.events.emit("roundStart");
-            } else {
-              this.events.emit("towerStart");
-            }
-          },
-        });
-      },
-      loop: false,
-    });
-  }
+		this.time.addEvent({
+			delay: 1500,
+			callback: () => {
+				console.log("decide winner", this.state.roundWinner);
+				if (this.state.roundWinner == null) {
+					//console.log("tie");
+					//this.p1Left.play("match_p1Left_lose");
+					//this.p1Right.play("match_p1Right_tie");
+					this.p1Right.visible = false;
+					this.p2Body.play("match_p2Body_tie");
+					this.p2Hand.play("match_p2Hand_tie");
+				} else if (this.state.roundWinner.name == this.povName) {
+					//console.log("i win");
+					//this.p1Left.play("match_p1Left_win");
+					this.p1Right.play("match_p1Right_win");
+					this.p2Body.play("match_p2Body_lose");
+					this.p2Hand.play("match_p2Hand_lose");
+				} else if (this.state.roundWinner.name == "discovry") {
+					//console.log("i lose");
+					//this.p1Left.play("match_p1Left_lose");
+					this.p1Right.play("match_p1Right_lose");
+					this.p2Body.play("match_p2Body_win");
+					this.p2Hand.play("match_p2Hand_win");
+				}
+				this.time.addEvent({
+					delay: 800,
+					callback: () => {
+						if (this.state.roundWinner == null) {
+							this.events.emit("roundStart");
+						} else {
+							this.events.emit("towerStart");
+						}
+					},
+				});
+			},
+			loop: false,
+		});
+	}
 
-  onTowerStart() {
-    /**An Rps winner must be determined. */
-    // tower logic
-    this.state.stage = "towerStart";
-    console.log("tower start");
+	onTowerStart() {
+		/**An Rps winner must be determined. */
+		// tower logic
+		this.state.stage = "towerStart";
+		console.log("tower start");
 
-    if (this.state.roundWinner.name != this.povName) {
-      this.p1Left.play("match_p1Left_wait");
-      this.p1Right.play("match_p1Right_waitTower");
-      this.p2Body.play("match_p2Body_think");
-      this.p2Hand.play("match_p2Hand_think");
-      //dont show buttons
+		if (this.state.roundWinner.name != this.povName) {
+			this.p1Left.play("match_p1Left_wait");
+			this.p1Right.play("match_p1Right_waitTower");
+			this.p2Body.play("match_p2Body_think");
+			this.p2Hand.play("match_p2Hand_think");
+			//dont show buttons
 
-      if (this.state.roundWinner.hp < 4) {
-        console.log("auto build");
-        this.handleTowerInput(
-          TowerActionTypes.BUILD_TOWER,
-          this.state.roundWinner.name
-        );
-        return;
-      }
-    } else {
-      // i win
-      this.p1Left.play("match_p1Left_think");
-      this.p1Right.visible = false;
-      this.p2Body.play("match_p2Body_wait");
-      this.p2Hand.play("match_p2Hand_waitTower");
+			if (this.state.roundWinner.hp < 4) {
+				console.log("auto build");
+				this.handleTowerInput(
+					TowerActionTypes.BUILD_TOWER,
+					this.state.roundWinner.name
+				);
+				return;
+			}
+		} else {
+			// i win
+			this.p1Left.play("match_p1Left_think");
+			this.p1Right.visible = false;
+			this.p2Body.play("match_p2Body_wait");
+			this.p2Hand.play("match_p2Hand_waitTower");
 
-      // how to unrepeat this
-      if (this.state.roundWinner.hp < 4) {
-        console.log("auto build");
-        this.handleTowerInput(
-          TowerActionTypes.BUILD_TOWER,
-          this.state.roundWinner.name
-        );
-        return;
-      }
-      this._showTowerButtons();
-    }
-  }
-  _showTowerButtons() {
-    // The build/atk/up buttons only
-    //show the arm lel
-    this.p1Left.visible = true;
+			// how to unrepeat this
+			if (this.state.roundWinner.hp < 4) {
+				console.log("auto build");
+				this.handleTowerInput(
+					TowerActionTypes.BUILD_TOWER,
+					this.state.roundWinner.name
+				);
+				return;
+			}
+			this._showTowerButtons();
+		}
+	}
+	_showTowerButtons() {
+		// The build/atk/up buttons only
+		//show the arm lel
+		this.p1Left.visible = true;
 
-    const chooseAtk = () => {
-      this.bldBtn.hide();
-      this.upgBtn.hide();
-      this.cannonBtn.hide();
-      this.shieldBtn.hide();
-      //player visulals
-      this.atkBtn.off("pointerdown");
-      this.atkBtn.removeInteractive();
+		const chooseAtk = () => {
+			this.bldBtn.hide();
+			this.upgBtn.hide();
+			this.cannonBtn.hide();
+			this.shieldBtn.hide();
 
-      this.tweens.add({
-        targets: this.atkBtn,
-        x: 475,
-        y: 294,
-        ease: "Linear",
-        duration: 300,
-        onComplete: () => {
-          //glow opp tower
-          this.p2Base.setTint(0xffffff);
+			this.tweens.add({
+				targets: this.atkBtn,
+				x: 475,
+				y: 294,
+				ease: "Linear",
+				duration: 300,
+				onComplete: () => {
+					this.atkBtn.off("pointerdown", chooseAtk, this);
+					this.p2Base.setTintFill(0xffffff);
+					this.targets.removeAll();
 
-          // glow weapons
-        },
-      });
-      // Attack base or cannon?
+					//add base target
 
-      if (null) {
-        this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, targetIdk);
-      } else {
-        this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, this.povName);
-      }
-    };
-    this.atkBtn
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", (p) => {
-        if (p.buttons == 1) {
-          chooseAtk();
-        }
-      });
+					//add cannon targets
+					for (const c of this.p2Cannons) {
+						console.log("add target at", c.x, c.y);
 
-    const chooseBld = () => {
-      this.atkBtn.hide();
-      this.upgBtn.hide();
-      this.cannonBtn.hide();
-      this.shieldBtn.hide();
+						this.targets.add(new TargetCannon(this, c.x, c.y));
+					}
 
-      this.tweens.add({
-        targets: this.bldBtn,
-        x: 607,
-        y: 362,
-        ease: "Linear",
-        duration: 100,
-        onComplete: () => {
-          // canon or shield
-          this.cannonBtn.visible = true;
-          this.shieldBtn.visible = true;
+					this.p2Base
+						.setInteractive({ cursor: "pointer" })
+						.on("pointerdown", () => {
+							this.p2Base.removeInteractive();
+							//this.p2Base.off("pointerdown");
+							this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
+								target: "tower",
+							});
+						});
+					// Attack base or cannon?
 
-          const handleAddCannon = () => {
-            let cannon = new Cannon(this, this.input.mousePointer);
-            /*let debugPoint = this.add
+					/*if (null) {
+          } else {
+            this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, this.povName);
+          }*/
+				},
+			});
+		};
+
+		// Fix the attack button event binding
+		this.atkBtn.setInteractive({ cursor: "pointer" });
+		this.atkBtn.on("pointerdown", chooseAtk);
+
+		const chooseBld = () => {
+			this.atkBtn.hide();
+			this.upgBtn.hide();
+			this.cannonBtn.hide();
+			this.shieldBtn.hide();
+
+			this.tweens.add({
+				targets: this.bldBtn,
+				x: 607,
+				y: 362,
+				ease: "Linear",
+				duration: 100,
+				onComplete: () => {
+					// canon or shield
+					this.cannonBtn.visible = true;
+					this.shieldBtn.visible = true;
+
+					const handleAddCannon = () => {
+						let cannon = new Cannon(this, this.input.mousePointer);
+						/*let debugPoint = this.add
               .sprite(oppX, 549, "match_p2Cannon")
               .setDisplayOrigin(49, 79)
               .setDepth(10)
               .setVisible(true);
 */
-            this.cannonBtn.off("pointerdown", handleAddCannon);
-            this.cannonBtn.removeInteractive();
+						this.cannonBtn.off("pointerdown", handleAddCannon);
+						this.cannonBtn.removeInteractive();
 
-            const handleMove = (pointer) => {
-              cannon.setX(pointer.x);
-              if (cannon.x < SCENE_W / 2) {
-                cannon.flipX = false;
-              } else {
-                cannon.flipX = true;
-              }
-              /*
+						const handleMove = (pointer) => {
+							cannon.setX(pointer.x);
+							if (cannon.x < SCENE_W / 2) {
+								cannon.flipX = false;
+							} else {
+								cannon.flipX = true;
+							}
+							/*
                 // Update debug point position
                 let oppX = ((pointer.x - 27) / (2580 - 27)) * 830 + 880;
                 oppX += 2 * (1280 - oppX);
                 debugPoint.setPosition(oppX, 549);
 */
-              // dont overlap existing cannons AND da base(what about shields)
-              this.cantAddCannon =
-                this.p1Cannons.some((builtC) => {
-                  let bounds1 = cannon.getBounds();
-                  let bounds2 = builtC.getBounds();
-                  return Phaser.Geom.Intersects.RectangleToRectangle(
-                    bounds1,
-                    bounds2
-                  );
-                }) ||
-                Phaser.Geom.Intersects.RectangleToRectangle(
-                  cannon.getBounds(),
-                  this.p1Base.getBounds()
-                );
+							// dont overlap existing cannons AND da base(what about shields)
+							this.cantAddCannon =
+								this.p1Cannons.some((builtC) => {
+									let bounds1 = cannon.getBounds();
+									let bounds2 = builtC.getBounds();
+									return Phaser.Geom.Intersects.RectangleToRectangle(
+										bounds1,
+										bounds2
+									);
+								}) ||
+								Phaser.Geom.Intersects.RectangleToRectangle(
+									cannon.getBounds(),
+									this.p1Base.getBounds()
+								);
 
-              if (this.cantAddCannon) {
-                cannon.setTint(0xff0000);
-              } else {
-                cannon.clearTint();
-              }
-            };
-            this.input.on("pointermove", handleMove);
+							if (this.cantAddCannon) {
+								cannon.setTint(0xff0000);
+							} else {
+								cannon.clearTint();
+							}
+						};
+						this.input.on("pointermove", handleMove);
 
-            this.time.addEvent({
-              delay: 50,
-              callback: () => {
-                const handleConfirm = () => {
-                  if (!this.cantAddCannon) {
-                    this.input.off("pointermove", handleMove);
-                    this.input.off("pointerdown", handleConfirm);
-                    this.p1Cannons.push(cannon);
-                    console.log("cannons: ", this.p1Cannons);
-                    this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
-                      x: cannon.x,
-                    });
-                  }
-                };
+						this.time.addEvent({
+							delay: 50,
+							callback: () => {
+								const handleConfirm = () => {
+									if (!this.cantAddCannon) {
+										this.input.off("pointermove", handleMove);
+										this.input.off("pointerdown", handleConfirm);
+										this.p1Cannons.push(cannon);
+										cannon.placed = true; //any use>
+										console.log("cannons: ", this.p1Cannons);
+										this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
+											x: cannon.x,
+										});
+									}
+								};
 
-                //why is it all funky when i add right mouse button detection wtf
-                /*
+								//why is it all funky when i add right mouse button detection wtf
+								//round winner becomes null when i add this
+								/*
                 const handleCancel = () => {
                   console.warn("cajncellll");
                   this.input.off("pointermove", handleMove);
@@ -549,369 +585,382 @@ export default class Match extends Phaser.Scene {
                   },
                   this
                 );*/
-                this.input.on("pointerdown", handleConfirm, this);
-              },
-              loop: false,
-            });
-          };
-          this.cannonBtn
-            .setInteractive({
-              cursor: "pointer",
-            })
-            .on("pointerdown", handleAddCannon);
+								this.input.on("pointerdown", handleConfirm, this);
+							},
+							loop: false,
+						});
+					};
+					this.cannonBtn
+						.setInteractive({
+							cursor: "pointer",
+						})
+						.on("pointerdown", handleAddCannon);
 
-          //disable later to avoid double clickin
-          const handleAddShield = () => {
-            this.shieldBtn.off("pointerdown", handleAddShield);
-            this.shieldBtn.removeInteractive();
+					//disable later to avoid double clickin
+					const handleAddShield = () => {
+						this.shieldBtn.off("pointerdown", handleAddShield);
+						this.shieldBtn.removeInteractive();
 
-            let shield = new Shield(this, this.input.mousePointer);
+						let shield = new Shield(this, this.input.mousePointer);
 
-            const handleResize = (pointer) => {
-              shield.handleResize(pointer);
-              this.cantAddShield = this.p1Shields.some(
-                (scale) => Math.abs(scale - shield.scale) <= 0.001
-              );
+						const handleResize = (pointer) => {
+							shield.handleResize(pointer);
+							this.cantAddShield = this.p1Shields.some(
+								(scale) => Math.abs(scale - shield.scale) <= 0.001
+							);
 
-              if (this.cantAddShield) {
-                shield.setTint(0xff0000);
-              } else {
-                shield.clearTint();
-              }
-            };
+							if (this.cantAddShield) {
+								shield.setTint(0xff0000);
+							} else {
+								shield.clearTint();
+							}
+						};
 
-            this.input.on("pointermove", handleResize);
+						this.input.on("pointermove", handleResize);
 
-            this.time.addEvent({
-              delay: 50,
-              callback: () => {
-                const handleConfirm = () => {
-                  if (!this.cantAddShield) {
-                    this.input.off("pointermove", handleAddShield);
-                    this.input.off("pointermove", handleResize);
-                    this.input.off("pointerdown", handleConfirm);
-                    this.p1Shields.push(shield);
-                    console.log(this.p1Shields);
-                    this.handleTowerInput(
-                      TowerActionTypes.BUILD_SHIELD,
-                      shield.scale
-                    );
-                  }
-                };
-                this.input.on("pointerdown", handleConfirm);
-              },
-              loop: false,
-            });
-          };
-          this.shieldBtn
-            .setInteractive({
-              cursor: "pointer",
-            })
-            .on("pointerdown", handleAddShield);
-        },
-      });
-    };
-    this.bldBtn
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", chooseBld);
+						this.time.addEvent({
+							delay: 50,
+							callback: () => {
+								const handleConfirm = () => {
+									if (!this.cantAddShield) {
+										this.input.off("pointermove", handleAddShield);
+										this.input.off("pointermove", handleResize);
+										this.input.off("pointerdown", handleConfirm);
+										this.p1Shields.push(shield);
+										console.log(this.p1Shields);
+										this.handleTowerInput(
+											TowerActionTypes.BUILD_SHIELD,
+											shield.scale
+										);
+									}
+								};
+								this.input.on("pointerdown", handleConfirm);
+							},
+							loop: false,
+						});
+					};
+					this.shieldBtn
+						.setInteractive({
+							cursor: "pointer",
+						})
+						.on("pointerdown", handleAddShield);
+				},
+			});
+		};
+		this.bldBtn
+			.setInteractive({
+				cursor: "pointer",
+			})
+			.on("pointerdown", chooseBld);
 
-    const chooseUpg = () => {
-      this.atkBtn.hide();
-      this.bldBtn.hide();
-      this.cannonBtn.hide();
-      this.shieldBtn.hide();
-      this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, this.povName);
-    };
-    this.upgBtn
-      .setInteractive({
-        cursor: "pointer",
-      })
-      .on("pointerdown", chooseUpg);
+		const chooseUpg = () => {
+			this.atkBtn.hide();
+			this.bldBtn.hide();
+			this.cannonBtn.hide();
+			this.shieldBtn.hide();
+			this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, this.povName);
+		};
+		this.upgBtn
+			.setInteractive({
+				cursor: "pointer",
+			})
+			.on("pointerdown", chooseUpg);
 
-    // Hide all buttons first
-    this.atkBtn.hide();
-    this.bldBtn.visible = true;
-    this.upgBtn.hide();
-    this.cannonBtn.hide();
+		// is the hide() overkill
+		this.atkBtn.visible = false;
+		this.bldBtn.visible = true;
+		this.upgBtn.visible = false;
+		this.cannonBtn.visible = false;
 
-    // Reset positions of buttons to their initial positions
-    this.atkBtn.setPosition(546, 389);
-    this.bldBtn.setPosition(862, 559);
-    this.upgBtn.setPosition(710, 922);
+		// Reset positions of buttons to their initial positions
+		this.atkBtn.setPosition(546, 389);
+		this.bldBtn.setPosition(862, 559);
+		this.upgBtn.setPosition(710, 922);
 
-    console.log(this.state.roundWinner);
+		console.log(this.state.roundWinner);
 
-    // Show buttons based on available options
-    if (this.state.roundWinner.cannons.length === 0) {
-      // No cannons - can only build
-      this.bldBtn.visible = true;
-    } else {
-      // Yes cannons - can do everything
-      this.atkBtn.visible = true;
-      this.bldBtn.visible = true;
-      this.upgBtn.visible = true;
-    }
-  }
-  _hideTowerButtons() {
-    this.atkBtn.hide();
-    this.bldBtn.hide();
-    this.upgBtn.hide();
+		// Show buttons based on available options
+		if (this.state.roundWinner.cannons.length === 0) {
+			// No cannons - can only build
+			this.bldBtn.visible = true;
+		} else {
+			// Yes cannons - can do everything
+			this.atkBtn.visible = true;
+			this.bldBtn.visible = true;
+			this.upgBtn.visible = true;
+		}
+	}
+	_hideTowerButtons() {
+		this.atkBtn.hide();
+		this.bldBtn.hide();
+		this.upgBtn.hide();
 
-    this.cannonBtn.hide();
-    this.shieldBtn.hide();
-  }
+		this.p2Base.clearTint();
 
-  _decideWinner(p1RpsChoice, p2RpsChoice) {
-    console.info(this.state.players);
+		this.cannonBtn.hide();
+		this.shieldBtn.hide();
+	}
 
-    if (p1RpsChoice == p2RpsChoice) {
-      this.state.roundWinner = null;
-      return -1;
-    } else if (
-      (p1RpsChoice == "r" && p2RpsChoice == "s") ||
-      (p1RpsChoice == "p" && p2RpsChoice == "r") ||
-      (p1RpsChoice == "s" && p2RpsChoice == "p")
-    ) {
-      this.state.roundWinner = this.state.players[0];
-      return 0;
-    } else {
-      this.state.roundWinner = this.state.players[1];
-      return 1;
-    }
-  }
+	_decideWinner(p1RpsChoice, p2RpsChoice) {
+		console.info(this.state.players);
 
-  onKeyDown(e) {
-    //Thesea re all temporareeie
-    if (this.state.stage == "rpsStart") {
-      if (["r", "p", "s"].includes(e.key)) {
-        this.handleRpsInput(e.key, "discovry");
-      }
-    } else if (this.state.stage == "towerStart") {
-      if (["b", "a", "u"].includes(e.key)) {
-        this.handleTowerInput(e.key, "discovry");
-      }
-    }
-  }
+		if (p1RpsChoice == p2RpsChoice) {
+			this.state.roundWinner = null;
+			return -1;
+		} else if (
+			(p1RpsChoice == "r" && p2RpsChoice == "s") ||
+			(p1RpsChoice == "p" && p2RpsChoice == "r") ||
+			(p1RpsChoice == "s" && p2RpsChoice == "p")
+		) {
+			this.state.roundWinner = this.state.players[0];
+			return 0;
+		} else {
+			this.state.roundWinner = this.state.players[1];
+			return 1;
+		}
+	}
 
-  handleRpsInput(choice, playerName) {
-    /**called only during roundStart event.
-     * Sends message to quasi server.
-     */
-    if (choice != "r" && choice != "p" && choice != "s") {
-      console.warn("invalid choice");
-      return;
-    }
+	onKeyDown(e) {
+		//Thesea re all temporareeie
+		if (this.state.stage == "rpsStart") {
+			if (["r", "p", "s"].includes(e.key)) {
+				this.handleRpsInput(e.key, "discovry");
+			}
+		} else if (this.state.stage == "towerStart") {
+			if (["b", "a", "u"].includes(e.key)) {
+				this.handleTowerInput(e.key, "discovry");
+			}
+		}
+	}
 
-    // saves input to server.
-    if (this.povName == playerName) {
-      this.state.p1RpsChoice = choice;
-    } else {
-      this.state.p2RpsChoice = choice;
-    }
-    console.log(this.state.p1RpsChoice, this.state.p2RpsChoice);
+	handleRpsInput(choice, playerName) {
+		/**called only during roundStart event.
+		 * Sends message to quasi server.
+		 */
+		if (choice != "r" && choice != "p" && choice != "s") {
+			console.warn("invalid choice");
+			return;
+		}
 
-    /**Quasi server logic.
-     * Called everytime an rps input is received. */
-    if (this.state.p1RpsChoice && this.state.p2RpsChoice) {
-      this.state.stage = "rpsResult";
-      this.events.emit("rpsResult");
-    }
-  }
-  handleTowerInput(towerAction, info) {
-    /**called only during towerStart event.
-     * Sends message to quasi server.
-     */
-    if (!Object.values(TowerActionTypes).includes(towerAction)) {
-      console.warn("invalid towerAction");
-      return;
-    }
+		// saves input to server.
+		if (this.povName == playerName) {
+			this.state.p1RpsChoice = choice;
+		} else {
+			this.state.p2RpsChoice = choice;
+		}
+		console.log(this.state.p1RpsChoice, this.state.p2RpsChoice);
 
-    // saves input to server.
-    //both atker and victim should know this actoin
-    console.info("tower input: " + towerAction);
-    //this.events.emit("towerResult", towerAction);
+		/**Quasi server logic.
+		 * Called everytime an rps input is received. */
+		if (this.state.p1RpsChoice && this.state.p2RpsChoice) {
+			this.state.stage = "rpsResult";
+			this.events.emit("rpsResult");
+		}
+	}
+	handleTowerInput(towerAction, info) {
+		/**called only during towerStart event.
+		 * Sends message to quasi server.
+		 */
+		if (!Object.values(TowerActionTypes).includes(towerAction)) {
+			console.warn("invalid towerAction");
+			return;
+		}
 
-    /**Quasi server logic.
-     * Called everytime an rps input is received. */
-    switch (towerAction) {
-      case TowerActionTypes.BUILD_TOWER:
-        console.log("build tower");
-        this.state.roundWinner.hp += 1;
+		// saves input to server.
+		//both atker and victim should know this actoin
+		console.info("tower input: " + towerAction);
+		//this.events.emit("towerResult", towerAction);
 
-        //update visuasl
-        if (this.state.roundWinner.name == this.povName) {
-          this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
-        } else {
-          this.p2Base.setFrame("match_p2Base000" + this.state.roundWinner.hp);
-        }
-        break;
-      case TowerActionTypes.BUILD_SHIELD:
-        console.log("build shield, scale: " + info);
-        this.state.roundWinner.hp += 1;
+		/**Quasi server logic.
+		 * Called everytime an rps input is received. */
+		switch (towerAction) {
+			case TowerActionTypes.BUILD_TOWER:
+				console.log("build tower");
+				this.state.roundWinner.hp += 1;
 
-        // shield upgrades are SCRAPPED!!!
+				//update visuasl
+				if (this.state.roundWinner.name == this.povName) {
+					this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
+				} else {
+					this.p2Base.setFrame("match_p2Base000" + this.state.roundWinner.hp);
+				}
+				break;
+			case TowerActionTypes.BUILD_SHIELD:
+				console.log("build shield, scale: " + info);
+				this.state.roundWinner.hp += 1;
 
-        break;
-      case TowerActionTypes.BUILD_CANNON:
-        console.log("info: ", info);
+				// shield upgrades are SCRAPPED!!!
 
-        // server sends the x pos of pov, calculte opponent x pos
-        let oppX = ((info.x - 27) / (2580 - 27)) * 830 + 880;
+				break;
+			case TowerActionTypes.BUILD_CANNON:
+				console.log("info: ", info);
 
-        oppX += 2 * (1280 - oppX);
-        console.log("oppX: ", oppX);
-        if (oppX > 1026 && oppX < 1541) {
-          if (oppX > 1280) {
-            oppX = 1541;
-          } else {
-            oppX = 1026;
-          }
-        }
-        console.log("oppX: ", oppX);
+				// server sends the x pos of pov, calculte opponent x pos
+				let oppX = ((info.x - 27) / (2580 - 27)) * 830 + 880;
 
-        let oppCannon = this.add
-          .sprite(oppX, 549, "match_p2Cannon")
-          .setDisplayOrigin(49, 79)
-          .setDepth(10)
-          .setVisible(true);
+				oppX += 2 * (1280 - oppX);
+				console.log("oppX: ", oppX);
+				if (oppX > 1026 && oppX < 1541) {
+					if (oppX > 1280) {
+						oppX = 1541;
+					} else {
+						oppX = 1026;
+					}
+				}
+				console.log("oppX: ", oppX);
 
-        this.state.roundWinner.cannons.push(info);
-        break;
-      case TowerActionTypes.ATTACK_TOWER:
-        console.log("info: ", info);
-        break;
-      case TowerActionTypes.ATTACK_CANNON:
-        console.log("info: ", info);
-        break;
-      /*case TowerActionTypes.UPGRADE_SHIELD:
+				let oppCannon = this.add
+					.sprite(oppX, 549, "match_p2Cannon")
+					.setDisplayOrigin(49, 79)
+					.setDepth(10)
+					.setVisible(true);
+
+				this.state.roundWinner.cannons.push(info);
+				break;
+			case TowerActionTypes.ATTACK_TOWER:
+				console.log("info: ", info);
+				break;
+			case TowerActionTypes.ATTACK_CANNON:
+				console.log("info: ", info);
+				break;
+			/*case TowerActionTypes.UPGRADE_SHIELD:
         console.log("info: ", info);
         break;*/
-      case TowerActionTypes.UPGRADE_CANNON:
-        console.log("info: ", info);
-        break;
-      default:
-        alert("Invalid action");
-        break;
-    }
-    this.events.emit("roundStart");
-  }
-  _showRpsButtons() {
-    // Update to show container instead of individual elements
-    this.rpsContainer.visible = true;
-  }
+			case TowerActionTypes.UPGRADE_CANNON:
+				console.log("info: ", info);
+				break;
+			default:
+				alert("Invalid action");
+				break;
+		}
+		this.events.emit("roundStart");
+	}
+	_showRpsButtons() {
+		// Update to show container instead of individual elements
+		this.rpsContainer.visible = true;
+	}
 
-  _hideRpsButtons() {
-    // Update to hide container instead of individual elements
-    this.rpsContainer.visible = false;
-  }
+	_hideRpsButtons() {
+		// Update to hide container instead of individual elements
+		this.rpsContainer.visible = false;
+	}
 }
 
 class Player {
-  constructor(name) {
-    this.name = name;
-    /***
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     * change this hp
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     */
-    this.hp = 4;
-    //this.shields = [];
-    this.cannons = [];
-  }
+	constructor(name) {
+		this.name = name;
+		/***
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 * change this hp
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 *
+		 */
+		this.hp = 4;
+		//this.shields = [];
+		this.cannons = [];
+	}
 
-  toString() {
-    return `Player(name=${this.name}, hp=${this.hp}, cannons=${this.cannons})`;
-  }
+	toString() {
+		return `Player(name=${this.name}, hp=${this.hp}, cannons=${this.cannons})`;
+	}
 
-  onNotify(move) {
-    console.log(`${this.name} received notification: ${move}`);
-  }
+	onNotify(move) {
+		console.log(`${this.name} received notification: ${move}`);
+	}
 }
 class Button extends Phaser.GameObjects.Sprite {
-  constructor(scene, x, y, texture) {
-    super(scene, x, y, texture);
-    this.setInteractive({ cursor: "pointer" });
-    this.setAlpha(0.7);
-    this.on("pointerover", () => {
-      this.setAlpha(1);
-    });
-    this.on("pointerout", () => {
-      this.setAlpha(0.7);
-    });
+	constructor(scene, x, y, texture) {
+		super(scene, x, y, texture);
+		this.setInteractive({ cursor: "pointer" });
+		this.setAlpha(0.7);
+		this.on("pointerover", () => {
+			this.setAlpha(1);
+		});
+		this.on("pointerout", () => {
+			this.setAlpha(0.7);
+		});
 
-    scene.add.existing(this);
-  }
-  hide() {
-    this.setVisible(false);
-    this.removeAllListeners();
-    this.removeInteractive();
-  }
+		scene.add.existing(this);
+	}
+	hide() {
+		this.setVisible(false);
+		//this.removeAllListeners();
+		//this.removeInteractive();
+	}
 }
 class Cannon extends Phaser.GameObjects.Sprite {
-  constructor(scene, pointer) {
-    super(scene, pointer.x, 1430, "match_p1Cannon");
-    this.pow = 1;
-    this.placed = false;
+	constructor(scene, pointer, forceX = null) {
+		/**
+		 * Usually the cannon is placed at mouse, but for debug u can force its x pos
+		 */
+		super(scene, pointer.x ? !forceX : forceX, 1430, "match_p1Cannon");
+		this.pow = 1;
+		this.placed = false;
 
-    this.setDisplayOrigin(129, 281)
-      .setDepth(10)
-      .setInteractive()
-      .setVisible(true);
-    scene.add.existing(this);
-  }
+		this.setDisplayOrigin(129, 281)
+			.setDepth(10)
+			.setInteractive()
+			.setVisible(true);
+		scene.add.existing(this);
+	}
 
-  handleMove(pointer) {
-    this.setX(pointer.x);
-  }
+	handleMove(pointer) {
+		this.setX(pointer.x);
+	}
 
-  handlePlacement() {
-    this.placed = true;
-    // Additional placement logic can go here
-  }
+	handlePlacement() {
+		this.placed = true;
+		// Additional placement logic can go here
+	}
 }
 class Shield extends Phaser.GameObjects.Sprite {
-  constructor(scene, pointer) {
-    super(scene, 1280, 1438, "match_p1Shield");
-    this.setDisplayOrigin(817, 519)
-      .setDepth(10)
-      .setInteractive()
-      .setVisible(true);
-    scene.add.existing(this);
-  }
+	constructor(scene, pointer) {
+		super(scene, 1280, 1438, "match_p1Shield");
+		this.setDisplayOrigin(817, 519)
+			.setDepth(10)
+			.setInteractive()
+			.setVisible(true);
+		scene.add.existing(this);
+	}
 
-  handleResize(pointer) {
-    const distance = Phaser.Math.Distance.Between(
-      this.x,
-      this.y,
-      pointer.x,
-      pointer.y
-    );
+	handleResize(pointer) {
+		const distance = Phaser.Math.Distance.Between(
+			this.x,
+			this.y,
+			pointer.x,
+			pointer.y
+		);
 
-    const newScale = roundToNearest(
-      Phaser.Math.Clamp(distance / 500, 0.85, 1.5),
-      0.04
-    );
+		const newScale = roundToNearest(
+			Phaser.Math.Clamp(distance / 500, 0.85, 1.5),
+			0.04
+		);
 
-    this.setScale(newScale);
-  }
+		this.setScale(newScale);
+	}
+}
+
+class TargetCannon extends Phaser.GameObjects.Sprite {
+	constructor(scene, x, y) {
+		super(scene, x, y, "match_targetCannon");
+		this.setDisplayOrigin(66, 92).setDepth(15).setVisible(true);
+		scene.add.existing(this);
+	}
 }
