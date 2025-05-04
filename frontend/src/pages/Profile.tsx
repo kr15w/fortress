@@ -23,7 +23,7 @@ const UserProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>()
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null)
   const [loading, setLoading] = useState(true)
-  const { setTheme } = useTheme()
+  const { setTheme, theme } = useTheme()
   const [currentUser, setCurrentUser] = useState<string | null>(null)
 
   useEffect(() => {
@@ -39,11 +39,11 @@ const UserProfile: React.FC = () => {
       }
     }
 
-
-
     fetchUserProfile()
-    const currentUser = getCurrentUser()
-    setCurrentUser(currentUser)
+
+    // Get current user from sessionStorage instead of fetching from backend
+    const username = getCurrentUser()
+    setCurrentUser(username)
   }, [userId])
 
   // Function to calculate win rate percentage
@@ -63,9 +63,6 @@ const UserProfile: React.FC = () => {
   }
 
   return (
-    console.log("Comparing:", currentUser, "vs", userProfile?.username),
-
-
     <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
       {/* Theme Toggle and Navigation in top right corner */}
       <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
@@ -123,7 +120,19 @@ const UserProfile: React.FC = () => {
               <CardHeader className="border-b border-border pb-6">
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <div className="relative">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center p-1">
+                    <div
+                      className={`w-32 h-32 rounded-full ${
+                        userProfile.win_count >= 100
+                          ? "bg-gradient-to-br from-yellow-500 to-amber-600"
+                          : userProfile.win_count >= 50
+                            ? "bg-gradient-to-br from-purple-500 to-indigo-600"
+                            : userProfile.win_count >= 25
+                              ? "bg-gradient-to-br from-blue-500 to-cyan-600"
+                              : userProfile.win_count >= 10
+                                ? "bg-gradient-to-br from-green-500 to-emerald-600"
+                                : "bg-gradient-to-br from-gray-500 to-slate-600"
+                      } flex items-center justify-center p-1`}
+                    >
                       <div className="w-full h-full rounded-full bg-background p-2 overflow-hidden">
                         <div className="w-full h-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
                           <img
@@ -166,6 +175,7 @@ const UserProfile: React.FC = () => {
                           variant="outline"
                           className="text-green-600 dark:text-green-500 border-green-400 dark:border-green-800 px-3 py-1"
                         >
+                          <Swords className="h-4 w-4 mr-1" /> {userProfile.win_count} Wins
                         </Badge>
                       )}
                       {userProfile.total_bomb_count > 20 && (
@@ -187,13 +197,16 @@ const UserProfile: React.FC = () => {
                     </div>
                   </div>
 
-                  {currentUser === userProfile.username && (
-                    <div className="mt-4 md:mt-0 md:ml-auto">
+                  <div className="mt-4 md:mt-0 md:ml-auto flex flex-col gap-2">
+                    {currentUser === userProfile.username && (
                       <Button variant="outline" asChild>
                         <Link to={`/profile/edit/${userId}`}>Edit Identifiers</Link>
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    <Button variant="outline" asChild>
+                      <Link to={`/battle-history/${userId}`}>Battle History</Link>
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
 
@@ -327,9 +340,11 @@ const UserProfile: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </CardContent>
 
-              
+                <div className="mt-6 text-center">
+                  <p className="text-muted-foreground text-sm">Player ID: #{userId}</p>
+                </div>
+              </CardContent>
             </Card>
           </div>
         )}

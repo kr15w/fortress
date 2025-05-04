@@ -6,7 +6,7 @@ import jwt
 import datetime
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import DatabaseService, User
+from database import DatabaseService, User, BattleHistory
 
 from flask_socketio import SocketIO, emit
 import uuid
@@ -44,8 +44,6 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = ''
 app.config['MAIL_PASSWORD'] = ''
-
-
 # Initialize OAuth
 oauth = OAuth(app)
 
@@ -481,5 +479,25 @@ def edit_user():
         app.logger.error(f"Edit user error: {str(e)}")
         return jsonify({'message': f'Failed to update user details: {str(e)}'}), 400
     
+@app.route('/api/battle-history/<user_id>', methods=['GET'])
+def get_battle_history(user_id):
+    db = DatabaseService('sqlite:///users.db')
+    session = db.Session()
+    user = session.query(User).filter_by(id=user_id).first()
+    battle_history = session.query(BattleHistory)
+    battle_history = battle_history.filter(
+        (BattleHistory.player1 == user.username) | (BattleHistory.player2 == user.username)
+    ).limit(10).all()
+    
+    return jsonify([
+        {
+            "match_id": battle.MatchId,
+            "match_end_time": battle.match_end_time,
+            "player1": battle.player1,
+            "player2": battle.player2,
+            "winner": battle.winner
+        } for battle in battle_history
+    ])
+
 if __name__ == '__main__':
     app.run(host='::', port=5000, debug=True)

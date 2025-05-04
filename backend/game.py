@@ -51,6 +51,8 @@ class Game:
         self.player2 = Player()
         self.state = 0  # 0: RPS, 1: Action, 2: End
         self.winner = None
+        self.player1_win = 0
+        self.player2_win = 0
     
     def get_player(self, player_num):
         return self.player1 if player_num == 1 else self.player2
@@ -164,8 +166,10 @@ class Game:
         
         if p1 == (p2 + 1) % 3:
             self.winner = 1
+            self.player1_win += 1
         elif p2 == (p1 + 1) % 3:
             self.winner = 2
+            self.player2_win += 1
         else:
             self.winner = 0  # Tie
     

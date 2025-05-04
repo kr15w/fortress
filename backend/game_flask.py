@@ -5,7 +5,7 @@ import uuid
 from game import Game
 import dump_users
 from database import DatabaseService
-
+from decimal import Decimal
 db = DatabaseService('sqlite:///users.db')
 app = Flask(__name__)
 
@@ -135,8 +135,11 @@ def handle_message(data):
                                     if game.winner == 1:
                                         winner_username = dump_users.id_to_name(game_rooms[room_id]['player1'])
                                         loser_username = dump_users.id_to_name(game_rooms[room_id]['player2'])
-                                        winner_player = game.player1
-                                        loser_player = game.player2
+                                        player1_rpsWinrate = round(Decimal(game.player1.rpsWin) / Decimal(game.player1.rpsWin + game.player2.rpsWin), 2)
+                                        player2_rpsWinrate = round(Decimal(game.player2.rpsWin) / Decimal(game.player1.rpsWin + game.player2.rpsWin), 2)
+                                        db.add_match_history(winner_username, loser_username, player1_rpsWinrate, player2_rpsWinrate, winner_username)
+
+
                                     elif game.winner == 2:
                                         winner_username = dump_users.id_to_name(game_rooms[room_id]['player2'])
                                         loser_username = dump_users.id_to_name(game_rooms[room_id]['player1'])

@@ -24,7 +24,7 @@ type UserStats = {
 const UserStatsTable: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats[]>([])
   const [loading, setLoading] = useState(true)
-  const { setTheme } = useTheme()
+  const { setTheme, theme } = useTheme()
 
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -87,7 +87,7 @@ const UserStatsTable: React.FC = () => {
       </div>
 
       {/* Title and content */}
-      <div className="flex-1 flex flex-col items-center justify-start w-full overflow-hidden pt-16 px-4">
+      <div className="flex-1 flex flex-col items-center justify-start w-full pt-16 px-4">
         <div className="w-full max-w-[1200px] flex-1 flex flex-col">
           <Card className="w-full border border-border bg-card text-card-foreground shadow-lg flex-1 flex flex-col overflow-hidden">
             <CardHeader className="border-b border-border pb-4">
@@ -111,7 +111,7 @@ const UserStatsTable: React.FC = () => {
                   <p className="text-muted-foreground">Loading leaderboard data...</p>
                 </div>
               ) : (
-                <div className="w-full h-full overflow-auto">
+                <div className="w-full h-full overflow-auto max-h-[70vh]">
                   <Table className="w-full">
                     <TableHeader>
                       <TableRow className="hover:bg-muted/50">
