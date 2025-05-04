@@ -453,7 +453,12 @@ export default class Match extends Phaser.Scene {
 
             const handleAddCannon = () => {
               let cannon = new Cannon(this, this.input.mousePointer);
-              //turn off button, turn on add cannon
+              /*let debugPoint = this.add
+              .sprite(oppX, 549, "match_p2Cannon")
+              .setDisplayOrigin(49, 79)
+              .setDepth(10)
+              .setVisible(true);
+*/
               this.cannonBtn.off("pointerdown", handleAddCannon);
               this.cannonBtn.removeInteractive();
 
@@ -464,7 +469,12 @@ export default class Match extends Phaser.Scene {
                 } else {
                   cannon.flipX = true;
                 }
-
+                /*
+                // Update debug point position
+                let oppX = ((pointer.x - 27) / (2580 - 27)) * 830 + 880;
+                oppX += 2 * (1280 - oppX);
+                debugPoint.setPosition(oppX, 549);
+*/
                 // dont overlap existing cannons AND da base(what about shields)
                 this.cantAddCannon =
                   this.p1Cannons.some((builtC) => {
@@ -705,8 +715,15 @@ export default class Match extends Phaser.Scene {
         console.log("info: ", info);
 
         // server sends the x pos of pov, calculte opponent x pos
-        let oppX = ((info.x - 27) / (2580 - 27)) * 800 + 880;
+        let oppX = ((info.x - 27) / (2580 - 27)) * 830 + 880;
         oppX += 2 * (1280 - oppX);
+        if (oppX > 1026 && oppX < 1531) {
+          if (oppX < 1280) {
+            oppX = 1531;
+          } else {
+            oppX = 1026;
+          }
+        }
 
         let oppCannon = this.add
           .sprite(oppX, 549, "match_p2Cannon")
