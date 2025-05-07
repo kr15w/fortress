@@ -321,7 +321,7 @@ export default class Match extends Phaser.Scene {
 		this.state.p2RpsChoice = null;
 		this.state.roundWinner = null;
 
-		console.log(this.state);
+		console.log("round start", this.state);
 
 		this.p1Left.play("match_p1Left_wait"); //yea no
 		this.p1Left.visible = false;
@@ -390,6 +390,8 @@ export default class Match extends Phaser.Scene {
 	}
 
 	onTowerStart() {
+		//console.warn("has", this.state);
+
 		/**An Rps winner must be determined. */
 		// tower logic
 		this.state.stage = "towerStart";
@@ -430,6 +432,8 @@ export default class Match extends Phaser.Scene {
 		}
 	}
 	_showTowerButtons() {
+		//console.warn("aaaaaaaaa", this.state);
+
 		// The build/atk/up buttons only
 		//show the arm lel
 		this.p1Left.visible = true;
@@ -489,6 +493,8 @@ export default class Match extends Phaser.Scene {
 		this.atkBtn.on("pointerdown", chooseAtk);
 
 		const chooseBld = () => {
+			console.warn("build aaaaaaaaaa", this.state.roundWinner);
+
 			this.atkBtn.hide();
 			this.upgBtn.hide();
 			this.cannonBtn.hide();
@@ -504,17 +510,20 @@ export default class Match extends Phaser.Scene {
 					// canon or shield
 					this.cannonBtn.visible = true;
 					this.shieldBtn.visible = true;
-
+					this.bldBtn.off("pointerdown", chooseBld);
+					this.bldBtn.removeInteractive();
 					const handleAddCannon = () => {
 						let cannon = new Cannon(this, this.input.mousePointer);
 						/*let debugPoint = this.add
-              .sprite(oppX, 549, "match_p2Cannon")
+						.sprite(oppX, 549, "match_p2Cannon")
               .setDisplayOrigin(49, 79)
               .setDepth(10)
               .setVisible(true);
 */
 						this.cannonBtn.off("pointerdown", handleAddCannon);
 						this.cannonBtn.removeInteractive();
+						this.shieldBtn.off("pointerdown", handleAddShield);
+						this.shieldBtn.removeInteractive();
 
 						const handleMove = (pointer) => {
 							cannon.setX(pointer.x);
@@ -558,7 +567,7 @@ export default class Match extends Phaser.Scene {
 							callback: () => {
 								const handleConfirm = () => {
 									if (!this.cantAddCannon) {
-										console.warn("this should stop STOP");
+										//console.warn("this should stop STOP");
 										this.input.off("pointermove", handleMove);
 										this.input.off("pointerdown", handleConfirm);
 										this.p1Cannons.push(cannon);
@@ -603,10 +612,12 @@ export default class Match extends Phaser.Scene {
 						.setInteractive({
 							cursor: "pointer",
 						})
-						.on("pointerdown", handleAddCannon);
+						.on("pointerdown", handleAddCannon, this);
 
 					//disable later to avoid double clickin
 					const handleAddShield = () => {
+						this.cannonBtn.off("pointerdown", handleAddCannon);
+						this.cannonBtn.removeInteractive();
 						this.shieldBtn.off("pointerdown", handleAddShield);
 						this.shieldBtn.removeInteractive();
 
@@ -625,7 +636,7 @@ export default class Match extends Phaser.Scene {
 							}
 						};
 
-						this.input.on("pointermove", handleResize);
+						this.input.on("pointermove", handleResize, this);
 
 						this.time.addEvent({
 							delay: 50,
