@@ -939,7 +939,8 @@ class Cannon extends Phaser.GameObjects.Sprite {
 		this.setDisplayOrigin(129, 281)
 			.setDepth(10)
 			.setInteractive()
-			.setVisible(true);
+			.setVisible(true)
+			.setScale(0.7, 0.7);
 		scene.add.existing(this);
 	}
 
