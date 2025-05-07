@@ -3,14 +3,11 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Trophy, Medal, Shield, Bomb, Loader2, Swords, Skull, Moon, Sun, Home } from "lucide-react"
-import { useTheme } from "next-themes"
-
+import { Trophy, Medal, Shield, Bomb, Loader2, Swords, Skull } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 
 type UserStats = {
   id: number
@@ -24,7 +21,6 @@ type UserStats = {
 const UserStatsTable: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats[]>([])
   const [loading, setLoading] = useState(true)
-  const { setTheme, theme } = useTheme()
 
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -62,29 +58,6 @@ const UserStatsTable: React.FC = () => {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background text-foreground overflow-hidden">
-      {/* Theme Toggle and Home button in top right corner */}
-      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
-        <Link to="/">
-          <Button variant="ghost" size="icon" aria-label="Go to home">
-            <Home className="h-5 w-5" />
-          </Button>
-        </Link>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Toggle theme">
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       {/* Title and content */}
       <div className="flex-1 flex flex-col items-center justify-start w-full pt-16 px-4">

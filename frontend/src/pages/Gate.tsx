@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { login } from "@/utils/auth"
-import { Moon, Sun, Trophy, ChromeIcon as Google } from "lucide-react"
+import { Moon, Sun, ChromeIcon as Google } from "lucide-react"
 
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ const Gate: React.FC = () => {
   })
   const [error, setError] = useState("")
   const navigate = useNavigate()
-  const { setTheme, theme } = useTheme()
+  const { setTheme } = useTheme()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({

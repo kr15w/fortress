@@ -4,15 +4,13 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useNavigate, Link, useParams } from "react-router-dom"
-import { useTheme } from "next-themes"
 import axios from "axios"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { User, Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle, Moon, Sun, Home, FileText } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { User, Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle, FileText } from "lucide-react"
 import { getCurrentUser, storeUsername } from "@/utils/auth"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -28,7 +26,7 @@ const EditProfile = () => {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { setTheme } = useTheme()
+
 
   // Validation states
   const [usernameError, setUsernameError] = useState("")
@@ -136,29 +134,6 @@ const EditProfile = () => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
-      {/* Theme Toggle and Navigation in top right corner */}
-      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
-        <Link to="/">
-          <Button variant="ghost" size="icon" aria-label="Go to home">
-            <Home className="h-5 w-5" />
-          </Button>
-        </Link>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Toggle theme">
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       {/* Centered Edit Profile Card */}
       <div className="w-full max-w-md px-4 max-h-[90vh] overflow-y-auto py-4">

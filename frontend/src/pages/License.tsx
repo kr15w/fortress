@@ -4,14 +4,12 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { license } from "@/utils/auth"
-import { Key, CheckCircle2, XCircle, Loader2, AlertTriangle, Moon, Sun, Trophy } from "lucide-react"
-import { useTheme } from "next-themes"
+import { Key, CheckCircle2, XCircle, Loader2, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 const License: React.FC = () => {
   const [displayLicenseKey, setDisplayLicenseKey] = useState("")
@@ -22,7 +20,6 @@ const License: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isValid, setIsValid] = useState(false)
   const navigate = useNavigate()
-  const { setTheme, theme } = useTheme()
 
   // Validate license key format
   const validateLicenseKey = (key: string): boolean => {
@@ -121,24 +118,6 @@ const License: React.FC = () => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
-      {/* Theme Toggle in top right corner */}
-      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Toggle theme">
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       {/* Centered License Verification Card */}
       <div className="w-full max-w-md px-4">

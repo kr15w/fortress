@@ -4,14 +4,12 @@ import type React from "react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import axios from "axios"
-import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Label } from "@/components/ui/label"
-import { Mail, Lock, KeyRound, ArrowRight, CheckCircle, AlertCircle, Loader2, Moon, Sun, Home } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Mail, Lock, KeyRound, ArrowRight, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 
 const ChangePassword: React.FC = () => {
   const [email, setEmail] = useState("")
@@ -21,7 +19,6 @@ const ChangePassword: React.FC = () => {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { setTheme, theme } = useTheme()
 
   const handleSendEmail = async () => {
     if (!email) {
@@ -76,29 +73,7 @@ const ChangePassword: React.FC = () => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
-      {/* Theme Toggle and Navigation in top right corner */}
-      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
-        <Link to="/">
-          <Button variant="ghost" size="icon" aria-label="Go to home">
-            <Home className="h-5 w-5" />
-          </Button>
-        </Link>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Toggle theme">
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       {/* Centered Password Reset Card */}
       <div className="w-full max-w-md px-4">
