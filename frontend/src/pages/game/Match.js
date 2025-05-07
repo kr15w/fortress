@@ -369,10 +369,6 @@ export default class Match extends Phaser.Scene {
 		this._hideRpsButtons();
 
 		console.info(this.state.players);
-		/*
-    console.log(
-      
-    );*/
 		this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
 		// player visuals
 		this.p1Right.play("match_p1Right_" + this.state.p1RpsChoice);
@@ -428,6 +424,7 @@ export default class Match extends Phaser.Scene {
 		console.log("tower start");
 
 		if (this.state.roundWinner.name != this.povName) {
+			//i lose, watch opponent think
 			this.p1Left.play("match_p1Left_wait");
 			this.p1Right.play("match_p1Right_waitTower");
 			this.p2Body.play("match_p2Body_think");
@@ -485,75 +482,81 @@ export default class Match extends Phaser.Scene {
 				duration: 300,
 				onComplete: () => {
 					this.atkBtn.off("pointerdown", chooseAtk, this);
-
 					this.targets.removeAll(true);
-					//add base+cannon targets
-					this.targets.add(
-						this.add
-							.sprite(this.p2Base.x, this.p2Base.y, "match_targetBase")
-							.setDisplayOrigin(32, 38)
-							.setName("p2Base")
-					);
-					// Use the p2Cannons array for targeting
-					this.p2CannonsContainer.list.forEach((c) => {
-						console.log("add target at", c.x, c.y);
 
-						this.targets.add(
-							this.add
-								.sprite(c.x, c.y, "match_targetCannon")
-								.setDisplayOrigin(66, 92)
-								.setDepth(15)
-								.setVisible(true)
-								.setName("p2Cannon_" + c.name)
-						);
-					});
-					this.targets.setVisible(true);
-					this.targets.setDepth(9999);
+					// Choose your weapon
+					this.cannonSelectors.removeAll(true);
+					this.p1CannonsContainer.list.forEach((cannon, index) => {
+						const selector = this.add
+							.sprite(cannon.x, cannon.y - 50, "match_chooseCannon")
+							.setName("selfCannonSelector")
+							.setScale(0.7)
+							.setAlpha(0.8)
+							.setInteractive({ cursor: "pointer" })
+							.on("pointerover", () => selector.setAlpha(1))
+							.on("pointerout", () => selector.setAlpha(0.8))
+							.on("pointerdown", () => {
+								console.warn(`Selected cannon ${index}`);
 
-					const chooseAtkTower = () => {
-						this.p2Base.off("pointerdown", chooseAtkTower);
-						this.p2Base.removeInteractive();
-						console.warn("owo");
+								//add targets, each trigger the call and then hide everyone
+								this.targets.removeAll(true);
 
-						//choose ur cannon lol
-						let selectedCannonId = null;
+								//base target
+								this.targets.add(
+									this.add
+										.sprite(this.p2Base.x, this.p2Base.y, "match_targetBase")
+										.setDisplayOrigin(32, 38)
+										.setName("p2Base")
+								);
+								// cannon target
+								this.p2CannonsContainer.list.forEach((c) => {
+									console.log("add target at", c.x, c.y);
 
-						// Add selection indicator for each cannon in the container
-						this.cannonSelectors.removeAll(true);
-						this.p1CannonsContainer.list.forEach((cannon, index) => {
-							const selector = this.add
-								.sprite(cannon.x, cannon.y - 50, "match_chooseCannon")
-								.setName("owo selecotrs")
-								.setScale(0.7)
-								.setAlpha(0.8)
-								.setInteractive({ cursor: "pointer" })
-								.on("pointerover", () => selector.setAlpha(1))
-								.on("pointerout", () => selector.setAlpha(0.8))
-								.on("pointerdown", () => {
-									// My mom is a woman
-									console.warn(`Selected cannon ${index}`);
+									this.targets.add(
+										this.add
+											.sprite(c.x, c.y, "match_targetCannon")
+											.setDisplayOrigin(66, 92)
+											.setDepth(15)
+											.setVisible(true)
+											.setName("p2Cannon_" + c.name)
+									);
+								});
+								this.targets.setVisible(true);
+
+								const chooseAtkTower = () => {
+									this.p2Base.off("pointerdown", chooseAtkTower);
+									this.p2Base.removeInteractive();
 
 									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-										target: "tower",
+										target: -1, //-1 for tower, 0+ for opponent cannon
 										cannonId: index,
 									});
+									//console.warn("owo");
+								};
 
-									// Clean up
-									//this.cannonSelectors.setVisible(false);
+								this.p2Base
+									.setInteractive({ cursor: "pointer" })
+									.on("pointerdown", chooseAtkTower);
+
+								const chooseAtkCannon = () => {
+									this.p2CannonsContainer.removeAll(true);
+									console.log("Attacking opopnent's cannon", index);
+									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
+										target: -1, //-1 for tower, 0+ for opponent cannon
+										cannonId: index,
+									});
+								};
+								this.p2CannonsContainer.list.forEach((c, index) => {
+									c.setInteractive({ cursor: "pointer" }).on(
+										"pointerdown",
+										chooseAtkCannon,
+										this
+									);
 								});
+							});
 
-							this.cannonSelectors.add(selector);
-						});
-					};
-					this.p2Base
-						.setInteractive({ cursor: "pointer" })
-						.on("pointerdown", chooseAtkTower);
-					// Attack base or cannon?
-
-					/*if (null) {
-          } else {
-            this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, this.povName);
-          }*/
+						this.cannonSelectors.add(selector);
+					});
 				},
 			});
 		};
@@ -627,9 +630,8 @@ export default class Match extends Phaser.Scene {
 										console.warn("add le caon", cannon);
 										this.input.off("pointermove", handleMove);
 										this.input.off("pointerdown", handleConfirm);
-										// Add cannon to container only
 										this.p1CannonsContainer.add(cannon);
-										cannon.placed = true; //any use>
+										cannon.placed = true; //any use?
 										console.log("cannons: ", this.p1CannonsContainer);
 										this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
 											x: cannon.x,
@@ -774,7 +776,6 @@ export default class Match extends Phaser.Scene {
 		this.bldBtn.hide();
 		this.upgBtn.hide();
 
-		//are we stupid?this.p1CannonsContainer.setVisible(false);
 		this.cannonSelectors.setVisible(false);
 		this.targets.setVisible(false);
 
@@ -840,6 +841,10 @@ export default class Match extends Phaser.Scene {
 	}
 	handleTowerInput(towerAction, info) {
 		console.debug("state: ", this.state);
+		if (!this.state.roundWinner) {
+			console.error("what the hell");
+			return;
+		}
 		/**called only during towerStart event.
 		 * Sends message to quasi server.
 		 */
@@ -900,8 +905,8 @@ export default class Match extends Phaser.Scene {
 
 				// player visuals again
 				let oppCannon = this.add
-					.sprite(oppX, 549, "match_p2Cannon")
-					.setDisplayOrigin(49, 79)
+					.sprite(oppX, 558, "match_p2Cannon")
+					.setDisplayOrigin(107, 154)
 					.setDepth(10)
 					.setVisible(true);
 				this.p2CannonsContainer.add(oppCannon);
@@ -1009,7 +1014,7 @@ class Cannon extends Phaser.GameObjects.Sprite {
 			.setInteractive()
 			.setVisible(true)
 			.setScale(0.7, 0.7)
-			.setName("AAAAAAAAAAAAAA");
+			.setName("p1Cannon");
 		scene.add.existing(this);
 	}
 
@@ -1023,6 +1028,7 @@ class Cannon extends Phaser.GameObjects.Sprite {
 	}
 }
 
+//unused
 class P2Cannon extends Phaser.GameObjects.Sprite {
 	constructor(scene, pointer, forceX = null) {
 		super(scene, pointer.x ? !forceX : forceX, 1430, "match_p2Cannon");
