@@ -161,23 +161,35 @@ export default class Match extends Phaser.Scene {
 		this.state.players[1].cannons.push(debugC2);*/
 
 		// Create containers for game objects
-		this.p1CannonsContainer = this.add.container(0, 0).setDepth(10);
-		this.p2CannonsContainer = this.add.container(0, 0).setDepth(10);
+		this.p1CannonsContainer = this.add
+			.container(0, 0)
+			.setDepth(10)
+			.setName("p1CannonsContainer");
+		this.p2CannonsContainer = this.add
+			.container(0, 0)
+			.setDepth(10)
+			.setName("p2CannonsContainer");
+
+		// selct use which cannon to atk
+		this.cannonSelectors = this.add
+			.container(0, 0)
+			.setName("cannonSelectorsContainer")
+			.setDepth(10000);
 		/*
 		// Add debug cannons to containers
 		this.p1CannonsContainer.add(debugC);
 		this.p2CannonsContainer.add(debugC2);
 */
-		/**
-		 * @todo migrate these bruh
-		 */
-		this.p1Cannons = [];
+		// Using containers for game objects instead of arrays
 		this.p1Shields = [];
 		this.p2Cannons = [];
 		this.p2Shields = [];
 
 		//aaaaaaaaaaaaaaaa
-		this.targets = this.add.container(0, 0);
+		this.targets = this.add
+			.container(0, 0)
+			.setDepth(9999)
+			.setName("targetsContainer");
 
 		/*****also remove the debug c lol */
 
@@ -347,6 +359,7 @@ export default class Match extends Phaser.Scene {
 		this.p2Hand.play("match_p2Hand_wait");
 
 		//this.events.removeAllListeners();
+
 		this._showRpsButtons();
 		this._hideTowerButtons();
 	}
@@ -366,8 +379,9 @@ export default class Match extends Phaser.Scene {
 		this.p2Hand.play("match_p2Hand_" + this.state.p2RpsChoice);
 		this.p2Body.play("match_p2Body_rps");
 
+		//todo change
 		this.time.addEvent({
-			delay: 1500,
+			delay: 500,
 			callback: () => {
 				console.log("decide winner", this.state.roundWinner);
 				if (this.state.roundWinner == null) {
@@ -391,7 +405,7 @@ export default class Match extends Phaser.Scene {
 					this.p2Hand.play("match_p2Hand_win");
 				}
 				this.time.addEvent({
-					delay: 800,
+					delay: 200,
 					callback: () => {
 						if (this.state.roundWinner == null) {
 							this.events.emit("roundStart");
@@ -454,6 +468,8 @@ export default class Match extends Phaser.Scene {
 		// The build/atk/up buttons only
 		//show the arm lel
 		this.p1Left.visible = true;
+		this.p1CannonsContainer.setVisible(true);
+		this.cannonSelectors.setVisible(true);
 
 		const chooseAtk = () => {
 			this.bldBtn.hide();
@@ -461,20 +477,6 @@ export default class Match extends Phaser.Scene {
 			this.cannonBtn.hide();
 			this.shieldBtn.hide();
 
-			let atkTarget = null; //temp
-			let cannonId = null; //temp
-
-			const checkIfSubmit = () => {
-				/**
-				 * submits tower action only when atk target and cannonId are chosen
-				 */
-				if (atkTarget && cannonId) {
-					this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-						target: atkTarget,
-						cannonId: cannonId,
-					});
-				}
-			};
 			this.tweens.add({
 				targets: this.atkBtn,
 				x: 475,
@@ -483,79 +485,69 @@ export default class Match extends Phaser.Scene {
 				duration: 300,
 				onComplete: () => {
 					this.atkBtn.off("pointerdown", chooseAtk, this);
-					//this.p2Base.setTintFill(0xffffff);
-					this.targets.removeAll();
 
+					this.targets.removeAll(true);
 					//add base+cannon targets
 					this.targets.add(
 						this.add
 							.sprite(this.p2Base.x, this.p2Base.y, "match_targetBase")
 							.setDisplayOrigin(32, 38)
+							.setName("p2Base")
 					);
 					// Use the p2Cannons array for targeting
-					for (const c of this.p2Cannons) {
+					this.p2CannonsContainer.list.forEach((c) => {
 						console.log("add target at", c.x, c.y);
 
-						this.targets.add(new TargetCannon(this, c.x, c.y));
-					}
+						this.targets.add(
+							this.add
+								.sprite(c.x, c.y, "match_targetCannon")
+								.setDisplayOrigin(66, 92)
+								.setDepth(15)
+								.setVisible(true)
+								.setName("p2Cannon_" + c.name)
+						);
+					});
 					this.targets.setVisible(true);
 					this.targets.setDepth(9999);
 
-					//this.targets.first
-					this.p2Base
-						.setInteractive({ cursor: "pointer" })
-						.on("pointerdown", () => {
-							//this.targets.first.removeInteractive();
-							this.p2Base.off("pointerdown");
-							this.p2Base.removeInteractive();
+					const chooseAtkTower = () => {
+						this.p2Base.off("pointerdown", chooseAtkTower);
+						this.p2Base.removeInteractive();
+						console.warn("owo");
 
-							//choose ur cannon lol
-							let selectedCannonId = null;
+						//choose ur cannon lol
+						let selectedCannonId = null;
 
-							// Create a container for cannon selection indicators
-							const cannonSelectors = this.add.container(0, 0);
-							cannonSelectors.setDepth(10000);
+						// Add selection indicator for each cannon in the container
+						this.cannonSelectors.removeAll(true);
+						this.p1CannonsContainer.list.forEach((cannon, index) => {
+							const selector = this.add
+								.sprite(cannon.x, cannon.y - 50, "match_chooseCannon")
+								.setName("owo selecotrs")
+								.setScale(0.7)
+								.setAlpha(0.8)
+								.setInteractive({ cursor: "pointer" })
+								.on("pointerover", () => selector.setAlpha(1))
+								.on("pointerout", () => selector.setAlpha(0.8))
+								.on("pointerdown", () => {
+									// My mom is a woman
+									console.warn(`Selected cannon ${index}`);
 
-							// Add selection indicator for each cannon
-							this.p1Cannons.forEach((cannon, index) => {
-								const selector = this.add
-									.image(cannon.x, cannon.y - 50, "match_chooseCannon")
-									.setScale(0.7)
-									.setAlpha(0.8)
-									.setInteractive({ cursor: "pointer" })
-									.on("pointerover", () => selector.setAlpha(1))
-									.on("pointerout", () => selector.setAlpha(0.8))
-									.on("pointerdown", () => {
-										// Select this cannon
-										selectedCannonId = index;
-										console.log(`Selected cannon ${index}`);
-
-										// Highlight the selected cannon
-										cannonSelectors.list.forEach((s) => s.setTint(0xffffff));
-										selector.setTint(0x00ff00);
-
-										// Fire the tower input with the selected cannon
-										this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-											target: "tower",
-											cannonId: selectedCannonId,
-										});
-
-										// Clean up
-										cannonSelectors.destroy();
+									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
+										target: "tower",
+										cannonId: index,
 									});
 
-								cannonSelectors.add(selector);
-							});
-
-							// If there are no cannons, use default behavior
-							if (this.p1Cannons.length === 0) {
-								this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-									//using which cannon, for animation
-									// both sides should keep track of the same list of cannons?
-									cannonId: 2,
+									// Clean up
+									//this.cannonSelectors.setVisible(false);
 								});
-							}
+
+							this.cannonSelectors.add(selector);
 						});
+					};
+					this.p2Base
+						.setInteractive({ cursor: "pointer" })
+						.on("pointerdown", chooseAtkTower);
 					// Attack base or cannon?
 
 					/*if (null) {
@@ -606,19 +598,17 @@ export default class Match extends Phaser.Scene {
 							}
 
 							// dont overlap existing cannons AND da base(what about shields)
+							//todo remove this.
 							this.cantAddCannon =
-								this.p1Cannons.some((builtC) => {
-									let bounds1 = cannon.getBounds();
-									let bounds2 = builtC.getBounds();
-									return Phaser.Geom.Intersects.RectangleToRectangle(
-										bounds1,
-										bounds2
+								this.p1CannonsContainer.list.some((builtC) => {
+									return (
+										Math.abs(builtC.x - cannon.x) <= 150 &&
+										Math.abs(builtC.y - cannon.y) <= 150
 									);
 								}) ||
-								Phaser.Geom.Intersects.RectangleToRectangle(
-									cannon.getBounds(),
-									this.p1Base.getBounds()
-								);
+								Math.abs(cannon.x - 736) <= 150 ||
+								cannon.x <= 27 ||
+								cannon.x >= 2580;
 
 							if (this.cantAddCannon) {
 								cannon.setTint(0xff0000);
@@ -637,8 +627,7 @@ export default class Match extends Phaser.Scene {
 										console.warn("add le caon", cannon);
 										this.input.off("pointermove", handleMove);
 										this.input.off("pointerdown", handleConfirm);
-										//combine these
-										this.p1Cannons.push(cannon);
+										// Add cannon to container only
 										this.p1CannonsContainer.add(cannon);
 										cannon.placed = true; //any use>
 										console.log("cannons: ", this.p1CannonsContainer);
@@ -785,7 +774,8 @@ export default class Match extends Phaser.Scene {
 		this.bldBtn.hide();
 		this.upgBtn.hide();
 
-		//this.p2Base.clearTint();
+		//are we stupid?this.p1CannonsContainer.setVisible(false);
+		this.cannonSelectors.setVisible(false);
 		this.targets.setVisible(false);
 
 		this.cannonBtn.hide();
@@ -914,7 +904,7 @@ export default class Match extends Phaser.Scene {
 					.setDisplayOrigin(49, 79)
 					.setDepth(10)
 					.setVisible(true);
-
+				this.p2CannonsContainer.add(oppCannon);
 				this.state.roundWinner.cannons.push(info);
 				break;
 			case TowerActionTypes.ATTACK_TOWER:
