@@ -3,7 +3,21 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
-import { Trophy, Medal, Shield, Bomb, Loader2, Swords, Skull, User, Moon, Sun, Home } from "lucide-react"
+import {
+  Trophy,
+  Medal,
+  Shield,
+  Bomb,
+  Loader2,
+  Swords,
+  Skull,
+  User,
+  Moon,
+  Sun,
+  Home,
+  FileText,
+  Quote,
+} from "lucide-react"
 import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -25,6 +39,7 @@ const UserProfile: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const { setTheme, theme } = useTheme()
   const [currentUser, setCurrentUser] = useState<string | null>(null)
+  const [biography, setBiography] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -33,6 +48,10 @@ const UserProfile: React.FC = () => {
         const data = await response.json()
         setUserProfile(data)
         setLoading(false)
+
+        // Load biography from localStorage
+        const savedBio = localStorage.getItem(`bio_${userId}`)
+        setBiography(savedBio)
       } catch (error) {
         console.error("Error fetching user profile:", error)
         setLoading(false)
@@ -211,6 +230,22 @@ const UserProfile: React.FC = () => {
               </CardHeader>
 
               <CardContent className="py-6">
+                {/* About Me Section */}
+                <div className="mb-6 bg-muted/30 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">About Me</h3>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Quote className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <p className="text-muted-foreground italic">
+                      {biography
+                        ? biography
+                        : `We don't know too much about them, but we're sure ${userProfile.username} is great!`}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-6">
                     <div className="bg-muted/50 rounded-lg p-4">

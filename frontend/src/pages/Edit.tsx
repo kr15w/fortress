@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { User, Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle, Moon, Sun, Home } from "lucide-react"
+import { User, Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle, Moon, Sun, Home, FileText } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCurrentUser, storeUsername } from "@/utils/auth"
+import { Textarea } from "@/components/ui/textarea"
 
 const EditProfile = () => {
   const navigate = useNavigate()
@@ -22,6 +23,8 @@ const EditProfile = () => {
   const [newUsername, setNewUsername] = useState("")
   const [newEmail, setNewEmail] = useState("")
   const [confirmEmail, setConfirmEmail] = useState("")
+  const [biography, setBiography] = useState("")
+  const [bioCharCount, setBioCharCount] = useState(0)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -39,6 +42,13 @@ const EditProfile = () => {
     // Pre-fill the form with current username
     if (username) {
       setNewUsername(username)
+
+      // Load biography from localStorage if it exists
+      const savedBio = localStorage.getItem(`bio_${userId}`)
+      if (savedBio) {
+        setBiography(savedBio)
+        setBioCharCount(savedBio.length)
+      }
     }
 
     // Fetch current email if needed
@@ -75,6 +85,14 @@ const EditProfile = () => {
     }
   }, [newEmail, confirmEmail])
 
+  const handleBiographyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value
+    if (value.length <= 100) {
+      setBiography(value)
+      setBioCharCount(value.length)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -91,6 +109,9 @@ const EditProfile = () => {
       setError("Emails do not match")
       return
     }
+
+    // Save biography to localStorage
+    localStorage.setItem(`bio_${userId}`, biography)
 
     setIsLoading(true)
     try {
@@ -140,7 +161,7 @@ const EditProfile = () => {
       </div>
 
       {/* Centered Edit Profile Card */}
-      <div className="w-full max-w-md px-4">
+      <div className="w-full max-w-md px-4 max-h-[90vh] overflow-y-auto py-4">
         <Card className="w-full border border-border bg-card text-card-foreground shadow-md">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto mb-4">
@@ -168,6 +189,29 @@ const EditProfile = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="biography" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  About Me
+                </Label>
+                <Textarea
+                  id="biography"
+                  placeholder="Tell us a bit about yourself..."
+                  value={biography}
+                  onChange={handleBiographyChange}
+                  className="resize-none"
+                  rows={3}
+                  maxLength={100}
+                />
+                <div className="flex justify-end">
+                  <span
+                    className={`text-xs ${bioCharCount >= 90 ? "text-orange-500 dark:text-orange-400" : "text-muted-foreground"}`}
+                  >
+                    {bioCharCount}/100 characters
+                  </span>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="newUsername">Username</Label>
                 <div className="relative">
@@ -219,7 +263,11 @@ const EditProfile = () => {
                 {emailError && <p className="text-xs text-red-500 dark:text-red-400">{emailError}</p>}
               </div>
 
-              <Button type="submit" className="w-full text-white" disabled={isLoading || !!usernameError || !!emailError}>
+              <Button
+                type="submit"
+                className="w-full text-white"
+                disabled={isLoading || !!usernameError || !!emailError}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -235,7 +283,7 @@ const EditProfile = () => {
           <CardFooter className="flex flex-col space-y-4">
             <Button variant="ghost" size="sm" asChild className="w-full">
               <Link to={`/profile/${userId}`} className="flex items-center justify-center text-muted-foreground">
-                <ArrowLeft className=" h-4 w-4" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Profile
               </Link>
             </Button>
