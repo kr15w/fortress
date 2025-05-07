@@ -87,13 +87,8 @@ const Signup: React.FC = () => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
-      {/* Theme Toggle and Leaderboard in top right corner */}
+      {/* Theme Toggle in top right corner */}
       <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
-        <Link to="/leaderboard">
-          <Button variant="ghost" size="icon" aria-label="Go to leaderboard">
-            <Trophy className="h-5 w-5" />
-          </Button>
-        </Link>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
