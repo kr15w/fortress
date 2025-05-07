@@ -22,14 +22,13 @@ import { Trophy, User, LogOut, Home } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-// Navigation buttons component that shows conditionally based on authentication
 const NavigationButtons = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check if user is authenticated and get userId from sessionStorage
+    // Check if user authenticated, get userId from sessionStorage
     const checkAuth = async () => {
       try {
         // Get userId from sessionStorage
@@ -63,18 +62,6 @@ const NavigationButtons = () => {
   return (
     <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
       <TooltipProvider>
-        {/* Always show theme toggle on all routes */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={buttonStyle}>
-              <ModeToggle />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Theme</p>
-          </TooltipContent>
-        </Tooltip>
-
         {/* Only show these buttons on protected routes */}
         {!isPublicRoute && (
           <>
@@ -147,6 +134,7 @@ const NavigationButtons = () => {
                   variant="ghost"
                   size="icon"
                   onClick={handleLogout}
+                  asChild
                   aria-label="Logout"
                   className={`bg-transparent ${buttonStyle}`}
                 >
