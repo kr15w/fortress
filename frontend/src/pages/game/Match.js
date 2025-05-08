@@ -380,7 +380,7 @@ export default class Match extends Phaser.Scene {
 
 		//todo change
 		this.time.addEvent({
-			delay: 500,
+			delay: 800,
 			callback: () => {
 				console.log("decide winner", this.state.roundWinner);
 				if (this.state.roundWinner == null) {
@@ -404,7 +404,7 @@ export default class Match extends Phaser.Scene {
 					this.p2Hand.play("match_p2Hand_win");
 				}
 				this.time.addEvent({
-					delay: 200,
+					delay: 500,
 					callback: () => {
 						if (this.state.roundWinner == null) {
 							this.events.emit("roundStart");
@@ -464,6 +464,14 @@ export default class Match extends Phaser.Scene {
 
 	onGameOver() {
 		alert("gggggggg on Game over");
+		this.time.addEvent({
+			delay: 1000,
+			callback: () => {
+				this.scene.sleep();
+				this.scene.stop();
+				this.scene.start("Lobby");
+			},
+		});
 	}
 
 	_showTowerButtons() {
@@ -613,9 +621,11 @@ export default class Match extends Phaser.Scene {
 							//todo remove this.
 							this.cantAddCannon =
 								this.p1CannonsContainer.list.some((builtC) => {
-									return (
-										Math.abs(builtC.x - cannon.x) <= 150 &&
-										Math.abs(builtC.y - cannon.y) <= 150
+									const builtCBounds = builtC.getBounds();
+									const cannonBounds = cannon.getBounds();
+									return !Phaser.Geom.Rectangle.Overlaps(
+										builtCBounds,
+										cannonBounds
 									);
 								}) ||
 								Math.abs(cannon.x - 736) <= 150 ||
@@ -1025,7 +1035,7 @@ class Player {
 		 *
 		 *
 		 *
-		 * change this hp
+		 * @todo change this hp
 		 *
 		 *
 		 *
@@ -1035,7 +1045,7 @@ class Player {
 		 *
 		 *
 		 */
-		this.hp = 4;
+		this.hp = 0;
 		//this.shields = [];
 		this.cannons = [];
 	}
