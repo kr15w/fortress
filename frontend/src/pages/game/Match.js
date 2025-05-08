@@ -186,7 +186,6 @@ export default class Match extends Phaser.Scene {
 		this.p2Cannons = [];
 		this.p2Shields = [];
 
-		//aaaaaaaaaaaaaaaa
 		this.targets = this.add
 			.container(0, 0)
 			.setDepth(9999)
@@ -200,6 +199,10 @@ export default class Match extends Phaser.Scene {
 		this.p1Right.play("match_p1Right_wait");
 		this.p2Body.play("match_p2Body_wait");
 
+		//todo centralize visuals
+		this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+		this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+
 		this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
 
 		this.events.on("roundStart", () => {
@@ -210,6 +213,9 @@ export default class Match extends Phaser.Scene {
 		});
 		this.events.on("towerStart", () => {
 			this.onTowerStart();
+		});
+		this.events.on("gameOver", () => {
+			this.onGameOver();
 		});
 
 		this.events.emit("roundStart");
@@ -355,9 +361,7 @@ export default class Match extends Phaser.Scene {
 		this.p1Right.play("match_p1Right_wait");
 		this.p2Body.play("match_p2Body_wait");
 		this.p2Hand.play("match_p2Hand_wait");
-
-		this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-		this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+		this.targets.removeAll(true);
 
 		this._showRpsButtons();
 		this._hideTowerButtons();
@@ -458,6 +462,10 @@ export default class Match extends Phaser.Scene {
 		}
 	}
 
+	onGameOver() {
+		alert("gggggggg on Game over");
+	}
+
 	_showTowerButtons() {
 		//console.warn("aaaaaaaaa", this.state);
 
@@ -537,7 +545,8 @@ export default class Match extends Phaser.Scene {
 									.setInteractive({ cursor: "pointer" })
 									.on("pointerdown", chooseAtkTower);
 
-								const chooseAtkCannon = (p2Index) => {
+								const chooseAtkCannon = (c, p2Index) => {
+									this.targets.removeAll(true);
 									console.log("Attacking opopnent's cannon", p2Index);
 									this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
 										target: p2Index, //-1 for tower, 0+ for opponent cannon
@@ -545,16 +554,12 @@ export default class Match extends Phaser.Scene {
 									});
 								};
 								this.p2CannonsContainer.list.forEach((c, p2Index) => {
-									console.log(
-										"atk opp's",
-										p2Index,
-										"with my",
-										p1Index,
-										"th cannon"
-									);
 									c.setInteractive({ cursor: "pointer" }).on(
 										"pointerdown",
-										(p2Index) => chooseAtkCannon(p2Index)
+										(pointer) => {
+											console.warn("each cannon's index:", p2Index);
+											chooseAtkCannon(c, p2Index);
+										}
 									);
 								});
 							});
@@ -625,7 +630,6 @@ export default class Match extends Phaser.Scene {
 						};
 						this.input.on("pointermove", handleMove);
 
-						//buggy
 						this.time.addEvent({
 							delay: 50,
 							callback: () => {
@@ -742,7 +746,28 @@ export default class Match extends Phaser.Scene {
 			this.bldBtn.hide();
 			this.cannonBtn.hide();
 			this.shieldBtn.hide();
-			this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, this.povName);
+
+			this.p1CannonsContainer.list.forEach((cannon, index) => {
+				const selector = this.add
+					.sprite(cannon.x, cannon.y, "match_chooseCannon")
+					.setName("selfCannonSelector")
+					.setScale(0.7)
+					.setAlpha(0.8)
+					.setInteractive({ cursor: "pointer" })
+					.on("pointerover", () => selector.setAlpha(1))
+					.on("pointerout", () => selector.setAlpha(0.8))
+					.on("pointerdown", () => {
+						this.targets.removeAll(true);
+						console.warn(`Upgrade my ${index}th cannon`);
+
+						this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
+							cannonId: index,
+						});
+
+						this.cannonSelectors.removeAll(true);
+					});
+				this.cannonSelectors.add(selector);
+			});
 		};
 		this.upgBtn
 			.setInteractive({
@@ -780,8 +805,8 @@ export default class Match extends Phaser.Scene {
 		this.bldBtn.hide();
 		this.upgBtn.hide();
 
-		this.cannonSelectors.setVisible(false);
-		this.targets.setVisible(false);
+		this.cannonSelectors.removeAll(true);
+		this.targets.removeAll(true);
 
 		this.cannonBtn.hide();
 		this.shieldBtn.hide();
@@ -872,6 +897,9 @@ export default class Match extends Phaser.Scene {
 				console.log("build tower");
 				this.state.roundWinner.hp += 1;
 
+				//where to update visuals
+				this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+				this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
 				// //update visuasl
 				// if (this.state.roundWinner.name == this.povName) {
 				// 	this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
@@ -911,26 +939,58 @@ export default class Match extends Phaser.Scene {
 				console.log("oppX: ", oppX);
 
 				// player visuals again
-				let oppCannon = this.add
+				const oppCannon = this.add
 					.sprite(oppX, 558, "match_p2Cannon")
 					.setDisplayOrigin(107, 154)
 					.setDepth(10)
 					.setVisible(true);
 				this.p2CannonsContainer.add(oppCannon);
-				this.state.roundWinner.cannons.push(info);
+				this.state.roundWinner.cannons.push({
+					x: info.x,
+					pow: 1,
+				});
 				break;
 			case TowerActionTypes.ATTACK_TOWER:
 				console.log("info: ", info);
 				this.state.roundLoser.hp -= 1;
+
+				if (this.state.roundLoser.hp < 0) {
+					alert("gg gamoe over");
+					this.events.emit("gameOver");
+				}
+				this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+				this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+
+				//temp
+				this.targets.removeAll(true);
 				break;
 			case TowerActionTypes.ATTACK_CANNON:
 				console.log("info: ", info);
+				console.log(this.p2CannonsContainer.list);
+				console.log("remove opp's", info.target, "th cannon");
+				this.state.roundLoser.cannons.splice(info.target, 1);
+				this.p2CannonsContainer.list[info.target].destroy();
 				break;
 			/*case TowerActionTypes.UPGRADE_SHIELD:
         console.log("info: ", info);
         break;*/
 			case TowerActionTypes.UPGRADE_CANNON:
 				console.log("info: ", info);
+				this.state.roundWinner.cannons[info.cannonId].pow += 1;
+
+				const pow = this.state.roundWinner.cannons[info.cannonId].pow;
+				console.warn(this.state.roundWinner.cannons[info.cannonId]);
+
+				//player visuals, no update beyond 7+power
+				if (pow <= 7) {
+					this.p2CannonsContainer.list[info.cannonId].setFrame(
+						"match_p2Cannon000" + (pow - 1)
+					);
+					this.p1CannonsContainer.list[info.cannonId].setFrame(
+						"match_p1Cannon000" + (pow - 1)
+					);
+				}
+
 				break;
 			default:
 				alert("Invalid action");
