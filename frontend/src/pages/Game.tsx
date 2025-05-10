@@ -1,9 +1,8 @@
 import { Component } from "react";
 import Phaser from "phaser";
-
-//all scenes
-import Match from "@/pages/game/Match.js";
 import Lobby from "@/pages/game/Lobby.js";
+import Match from "@/pages/game/Match.js";
+
 /**
  * @todo send exit event to server
  * @todo ask for confirmation
@@ -13,6 +12,11 @@ import Lobby from "@/pages/game/Lobby.js";
 
 class Game extends Component {
 	private game: Phaser.Game | null = null;
+
+	constructor(props: any) {
+		super(props);
+		this.game = null;
+	}
 
 	componentDidMount() {
 		const config: Phaser.Types.Core.GameConfig = {
@@ -27,16 +31,19 @@ class Game extends Component {
 				mode: Phaser.Scale.FIT,
 				autoCenter: Phaser.Scale.CENTER_BOTH,
 			},
-			scene: [
-				//Lobby,
-				Match,
-			],
+			scene: [Lobby, Match],
 		};
 
 		this.game = new Phaser.Game(config);
+
+		// Add window resize listener
+		window.addEventListener("resize", this.handleResize);
 	}
 
 	componentWillUnmount() {
+		// Remove resize listener
+		window.removeEventListener("resize", this.handleResize);
+
 		if (this.game) {
 			this.game.destroy(true);
 			this.game = null;
@@ -44,8 +51,15 @@ class Game extends Component {
 		}
 	}
 
+	handleResize = () => {
+		if (this.game) {
+			// Update game scale
+			this.game.scale.setParentSize(window.innerWidth, window.innerHeight);
+		}
+	};
+
 	render() {
-		return <div id="game"></div>;
+		return <div id="game" style={{}}></div>;
 	}
 }
 

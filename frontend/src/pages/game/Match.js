@@ -185,8 +185,6 @@ export default class Match extends Phaser.Scene {
 			.setName("rps contaienr")
 			.setDepth(9999);
 
-		/*****also remove the debug c lol */
-
 		loadAnims(ANIMS, this);
 		this.p1Right.play("match_p1Right_wait");
 		this.p2Body.play("match_p2Body_wait");
