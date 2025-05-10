@@ -1,8 +1,9 @@
 import { Component } from "react";
 import Phaser from "phaser";
-import Lobby from "@/pages/game/Lobby.js";
-import Match from "@/pages/game/Match.js";
 
+//all scenes
+import Match from "@/pages/game/Match.js";
+import Lobby from "@/pages/game/Lobby.js";
 /**
  * @todo send exit event to server
  * @todo ask for confirmation
@@ -35,6 +36,8 @@ class Game extends Component {
 		};
 
 		this.game = new Phaser.Game(config);
+		//uhhhhhhhhhhh
+		this.game.scale.setParentSize(window.innerWidth, window.innerHeight);
 
 		// Add window resize listener
 		window.addEventListener("resize", this.handleResize);
