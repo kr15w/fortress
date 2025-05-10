@@ -99,13 +99,6 @@ export default class Lobby extends Phaser.Scene {
 		this.p1.setOrigin(291 / this.p1.width, 800 / this.p1.height);
 		this.p2.setOrigin(291 / this.p2.width, 800 / this.p2.height);
 
-		// Create dots to visualize p1's and p2's origins
-		this.p1OriginDot = this.add.circle(0, 0, 5, 0x00ff00); // Green dot for p1
-		this.p1OriginDot.setDepth(200); // Make sure it's visible above everything
-
-		this.p2OriginDot = this.add.circle(0, 0, 5, 0xff0000); // Red dot for p2
-		this.p2OriginDot.setDepth(200); // Make sure it's visible above everything
-
 		loadAnims(ANIMS, this);
 
 		this.p1.play("lobby_player_enter", true);
@@ -175,7 +168,7 @@ export default class Lobby extends Phaser.Scene {
 									this.p1.play("lobby_player_idle");
 								}
 							});
-
+						/*
 						//aaaaaaaaaaaaaaaaarrrrrgghh wip
 						this.p1.input.hitArea = new Phaser.Geom.Rectangle(
 							-81,
@@ -205,7 +198,7 @@ export default class Lobby extends Phaser.Scene {
 							this.p1.input.hitArea.width,
 							this.p1.input.hitArea.height
 						);
-						graphics.strokeCircle(this.p1.x, this.p1.y, 10);
+						graphics.strokeCircle(this.p1.x, this.p1.y, 10);*/
 					},
 				});
 			},

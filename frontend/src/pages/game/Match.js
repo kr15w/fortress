@@ -718,77 +718,6 @@ export default class Match extends Phaser.Scene {
 							// Draw debug visualization
 							this.debugGraphics.clear();
 
-							/*
-							// draw where the enemy tower would be placed on the other guys pov
-							let oppX = mapRange(
-								cannon.x,
-								30,
-								SCENE_W - 30,
-								910,
-								SCENE_W - 910
-							);
-
-							oppX += 2 * (1280 - oppX);
-							console.log("oppX: ", oppX);
-							if (oppX > 1026 && oppX < 1541) {
-								if (oppX > 1280) {
-									oppX = 1541;
-								} else {
-									oppX = 1026;
-								}
-							}
-							this.debugGraphics.fillStyle(0xffffff, 1);
-							this.debugGraphics.fillPoint(oppX, 545);
-*/
-							// Draw p1Base hit area in blue
-							const baseHitArea = this.p1Base.input
-								? this.p1Base.input.hitArea
-								: null;
-							if (baseHitArea) {
-								this.debugGraphics.lineStyle(2, 0x0000ff, 1);
-								this.debugGraphics.strokeRect(
-									this.p1Base.x + baseHitArea.x,
-									this.p1Base.y + baseHitArea.y,
-									baseHitArea.width,
-									baseHitArea.height
-								);
-							} else {
-								// Fallback to bounds if no hit area
-								const baseBounds = this.p1Base.getBounds();
-								this.debugGraphics.lineStyle(2, 0x0000ff, 1);
-								this.debugGraphics.strokeRect(
-									baseBounds.x,
-									baseBounds.y,
-									baseBounds.width,
-									baseBounds.height
-								);
-							}
-
-							// Draw existing cannons hit areas in green
-							this.debugGraphics.lineStyle(2, 0x00ff00, 1);
-							this.p1Cannons.list.forEach((builtC) => {
-								const cannonHitArea = builtC.input
-									? builtC.input.hitArea
-									: null;
-								if (cannonHitArea) {
-									this.debugGraphics.strokeRect(
-										builtC.x + cannonHitArea.x,
-										builtC.y + cannonHitArea.y,
-										cannonHitArea.width,
-										cannonHitArea.height
-									);
-								} else {
-									// Fallback to bounds if no hit area
-									const cannonBounds = builtC.getBounds();
-									this.debugGraphics.strokeRect(
-										cannonBounds.x,
-										cannonBounds.y,
-										cannonBounds.width,
-										cannonBounds.height
-									);
-								}
-							});
-
 							// Draw current cannon hit area in red or white
 							const cannonHitArea = cannon.input ? cannon.input.hitArea : null;
 							this.debugGraphics.lineStyle(
@@ -796,28 +725,6 @@ export default class Match extends Phaser.Scene {
 								this.cantAddCannon ? 0xff0000 : 0xffffff,
 								1
 							);
-
-							if (cannonHitArea) {
-								// Draw the hit area if it exists
-								this.debugGraphics.strokeRect(
-									cannon.x + cannonHitArea.x,
-									cannon.y + cannonHitArea.y,
-									cannonHitArea.width,
-									cannonHitArea.height
-								);
-								// Also draw a point at the origin for reference
-								this.debugGraphics.fillStyle(0xff00ff, 1);
-								this.debugGraphics.fillCircle(cannon.x, cannon.y, 5);
-							} else {
-								// Fallback to bounds if no hit area
-								const currentCannonBounds = cannon.getBounds();
-								this.debugGraphics.strokeRect(
-									currentCannonBounds.x,
-									currentCannonBounds.y,
-									currentCannonBounds.width,
-									currentCannonBounds.height
-								);
-							}
 
 							if (this.cantAddCannon) {
 								cannon.setTint(0xff0000);
@@ -1069,7 +976,7 @@ export default class Match extends Phaser.Scene {
 		 * Called everytime an rps input is received. */
 		switch (towerAction) {
 			case TowerActionTypes.BUILD_TOWER:
-				console.log("build tower");
+				console.log("build tower of", this.state.roundWinner.name);
 				this.state.roundWinner.hp += 1;
 
 				//where to update visuals
@@ -1077,7 +984,7 @@ export default class Match extends Phaser.Scene {
 					this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
 				}
 				if (this.state.players[1].hp <= 4) {
-					this.p1Base.setFrame("match_p1Base000" + this.state.players[1].hp);
+					this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
 				}
 				// //update visuasl
 				// if (this.state.roundWinner.name == this.povName) {
@@ -1216,7 +1123,7 @@ class Player {
 		 *
 		 *
 		 */
-		this.hp = 4;
+		this.hp = 0;
 		//this.shields = [];
 		this.cannons = [];
 	}
