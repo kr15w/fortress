@@ -1,4 +1,3 @@
-# Fortress Le game Lmao
 
 ## Development Setup
 
@@ -72,6 +71,11 @@ To add a new license key:
 
 ```bash
 python add_license_key.py "key_value" "description"
+```
+
+To access the ban control system:
+```bash
+python ban_control_system.py 
 ```
 
 ## Game Logic
