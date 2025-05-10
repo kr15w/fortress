@@ -724,6 +724,28 @@ export default class Match extends Phaser.Scene {
 							// Draw debug visualization
 							this.debugGraphics.clear();
 
+							/*
+							// draw where the enemy tower would be placed on the other guys pov
+							let oppX = mapRange(
+								cannon.x,
+								30,
+								SCENE_W - 30,
+								910,
+								SCENE_W - 910
+							);
+
+							oppX += 2 * (1280 - oppX);
+							console.log("oppX: ", oppX);
+							if (oppX > 1026 && oppX < 1541) {
+								if (oppX > 1280) {
+									oppX = 1541;
+								} else {
+									oppX = 1026;
+								}
+							}
+							this.debugGraphics.fillStyle(0xffffff, 1);
+							this.debugGraphics.fillPoint(oppX, 545);
+*/
 							// Draw p1Base hit area in blue
 							const baseHitArea = this.p1Base.input
 								? this.p1Base.input.hitArea
@@ -1078,18 +1100,18 @@ export default class Match extends Phaser.Scene {
 				console.log("info: ", info);
 
 				// server sends the x pos of pov, calculte opponent x pos
-				let oppX = ((info.x - 27) / (2580 - 27)) * 830 + 880;
+				let oppX = mapRange(info.x, 30, SCENE_W - 30, 910, SCENE_W - 910);
 
 				oppX += 2 * (1280 - oppX);
 				console.log("oppX: ", oppX);
-				if (oppX > 1026 && oppX < 1541) {
+				//dont draw into the base
+				if (oppX > 1010 && oppX < 1561) {
 					if (oppX > 1280) {
-						oppX = 1541;
+						oppX = 1561;
 					} else {
-						oppX = 1026;
+						oppX = 1010;
 					}
 				}
-				console.log("oppX: ", oppX);
 
 				// player visuals again
 				const oppCannon = this.add
@@ -1309,4 +1331,8 @@ class TargetCannon extends Phaser.GameObjects.Sprite {
 		this.setDisplayOrigin(66, 92).setDepth(15).setVisible(true);
 		scene.add.existing(this);
 	}
+}
+function mapRange(x, a, b, c, d) {
+	// map a number between (a,b) to
+	return ((x - a) * (d - c)) / (b - a) + c;
 }
