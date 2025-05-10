@@ -12,37 +12,58 @@ import Lobby from "@/pages/game/Lobby.js";
  */
 
 class Game extends Component {
-  private game: Phaser.Game | null = null;
+	private game: Phaser.Game | null = null;
 
-  componentDidMount() {
-    const config: Phaser.Types.Core.GameConfig = {
-      title: "Fortress",
-      type: Phaser.AUTO,
-      width: 2560,
-      height: 1440,
-      parent: "game",
-      backgroundColor: "#333333",
-      scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-      },
-      scene: [Match],
-    };
+	constructor(props: any) {
+		super(props);
+		this.game = null;
+	}
 
-    this.game = new Phaser.Game(config);
-  }
+	componentDidMount() {
+		const config: Phaser.Types.Core.GameConfig = {
+			title: "Fortress",
+			type: Phaser.AUTO,
+			width: 2560,
+			height: 1440,
+			parent: "game",
+			disableContextMenu: true, //yay
+			backgroundColor: "#333333",
+			scale: {
+				mode: Phaser.Scale.FIT,
+				autoCenter: Phaser.Scale.CENTER_BOTH,
+			},
+			scene: [Lobby, Match],
+		};
 
-  componentWillUnmount() {
-    if (this.game) {
-      this.game.destroy(true);
-      this.game = null;
-      console.log("Game destroyed");
-    }
-  }
+		this.game = new Phaser.Game(config);
+		//uhhhhhhhhhhh
+		this.game.scale.setParentSize(window.innerWidth, window.innerHeight);
 
-  render() {
-    return <div id="game"></div>;
-  }
+		// Add window resize listener
+		window.addEventListener("resize", this.handleResize);
+	}
+
+	componentWillUnmount() {
+		// Remove resize listener
+		window.removeEventListener("resize", this.handleResize);
+
+		if (this.game) {
+			this.game.destroy(true);
+			this.game = null;
+			console.log("Game destroyed");
+		}
+	}
+
+	handleResize = () => {
+		if (this.game) {
+			// Update game scale
+			this.game.scale.setParentSize(window.innerWidth, window.innerHeight);
+		}
+	};
+
+	render() {
+		return <div id="game" style={{}}></div>;
+	}
 }
 
 export default Game;
