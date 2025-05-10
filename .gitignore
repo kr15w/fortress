@@ -26,8 +26,12 @@ dist-ssr
 # flash 
 #*.fla
 
+#shi
+*.pyc
+
 
 # back end stuff
 backend/venv
 backend/__pycache__
 backend/user.db
+backend/tmp_keys.txt

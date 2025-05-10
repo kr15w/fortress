@@ -240,34 +240,8 @@ export default class Match extends Phaser.Scene {
 		this.debugGraphics.setDepth(10000); // Make sure it's visible above everything
 
 		// Draw the p1Base hitArea polygon
-		this.debugGraphics.lineStyle(2, 0xff00ff, 1); // Magenta color for polygon
+		this.debugGraphics.lineStyle(2, 0xff00ff, 1);
 		const polygon = this.p1Base.input.hitArea;
-
-		// Draw the polygon by connecting its points
-		if (polygon && polygon.points) {
-			this.debugGraphics.beginPath();
-			// Move to the first point
-			this.debugGraphics.moveTo(
-				this.p1Base.x + polygon.points[0].x,
-				this.p1Base.y + polygon.points[0].y
-			);
-
-			// Draw lines to each subsequent point
-			for (let i = 1; i < polygon.points.length; i++) {
-				this.debugGraphics.lineTo(
-					this.p1Base.x + polygon.points[i].x,
-					this.p1Base.y + polygon.points[i].y
-				);
-			}
-
-			// Close the path by connecting back to the first point
-			this.debugGraphics.lineTo(
-				this.p1Base.x + polygon.points[0].x,
-				this.p1Base.y + polygon.points[0].y
-			);
-
-			this.debugGraphics.strokePath();
-		}
 	}
 	_createBackground() {
 		this.bg = this.add
