@@ -22,12 +22,11 @@ class Game extends Component {
       height: 1440,
       parent: "game",
       backgroundColor: "#333333",
-      pixelArt: true,
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
-      scene: [Lobby, Match],
+      scene: [Match],
     };
 
     this.game = new Phaser.Game(config);

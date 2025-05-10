@@ -1,6 +1,6 @@
 # Fortress le gaym
 
-A turn-based tower defense game where players build shields and bombs, with moves determined by Rock-Paper-Scissors.
+A turn-based tower defense game where players build shields and bombs, with moves determined by Rock-Paper-Scissors. The demo can be seen in [flow.py](flow.py)
 
 ## Game Overview
 

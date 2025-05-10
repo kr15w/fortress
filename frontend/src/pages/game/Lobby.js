@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-
+import { loadAnims } from "./loadAnims";
 /**
  * @todo handle animations
  * @todo automate origin setting (use the relative position of the largest sprite)
@@ -8,57 +8,38 @@ import Phaser from "phaser";
  * @todo show usernaem
  * @todo add prelobby in case user reloads screen (how to handle?)
  */
+const ANIMS = {
+  lobby_player: [
+    {
+      key: "enter",
+
+      start: 0,
+      end: 3,
+      frameRate: 24,
+      repeat: -1,
+    },
+    {
+      key: "idle",
+
+      start: 4,
+      end: 4,
+
+      frameRate: 24,
+      repeat: -1,
+    },
+    {
+      key: "ready",
+      start: 5,
+      end: 16,
+      frameRate: 24,
+      repeat: 0,
+    },
+  ],
+};
 
 export default class Lobby extends Phaser.Scene {
   constructor() {
     super("Lobby");
-  }
-
-  loadAnims() {
-    const ANIMS = {
-      lobby_player: [
-        {
-          key: "enter",
-
-          start: 0,
-          end: 3,
-          frameRate: 24,
-          repeat: -1,
-        },
-        {
-          key: "idle",
-
-          start: 4,
-          end: 4,
-
-          frameRate: 24,
-          repeat: -1,
-        },
-        {
-          key: "ready",
-          start: 5,
-          end: 16,
-          frameRate: 24,
-          repeat: 0,
-        },
-      ],
-    };
-    for (let s in ANIMS) {
-      //console.log("loading anims of "+s);
-      for (let a in ANIMS[s]) {
-        //console.log(ANIMS[s][a]);
-        this.anims.create({
-          key: ANIMS[s][a].key,
-          frames: this.anims.generateFrameNames(s, {
-            prefix: s,
-            start: ANIMS[s][a].start,
-            end: ANIMS[s][a].end,
-            zeroPad: 4,
-          }),
-          repeat: ANIMS[s][a].repeat,
-        });
-      }
-    }
   }
   preload() {
     this.load.image("lobby_table", "assets/lobby_table.png");
@@ -90,6 +71,7 @@ export default class Lobby extends Phaser.Scene {
     this.p1 = this.add.sprite(0, 1098, "lobby_player").setName("p1");
     this.p2 = this.add.sprite(0, 1098, "lobby_player").setName("p2");
 
+    // PIVOTS
     // AUTOMATE THIS, use the largest anim for the stuff
     this.p1.setOrigin(291 / this.p1.width, 800 / this.p1.height);
     this.p2.setOrigin(291 / this.p2.width, 800 / this.p2.height);
@@ -101,16 +83,16 @@ export default class Lobby extends Phaser.Scene {
     this.p2OriginDot = this.add.circle(0, 0, 5, 0xff0000); // Red dot for p2
     this.p2OriginDot.setDepth(200); // Make sure it's visible above everything
 
-    this.loadAnims();
+    loadAnims(ANIMS, this);
 
-    this.p1.play("enter", true);
-    this.p2.play("enter", true);
+    this.p1.play("lobby_player_enter", true);
+    this.p2.play("lobby_player_enter", true);
 
     this.p1.setPosition(-this.p1.width, 1098);
 
     if (this.p2Enter) {
       this.p2.setPosition(1922, 1098);
-      this.p2.play("idle");
+      this.p2.play("lobby_player_idle");
     } else {
       this.p2.setPosition(SCENE_W + this.p2.width, 1098);
     }
@@ -129,7 +111,7 @@ export default class Lobby extends Phaser.Scene {
       yoyo: false,
       onComplete: () => {
         console.log("idle");
-        this.p1.play("idle");
+        this.p1.play("lobby_player_idle");
         this.p1Enter = true;
       },
     });
@@ -148,7 +130,7 @@ export default class Lobby extends Phaser.Scene {
             yoyo: false,
             onComplete: () => {
               console.log("idle");
-              this.p2.play("idle");
+              this.p2.play("lobby_player_idle");
               this.p2Enter = true;
             },
           });
@@ -162,9 +144,9 @@ export default class Lobby extends Phaser.Scene {
         }
         //console.log("p2 RED");
         if (this.p2Ready) {
-          this.p2.play("idle");
+          this.p2.play("lobby_player_idle");
         } else {
-          this.p2.play("ready");
+          this.p2.play("lobby_player_ready");
         }
         this.p2Ready = !this.p2Ready;
       }
@@ -194,11 +176,11 @@ export default class Lobby extends Phaser.Scene {
       if (this.p1Enter && !this.p1Ready) {
         console.log("Player 1 ready");
         this.p1Ready = true;
-        this.p1.play("ready");
+        this.p1.play("lobby_player_ready");
       } else if (this.p1Ready) {
         console.log("Player 1 unready");
         this.p1Ready = false;
-        this.p1.play("idle");
+        this.p1.play("lobby_player_idle");
       }
     });
   }
@@ -211,6 +193,7 @@ export default class Lobby extends Phaser.Scene {
         this.startingGame = true;
         console.log("both ready, start in 2 sec");
         this.time.delayedCall(2000, () => {
+          this.scene.stop("Lobby");
           this.scene.start("Match");
         });
       }
