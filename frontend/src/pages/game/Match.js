@@ -636,20 +636,44 @@ export default class Match extends Phaser.Scene {
 							} else {
 								cannon.flipX = true;
 							}
-
 							// dont overlap existing cannons AND da base, shields ok lol
-							//todo remove this.
+							const movingCHitbox = new Phaser.Geom.Rectangle(
+								cannon.x + cannon.input.hitArea.x,
+								cannon.y + cannon.input.hitArea.y,
+								cannon.input.hitArea.width,
+								cannon.input.hitArea.height
+							);
 							this.cantAddCannon =
 								this.p1CannonsContainer.list.some((builtC) => {
-									const builtCBounds = builtC.getBounds();
-									const cannonBounds = cannon.getBounds();
+									//GET BY HITAREA< NOT RECT
+									const builtCHitbox = new Phaser.Geom.Rectangle(
+										builtC.x + builtC.input.hitArea.x,
+										builtC.y + builtC.input.hitArea.y,
+										builtC.input.hitArea.width,
+										builtC.input.hitArea
+									);
+
+									console.log(
+										"overlap canons?",
+										builtCHitbox,
+										movingCHitbox,
+										Phaser.Geom.Rectangle.Overlaps(builtCHitbox, movingCHitbox),
+										"overlap base?",
+										movingCHitbox,
+										this.p1Base.getBounds(),
+										Phaser.Geom.Rectangle.Overlaps(
+											this.p1Base.getBounds(),
+											movingCHitbox
+										)
+									);
+
 									return Phaser.Geom.Rectangle.Overlaps(
-										builtCBounds,
-										cannonBounds
+										builtCHitbox,
+										movingCHitbox
 									);
 								}) ||
 								Phaser.Geom.Rectangle.Overlaps(
-									cannon.getBounds(),
+									movingCHitbox,
 									this.p1Base.getBounds()
 								) ||
 								cannon.x <= 27 ||
@@ -1171,6 +1195,7 @@ class Cannon extends Phaser.GameObjects.Sprite {
 
 		console.log("set hitarea?");
 		this.input.hitArea.setTo(-88, -150, 167, 144);
+		//console.warn(this.input.hitArea, this.getBounds());
 		scene.add.existing(this);
 	}
 
