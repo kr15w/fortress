@@ -7,15 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import {
   GamepadIcon,
-  Code,
-  ExternalLink,
   PlayCircle,
   LogIn,
-  AlertTriangle,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { decryptUsername } from "@/utils/auth"
 
 // Define UserStats type to match user-stats-table
@@ -111,75 +106,8 @@ const Menu: React.FC = () => {
             </div>
 
             <Separator />
-            {/* Developer Options */}
-            <TooltipProvider>
-              <div className="space-y-4 bg-red-50 dark:bg-red-900/10 p-4 rounded-lg border border-red-200 dark:border-red-900/50">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                  <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">Developer Options</h3>
-                  <Badge
-                    variant="outline"
-                    className="ml-auto border-red-300 dark:border-red-800 text-red-600 dark:text-red-400"
-                  >
-                    DEV ONLY
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="h-12 justify-start border-red-200 dark:border-red-900/50 hover:bg-red-100 dark:hover:bg-red-900/20"
-                        asChild
-                      >
-                        <a
-                          href="/api/token"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3"
-                        >
-                          <Code className="h-5 w-5 text-red-500" />
-                          <span className="text-red-600 dark:text-red-400">Get API Token</span>
-                          <ExternalLink className="h-4 w-4 ml-auto text-red-400" />
-                        </a>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Opens in a new tab</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="h-12 justify-start border-red-200 dark:border-red-900/50 hover:bg-red-100 dark:hover:bg-red-900/20"
-                        asChild
-                      >
-                        <a
-                          href="/api/match_demo"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3"
-                        >
-                          <Code className="h-5 w-5 text-red-500" />
-                          <span className="text-red-600 dark:text-red-400">Match Demo</span>
-                          <ExternalLink className="h-4 w-4 ml-auto text-red-400" />
-                        </a>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Opens in a new tab</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-
-                <p className="text-xs text-red-500 italic">
-                  These options are for development purposes only and should be removed in production.
-                </p>
-              </div>
-            </TooltipProvider>
+     
+         
           </CardContent>
         </Card>
       </div>

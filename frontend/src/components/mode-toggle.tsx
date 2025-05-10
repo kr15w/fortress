@@ -23,7 +23,7 @@ export function ModeToggle() {
   }, [theme]);
 
   return (
-    <div className="fixed bottom-4 left-4">
+    <div className="fixed bottom-4 right-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="!bg-transparent !shadow-none !border-none !ring-0 hover:!bg-transparent focus:!bg-transparent active:!bg-transparent relative">
