@@ -225,6 +225,17 @@ export default class Match extends Phaser.Scene {
 			.setOrigin(0, 0)
 			.setDepth(10)
 			.setName("p1Base");
+		const hitShape = new Phaser.Geom.Polygon([
+			12,
+			303,
+			150,
+			0,
+			1083 - 150,
+			0,
+			1083 - 12,
+			303,
+		]);
+		this.p1Base.setInteractive(hitShape, Phaser.Geom.Polygon.Contains);
 
 		this.p2Base = this.add
 			.sprite(1022, 525, "match_p2Base")
@@ -235,6 +246,36 @@ export default class Match extends Phaser.Scene {
 		// Create debug graphics for showing bounds
 		this.debugGraphics = this.add.graphics();
 		this.debugGraphics.setDepth(10000); // Make sure it's visible above everything
+
+		// Draw the p1Base hitArea polygon
+		this.debugGraphics.lineStyle(2, 0xff00ff, 1); // Magenta color for polygon
+		const polygon = this.p1Base.input.hitArea;
+
+		// Draw the polygon by connecting its points
+		if (polygon && polygon.points) {
+			this.debugGraphics.beginPath();
+			// Move to the first point
+			this.debugGraphics.moveTo(
+				this.p1Base.x + polygon.points[0].x,
+				this.p1Base.y + polygon.points[0].y
+			);
+
+			// Draw lines to each subsequent point
+			for (let i = 1; i < polygon.points.length; i++) {
+				this.debugGraphics.lineTo(
+					this.p1Base.x + polygon.points[i].x,
+					this.p1Base.y + polygon.points[i].y
+				);
+			}
+
+			// Close the path by connecting back to the first point
+			this.debugGraphics.lineTo(
+				this.p1Base.x + polygon.points[0].x,
+				this.p1Base.y + polygon.points[0].y
+			);
+
+			this.debugGraphics.strokePath();
+		}
 	}
 	_createBackground() {
 		this.bg = this.add
@@ -645,12 +686,13 @@ export default class Match extends Phaser.Scene {
 							);
 							this.cantAddCannon =
 								this.p1CannonsContainer.list.some((builtC) => {
-									//GET BY HITAREA< NOT RECT
+									//GET BY HITAREA< NOT getbounds
+									const baseHitbox = this.p1Base.input.hitArea;
 									const builtCHitbox = new Phaser.Geom.Rectangle(
 										builtC.x + builtC.input.hitArea.x,
 										builtC.y + builtC.input.hitArea.y,
 										builtC.input.hitArea.width,
-										builtC.input.hitArea
+										builtC.input.hitArea.height
 									);
 
 									console.log(
