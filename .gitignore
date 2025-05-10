@@ -33,5 +33,5 @@ dist-ssr
 # back end stuff
 backend/venv
 backend/__pycache__
-backend/user.db
+backend/users.db
 backend/tmp_keys.txt
