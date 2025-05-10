@@ -466,7 +466,7 @@ export default class Match extends Phaser.Scene {
 	}
 
 	onGameOver() {
-		alert("gggggggg on Game over");
+		alert("gggggg rematch or quit?");
 		this.time.addEvent({
 			delay: 1000,
 			callback: () => {
