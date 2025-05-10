@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import axios from "axios"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -71,122 +72,133 @@ const ChangePassword: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-md border-gray-200 dark:border-gray-800 shadow-lg">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto mb-4">
-            <KeyRound className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
-          <CardDescription className="text-center">
-            {step === 1
-              ? "Enter your email to receive a verification code"
-              : "Enter the verification code and your new password"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive" className="text-sm">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {message && (
-            <Alert className="bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900">
-              <CheckCircle className="h-4 w-4" />
-              <AlertTitle>Success</AlertTitle>
-              <AlertDescription>{message}</AlertDescription>
-            </Alert>
-          )}
+    <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
 
-          {step === 1 ? (
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+
+      {/* Centered Password Reset Card */}
+      <div className="w-full max-w-md px-4">
+        <Card className="w-full border border-border bg-card text-card-foreground shadow-md">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto mb-4">
+              <KeyRound className="h-6 w-6 text-primary" />
             </div>
-          ) : (
-            <div className="space-y-4">
+            <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
+            <CardDescription className="text-center">
+              {step === 1
+                ? "Enter your email to receive a verification code"
+                : "Enter the verification code and your new password"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive" className="text-sm">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {message && (
+              <Alert className="bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900">
+                <CheckCircle className="h-4 w-4" />
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            )}
+
+            {step === 1 ? (
               <div className="space-y-2">
-                <Label htmlFor="code">Verification Code</Label>
-                <Input
-                  id="code"
-                  type="text"
-                  placeholder="Enter the 6-digit code"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="newPassword"
-                    type="password"
-                    placeholder="Create a new password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     required
                     disabled={isLoading}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Password must be at least 8 characters long</p>
               </div>
-            </div>
-          )}
-        </CardContent>
-        <CardFooter>
-          
-        <div className = "text-white px-6 pb-6 text-center w-full">
-          <Button className="text-white px-6 pb-6 text-center " onClick={step === 1 ? handleSendEmail : handleChangePassword} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {step === 1 ? "Sending..." : "Changing..."}
-              </>
             ) : (
-              <>
-                {step === 1 ? "Send Verification Code" : "Change Password"}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="code">Verification Code</Label>
+                  <Input
+                    id="code"
+                    type="text"
+                    placeholder="Enter the 6-digit code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      placeholder="Create a new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Password must be at least 8 characters long</p>
+                </div>
+              </div>
             )}
-          </Button>
-        </div>
-        </CardFooter>
-        {step === 2 && (
-          <div className="text-white px-6 pb-6 mt-[-20px] text-center w-full">
-            <Button className="text-white px-6 mt-[-10px] pb-6 text-center"
-              variant="link"
-              onClick={() => {
-                setStep(1)
-                setVerificationCode("")
-                setNewPassword("")
-                setError("")
-                setMessage("")
-              }}
-              
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-2">
+            <Button
+              className="w-full text-white"
+              onClick={step === 1 ? handleSendEmail : handleChangePassword}
+              disabled={isLoading}
             >
-              Change Email Address
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {step === 1 ? "Sending..." : "Changing..."}
+                </>
+              ) : (
+                <>
+                  {step === 1 ? "Send Verification Code" : "Change Password"}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
             </Button>
-          </div>
-        )}
-      </Card>
+
+            {step === 2 && (
+              <Button
+                variant="ghost"
+                className="mt-2"
+                onClick={() => {
+                  setStep(1)
+                  setVerificationCode("")
+                  setNewPassword("")
+                  setError("")
+                  setMessage("")
+                }}
+              >
+                Change Email Address
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+
+        <div className="mt-4 text-center">
+          <Link to="/" className="text-sm text-primary hover:underline">
+            Back to Login
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

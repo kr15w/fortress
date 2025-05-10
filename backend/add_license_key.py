@@ -9,7 +9,7 @@ def main():
         return
 
     n = int(sys.argv[1])  # Convert input to integer
-    pw_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    pw_string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     pw_length = 16
 
     with open("tmp_keys.txt", "a") as file:  # Use "a" mode to append

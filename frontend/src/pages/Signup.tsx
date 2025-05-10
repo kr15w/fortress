@@ -2,148 +2,238 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { license } from "@/utils/auth"
-import TopBar from "@/components/TopBar"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Link, useNavigate } from "react-router-dom"
+import { register } from "@/utils/auth"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Key, CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { User, Mail, Lock, Key, AlertCircle, ArrowLeft, Loader2} from "lucide-react"
 
-const License: React.FC = () => {
-  const [licenseKey, setLicenseKey] = useState("")
-  const [message, setMessage] = useState("")
+
+
+const Signup: React.FC = () => {
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    passwordConfirm: "",
+    email: "",
+    licenseKey: "",
+  })
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "")
-    const formatted = formatLicenseKey(value)
-    setLicenseKey(formatted)
-  }
 
-  const formatLicenseKey = (key: string) => {
-    // Remove any existing dashes
-    const cleaned = key.replace(/-/g, "")
-    // Add a dash after every 4 characters
-    let formatted = ""
-    for (let i = 0; i < cleaned.length; i++) {
-      if (i > 0 && i % 4 === 0) {
-        formatted += "-"
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+
+    // Special handling for license key to add dashes
+    if (name === "licenseKey") {
+      const cleaned = value
+        .toUpperCase()
+        .replace(/[^A-Z0-9-]/g, "")
+        .replace(/-/g, "")
+      let formatted = ""
+      for (let i = 0; i < cleaned.length; i++) {
+        if (i > 0 && i % 4 === 0 && i <= 12) {
+          // Add dash after every 4 chars, up to 3 dashes
+          formatted += "-"
+        }
+        formatted += cleaned[i]
       }
-      formatted += cleaned[i]
+
+      setFormData({
+        ...formData,
+        [name]: formatted,
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      })
     }
-    return formatted
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setMessage("")
-    setIsLoading(true)
 
+    if (formData.password !== formData.passwordConfirm) {
+      setError("Passwords do not match")
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long")
+      return
+    }
+
+    setIsLoading(true)
     try {
-      await license({ licenseKey })
-      setMessage("License verification successful! Redirecting...")
-      setTimeout(() => {
-        navigate("/menu")
-      }, 2000) // Delay redirection for user to see the message
+      await register({
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        licenseKey: formData.licenseKey,
+      })
+      navigate("/")
     } catch (err: any) {
-      setError(err.message || "License verification failed due to invalid license key. Please try again.")
+      setError(err.message || "Registration failed. Please try again.")
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-      <TopBar />
-
-      <div className="container mx-auto px-4 py-12 flex flex-col items-center">
-        <Card className="w-full max-w-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
-          <CardHeader className="space-y-1 pb-6">
-            <div className="flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700 mx-auto mb-4">
-              <Key className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+    <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
+      {/* Centered Signup Card */}
+      <div className="w-full max-w-md px-4 max-h-[90vh] overflow-y-auto py-4">
+        <Card className="w-full border border-border bg-card text-card-foreground">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto mb-2">
+              <User className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-100">
-              License Verification
-            </CardTitle>
-            <CardDescription className="text-center text-gray-600 dark:text-gray-400">
-              Enter your license key to activate the software
-            </CardDescription>
+            <CardTitle className="text-2xl font-semibold text-center">Create Account</CardTitle>
+            <CardDescription className="text-center">Enter your details below to create your account</CardDescription>
           </CardHeader>
 
           <CardContent>
             {error && (
               <Alert variant="destructive" className="mb-6">
-                <XCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            {message && (
-              <Alert className="mb-6 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <AlertDescription className="text-green-600 dark:text-green-400">{message}</AlertDescription>
-              </Alert>
-            )}
-
-            <form id="licenseForm" onSubmit={handleSubmit} className="space-y-6">
+            <form id="loginForm" onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="licenseKey" className="text-gray-700 dark:text-gray-300">
-                  License Key
-                </Label>
+                <Label htmlFor="username">Username</Label>
                 <div className="relative">
-                  <Key className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="pl-10"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="pl-10"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="pl-10"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirm">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="passwordConfirm"
+                    name="passwordConfirm"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={formData.passwordConfirm}
+                    onChange={handleChange}
+                    className="pl-10"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="licenseKey">License Key</Label>
+                <div className="relative">
+                  <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="licenseKey"
                     name="licenseKey"
                     type="text"
                     placeholder="XXXX-XXXX-XXXX-XXXX"
-                    value={licenseKey}
+                    value={formData.licenseKey}
                     onChange={handleChange}
-                    className="pl-10 font-mono border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-10 font-mono"
                     required
-                    disabled={isLoading || message !== ""}
+                    disabled={isLoading}
                     maxLength={19} // 16 chars + 3 dashes
                   />
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground">
                   Your license key should be in the format XXXX-XXXX-XXXX-XXXX
                 </p>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 text-white"
-                disabled={isLoading || message !== ""}
-              >
+              <Button type="submit" className="w-full text-white" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying...
-                  </>
-                ) : message !== "" ? (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Verified
+                    Creating Account...
                   </>
                 ) : (
-                  "Verify License"
+                  "Create Account"
                 )}
               </Button>
             </form>
           </CardContent>
 
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-sm text-center text-muted-foreground">
+              Already have an account?{" "}
+              <Link to="/login" className="text-primary hover:underline font-medium">
+                Sign in
+              </Link>
+            </div>
 
+            <Button variant="ghost" size="sm" asChild className="w-full">
+              <Link to="/" className="flex items-center justify-center text-muted-foreground">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
-
-
       </div>
     </div>
   )
 }
 
-export default License
+export default Signup

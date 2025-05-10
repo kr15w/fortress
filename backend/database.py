@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Numeric, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from decimal import Decimal
 
 Base = declarative_base()
 
@@ -25,8 +26,17 @@ class User(Base):
     loss_count = Column(Integer, default=0)
     total_bomb_count = Column(Integer, default=0)
     total_shield_count = Column(Integer, default=0)
+    banned = Column(Boolean, default=False)
 
-
+class BattleHistory(Base):
+    __tablename__ = 'battle_history'
+    MatchId = Column(Integer, primary_key=True)
+    match_end_time = Column(DateTime, default=datetime.utcnow)
+    player1 = Column(String(50), nullable=False) 
+    player2 = Column(String(50), nullable=False)  
+    player1_rpsWinrate = Column(Numeric(5, 2), default=0.00)
+    player2_rpsWinrate = Column(Numeric(5, 2), default=0.00)
+    winner = Column(String(50), nullable=False)  
 
 class DatabaseService:
     def __init__(self, db_url='sqlite:///users.db'):
@@ -144,3 +154,55 @@ class DatabaseService:
                 user.loss_count += increment
             session.commit()
             return True
+        
+    def is_username_taken(self, username):
+        """Check if the username already exists in the database."""
+        session = self.Session()
+        exists = session.query(User).filter_by(username=username).first() is not None
+        session.close()
+        return exists
+
+    def is_email_taken(self, email):
+        """Check if the email is already registered."""
+        session = self.Session()
+        exists = session.query(User).filter_by(email=email).first() is not None
+        session.close()
+        return exists
+
+    def update_user(self, current_username, new_username, new_email):
+        """Update the username and email of a user."""
+        session = self.Session()
+        try:
+            user = session.query(User).filter_by(username = current_username).first()
+            if user:
+                user.username = new_username
+                user.email = new_email
+                session.commit()
+                session.close()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            print(f"Error updating user: {e}")
+            return False
+
+    def add_match_history(self, player1, player2, player1_rpsWinrate, player2_rpsWinrate, winner):
+        session = self.Session()
+        try:
+            history = BattleHistory(
+            MatchId=None,  # Auto-incremented by the database
+            match_end_time=datetime.utcnow(),  
+            player1=player1,
+            player2=player2,
+            player1_rpsWinrate=player1_rpsWinrate,
+            player2_rpsWinrate=player2_rpsWinrate,
+            winner=winner
+        )
+            session.add(history)
+            session.commit()
+            return history
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()

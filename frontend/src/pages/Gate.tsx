@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { login } from "@/utils/auth"
-import { Moon, Sun, Trophy, ChromeIcon as Google } from "lucide-react"
+import { Moon, Sun, ChromeIcon as Google } from "lucide-react"
 
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ const Gate: React.FC = () => {
   })
   const [error, setError] = useState("")
   const navigate = useNavigate()
-  const { setTheme, theme } = useTheme()
+  const { setTheme } = useTheme()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({
@@ -48,31 +48,8 @@ const Gate: React.FC = () => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background text-foreground">
-      {/* Theme Toggle and Leaderboard in top right corner */}
-      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
-        <Link to="/leaderboard">
-          <Button variant="ghost" size="icon" aria-label="Go to leaderboard">
-            <Trophy className="h-5 w-5" />
-          </Button>
-        </Link>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Toggle theme">
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Absolutely Centered Login Card */}
+      {/* Centered Login Card */}
       <div className="w-full max-w-md px-4">
         <Card className="w-full border border-border bg-card text-card-foreground">
           <CardHeader>

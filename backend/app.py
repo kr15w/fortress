@@ -1,11 +1,12 @@
 from flask import Flask, jsonify, request, Response, render_template, session, request, url_for, redirect
+import flask
 import requests
 from flask_cors import CORS
 import jwt
 import datetime
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import DatabaseService, User
+from database import DatabaseService, User, BattleHistory
 
 from flask_socketio import SocketIO, emit
 import uuid
@@ -43,8 +44,6 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = ''
 app.config['MAIL_PASSWORD'] = ''
-
-
 # Initialize OAuth
 oauth = OAuth(app)
 
@@ -71,7 +70,7 @@ try:
 
     @google.tokengetter
     def get_google_oauth_token():
-        return session.get('google_token')
+        return flask.session.get('google_token')
 except:
     google = None
     print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -87,41 +86,45 @@ def google_callback():
     resp = google.authorized_response()
     if resp is None or 'access_token' not in resp:
         return redirect('http://localhost:5173/license?error=access_denied')
-    session['google_token'] = (resp['access_token'], '')
-    dbSession = db.Session() 
-    # Check if the user exists in your database, otherwise prompts for license key
+
+    flask.session['google_token'] = (resp['access_token'], '')
+    dbSession = db.Session()
+
+    # Get user info from Google OAuth
     user_info = google.get('userinfo').data
     user = dbSession.query(User).filter_by(email=user_info['email'], username=user_info['name']).first()
+
     if user:
+        if user.banned:
+            return redirect('http://localhost:5173/account-banned')
+
         access_token = jwt.encode({
-        'user': user_info['name'],
-        'exp': datetime.datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']
-    }, app.config['SECRET_KEY'])
-    
+            'user': user_info['name'],
+            'exp': datetime.datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']
+        }, app.config['SECRET_KEY'])
+
         refresh_token = jwt.encode({
             'user': user_info['name'],
             'exp': datetime.datetime.utcnow() + app.config['JWT_REFRESH_TOKEN_EXPIRES']
         }, app.config['SECRET_KEY'])
-        # Generate and store game token
+
+        # Generate game token
         game_token = f"{user.id}_{secrets.token_hex(16)}"
         user_tokens[user.id] = game_token
-        response = jsonify({'message': 'Login successful'})
-        response.set_cookie('access_token', access_token, httponly=True, secure=True)
-        response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
-        return redirect('http://localhost:5173/menu')
-    
-    # Generate a JWT token for the user
+
+        # Redirect to /processing and pass username
+        redirect_url = f"http://localhost:5173/processing?username={user_info['name']}"
+        return redirect(redirect_url)
+
+    # Generate JWT for license check
     payload = {
         'user_id': user_info["id"],
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
     }
-
     token = jwt.encode(payload, app.secret_key, algorithm='HS256')
 
-    # Attach token to redirect URL
-    redirect_url = f'http://localhost:5173/license?token={token}'
-    return redirect(redirect_url)
-
+    # Attach token to redirect URL for licensing
+    return redirect(f'http://localhost:5173/license?token={token}')
 
 '''
 @app.route('/api/match_demo')
@@ -170,6 +173,8 @@ def validate_license():
     except Exception as e:
         return jsonify({'message': str(e)}), 400
 
+
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -206,12 +211,13 @@ def license_check():
     
     req_data = request.get_json()
     user_info = google.get('userinfo').data
+    username = user_info['name']
     if 'license_key' not in req_data:
-        return jsonify({'error': 'License key required.'}), 400
+        return jsonify({'error': 'License key required.', 'username': username}), 400
     try:
         # First validate license key
         if not db.validate_license_key(req_data['license_key']):
-            return jsonify({'error': 'Invalid or already used license key.'}), 400    
+            return jsonify({'error': 'Invalid or already used license key.', 'username': username}), 400    
         # Check if the user exists in your database, otherwise create a new user
         session_obj = db.Session()
             # Create a new user if not found
@@ -232,10 +238,10 @@ def license_check():
     except Exception as e:
         app.logger.error(f"Registration error: {str(e)}")
         if "UNIQUE constraint failed" in str(e) and "users.email" in str(e):
-            return jsonify({'message': 'Email or username already registered. Please use another Google account.'}), 400
+            return jsonify({'message': 'Email or username already registered. Please use another Google account.', 'username': username}), 400
         elif "license_key" in str(e):
-            return jsonify({'message': 'Invalid or already used license key.'}), 400
-        return jsonify({'message': f'Registration failed: {str(e)}'}), 400
+            return jsonify({'message': 'Invalid or already used license key.', 'username': username}), 400
+        return jsonify({'message': f'Registration failed: {str(e)}', 'username': username}), 400
     access_token = jwt.encode({
         'user': user_info['name'],
         'exp': datetime.datetime.utcnow() + app.config['JWT_ACCESS_TOKEN_EXPIRES']
@@ -251,7 +257,7 @@ def license_check():
     game_token = f"{user.id}_{secrets.token_hex(16)}"
     user_tokens[user.id] = game_token
     
-    response = jsonify({'message': 'Login successful'})
+    response = jsonify({'message': 'Login successful', 'id': user.id})
     response.set_cookie('access_token', access_token, httponly=True, secure=True)
     response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
     
@@ -264,7 +270,8 @@ def login():
     user = db.verify_user(auth['username'], auth['password'])
     if not user:
         return jsonify({'message': 'Invalid credentials'}), 401
-    
+    if user.banned == True:
+        return redirect('http://localhost:5173/account-banned')
     # Create tokens
     access_token = jwt.encode({
         'user': auth['username'],
@@ -443,6 +450,59 @@ def get_user_stats():
     finally:
         session.close()
 
+@app.route('/api/edit', methods=['POST'])
+def edit_user():
+    data = request.get_json()
+    db = DatabaseService('sqlite:///users.db')  
+
+    # Validate required fields
+    if not all(k in data for k in ['current_username', 'new_username', 'new_email']):
+        return jsonify({'message': 'Missing required fields'}), 400
+
+    try:
+        # Use `db` to check if the user exists
+        session = db.Session()
+        user = session.query(User).filter_by(username=data['current_username']).first()
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+
+        # **IMPORTANT:** Call `db.is_username_taken()` instead of `session.is_username_taken()`
+        if db.is_username_taken(data['new_username']) and data['new_username'] != data['current_username']:
+            return jsonify({'message': 'Username already taken'}), 400
+
+        if db.is_email_taken(data['new_email']) and data['new_email'] != user.email:
+            return jsonify({'message': 'Email already registered'}), 400
+
+        # Update user details
+        success = db.update_user(data['current_username'], data['new_username'], data['new_email'])
+        if not success:
+            raise Exception('Failed to update user details')
+
+        return jsonify({'message': 'User details updated successfully'}), 200
+    
+    except Exception as e:
+        app.logger.error(f"Edit user error: {str(e)}")
+        return jsonify({'message': f'Failed to update user details: {str(e)}'}), 400
+    
+@app.route('/api/battle-history/<user_id>', methods=['GET'])
+def get_battle_history(user_id):
+    db = DatabaseService('sqlite:///users.db')
+    session = db.Session()
+    user = session.query(User).filter_by(id=user_id).first()
+    battle_history = session.query(BattleHistory)
+    battle_history = battle_history.filter(
+        (BattleHistory.player1 == user.username) | (BattleHistory.player2 == user.username)
+    ).limit(10).all()
+    
+    return jsonify([
+        {
+            "match_id": battle.MatchId,
+            "match_end_time": battle.match_end_time,
+            "player1": battle.player1,
+            "player2": battle.player2,
+            "winner": battle.winner
+        } for battle in battle_history
+    ])
 
 if __name__ == '__main__':
     app.run(host='::', port=5000, debug=True)

@@ -6,12 +6,18 @@ class Player:
         self.health = health
         self.weaponry = weaponry if weaponry is not None else []
         self.rps_choice = None
+        self.weapond_deployed = 0
+        self.shields_deployed = 0
+        self.consecutive_no_choice = 0  # Track consecutive rounds without RPS choice
     
     def build(self, choice):
         if choice == 'health':
+            if self.health >= MIN_HEALTH_FOR_WEAPON:
+                self.shields_deployed += 1
             self.health += 1
         elif choice == 'wepond' and self.health >= MIN_HEALTH_FOR_WEAPON:
             self.weaponry.append(1)
+            self.weapond_deployed += 1
     
     def upgrade(self, index):
         if 0 <= index < len(self.weaponry):
@@ -22,28 +28,34 @@ class Player:
             return False, "Invalid weapon index"
             
         max_attacks = self.weaponry[weapon_index]
-        if len(target) > max_attacks:
+        if len(target) > 1:
             return False, "Too many targets for weapon capacity"
-        
+
         for t in target:
             if t == 'h':
-                opponent.health -= 1
+                if opponent.health > MIN_HEALTH_FOR_WEAPON:
+                    opponent.health -= 1
+                else:
+                    opponent.health -= max_attacks
+
             elif isinstance(t, int) and 0 <= t < len(opponent.weaponry):
                 opponent.weaponry[t] = 0
             else:
                 return False, "Invalid target"
-        
-        opponent.weaponry = [i for i in opponent.weaponry if i > 0]
-        
-        if DESTROY_WEAPON:
-            self.weaponry.pop(weapon_index)
-        return True, "Attack successful"
+            
+            opponent.weaponry = [i for i in opponent.weaponry if i > 0]
+            
+            if DESTROY_WEAPON:
+                self.weaponry.pop(weapon_index)
+            return True, "Attack successful"
 
 class Game:
     def __init__(self):
         self.player1 = Player()
         self.player2 = Player()
         self.state = 0  # 0: RPS, 1: Action, 2: End
+        self.player1_rps_win = 0
+        self.player2_rps_win = 0
         self.winner = None
     
     def get_player(self, player_num):
@@ -60,6 +72,8 @@ class Game:
             
             if self.player1.rps_choice and self.player2.rps_choice:
                 print("Both players made RPS choices")
+                self.player1.consecutive_no_choice = 0
+                self.player2.consecutive_no_choice = 0
                 self._determine_rps_winner()
                 print(f"RPS winner: {self.winner}")
                 
@@ -158,8 +172,10 @@ class Game:
         
         if p1 == (p2 + 1) % 3:
             self.winner = 1
+            self.player1_rps_win += 1
         elif p2 == (p1 + 1) % 3:
             self.winner = 2
+            self.player2_rps_win += 1
         else:
             self.winner = 0  # Tie
     
