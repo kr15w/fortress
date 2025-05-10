@@ -44,19 +44,16 @@ export default class Match extends Phaser.Scene {
 		};
 	}
 	addPlayer(p) {
-		console.info("addPlayer() called");
 		this.state.players.push(p);
 	}
 	constructor() {
 		super("Match");
-		console.info("Match constructor called");
 		this.initGame();
 		// I am noogai
 		this.povName = "noogai67";
 	}
 
 	init(data) {
-		console.info("init() called");
 		this.initGame();
 		this.addPlayer(new Player(this.povName));
 		this.addPlayer(new Player("discovry"));
@@ -68,7 +65,6 @@ export default class Match extends Phaser.Scene {
 	}
 
 	preload() {
-		console.info("preload() called");
 		this.load.image("match_bg", "assets/match_bg.png");
 		this.load.image("match_table", "assets/match_table.png");
 		this.load.image("match_rps_rock", "assets/match_rps_rock.png");
@@ -160,11 +156,6 @@ export default class Match extends Phaser.Scene {
 		this._createBases();
 		this._createPlayers();
 		this._createTowerBtns();
-		/*
-		const debugC = new Cannon(this, 1, 500).setDepth(999999);
-		const debugC2 = new Cannon(this, 1, 1000).setDepth(999999);
-		this.state.players[0].cannons.push(debugC);
-		this.state.players[1].cannons.push(debugC2);*/
 
 		// Create containers for game objects
 		this.p1CannonsContainer = this.add
@@ -202,8 +193,6 @@ export default class Match extends Phaser.Scene {
 
 		/*****also remove the debug c lol */
 
-		//this.add.existing(new Button(this, 0, 0, "match_rps_rock"));
-
 		loadAnims(ANIMS, this);
 		this.p1Right.play("match_p1Right_wait");
 		this.p2Body.play("match_p2Body_wait");
@@ -231,7 +220,6 @@ export default class Match extends Phaser.Scene {
 	}
 
 	_createBases() {
-		console.info("_createBases() called");
 		this.p1Base = this.add
 			.sprite(736, 1107, "match_p1Base")
 			.setOrigin(0, 0)
@@ -249,7 +237,6 @@ export default class Match extends Phaser.Scene {
 		this.debugGraphics.setDepth(10000); // Make sure it's visible above everything
 	}
 	_createBackground() {
-		console.info("_createBackground() called");
 		this.bg = this.add
 			.sprite(-19, -95, "match_bg")
 			.setOrigin(0, 0)
@@ -264,7 +251,6 @@ export default class Match extends Phaser.Scene {
 	}
 
 	_createPlayers() {
-		console.info("_createPlayers() called");
 		// Player 2 (opponent)
 		this.p2Body = this.add
 			.sprite(1095, 76, "match_p2Body")
@@ -304,25 +290,28 @@ export default class Match extends Phaser.Scene {
 			.setName("rpsText");
 		this.rpsContainer.add(this.rpsText);
 
-		this.rockBtn = new Button(this, 2105, 436, "match_rps_rock")
-			.setOrigin(0, 0)
-			.setName("rockBtn");
+		this.rockBtn = new Button(this, 2105, 436, "match_rps_rock").setName(
+			"rockBtn"
+		);
 		this.rockBtn.once("pointerdown", () => {
 			this.handleRpsInput("r", this.povName);
 		});
 		this.rpsContainer.add(this.rockBtn);
 
-		this.paperBtn = new Button(this, 1748, 520, "match_rps_paper")
-			.setOrigin(0, 0)
-			.setName("paperBtn");
+		this.paperBtn = new Button(this, 1748, 520, "match_rps_paper").setName(
+			"paperBtn"
+		);
 		this.paperBtn.once("pointerdown", () => {
 			this.handleRpsInput("p", this.povName);
 		});
 		this.rpsContainer.add(this.paperBtn);
 
-		this.scissorsBtn = new Button(this, 1663, 845, "match_rps_scissors")
-			.setOrigin(0, 0)
-			.setName("scissorsBtn");
+		this.scissorsBtn = new Button(
+			this,
+			1663,
+			845,
+			"match_rps_scissors"
+		).setName("scissorsBtn");
 		this.scissorsBtn.once("pointerdown", () => {
 			this.handleRpsInput("s", this.povName);
 		});
@@ -334,34 +323,22 @@ export default class Match extends Phaser.Scene {
 		// adds buttons that triggers TowerInput event
 		// interactives are added in _showTowerButtons() {
 
-		this.atkBtn = new Button(this, 546, 389, "match_atkBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("atkBtn");
+		this.atkBtn = new Button(this, 546, 389, "match_atkBtn").setName("atkBtn");
 
-		this.bldBtn = new Button(this, 862, 559, "match_bldBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("bldBtn");
+		this.bldBtn = new Button(this, 862, 559, "match_bldBtn").setName("bldBtn");
 
-		this.upgBtn = new Button(this, 710, 922, "match_upgBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("upgBtn");
+		this.upgBtn = new Button(this, 710, 922, "match_upgBtn").setName("upgBtn");
 
-		this.cannonBtn = new Button(this, 910, 292, "match_cannonBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("cannonBtn");
+		this.cannonBtn = new Button(this, 910, 292, "match_cannonBtn").setName(
+			"cannonBtn"
+		);
 
-		this.shieldBtn = new Button(this, 906, 579, "match_shieldBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("shieldBtn");
+		this.shieldBtn = new Button(this, 906, 579, "match_shieldBtn").setName(
+			"shieldBtn"
+		);
 	}
 
 	onRoundStart() {
-		console.info("onRoundStart() called");
 		//update shi
 		this.state.rounds++;
 		this.state.stage = "rpsStart";
@@ -385,7 +362,6 @@ export default class Match extends Phaser.Scene {
 	}
 
 	onRpsResult() {
-		console.info("onRpsResult() called");
 		console.info("show rps result");
 
 		// Player visuals.
@@ -439,7 +415,6 @@ export default class Match extends Phaser.Scene {
 	}
 
 	onTowerStart() {
-		console.info("onTowerStart() called");
 		console.info("choose tower options");
 
 		/**An Rps winner must be determined. */
@@ -484,12 +459,10 @@ export default class Match extends Phaser.Scene {
 	}
 
 	onGameOver() {
-		console.info("onGameOver() called");
 		alert("gggggggg on Game over");
 		this.time.addEvent({
 			delay: 1000,
 			callback: () => {
-				console.info("gameOver callback() called");
 				this.scene.sleep();
 				this.scene.stop();
 				this.scene.start("Lobby");
@@ -498,7 +471,6 @@ export default class Match extends Phaser.Scene {
 	}
 
 	_showTowerButtons() {
-		console.info("_showTowerButtons() called");
 		console.info("show tower butons");
 
 		// The build/atk/up buttons only
@@ -508,29 +480,17 @@ export default class Match extends Phaser.Scene {
 		this.cannonSelectors.setVisible(true);
 
 		// Create new button instances instead of showing/hiding existing ones
-		this.atkBtn = new Button(this, 546, 389, "match_atkBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("atkBtn");
+		this.atkBtn = new Button(this, 546, 389, "match_atkBtn").setName("atkBtn");
 
-		this.bldBtn = new Button(this, 862, 559, "match_bldBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("bldBtn");
+		this.bldBtn = new Button(this, 862, 559, "match_bldBtn").setName("bldBtn");
 
-		this.upgBtn = new Button(this, 710, 922, "match_upgBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
-			.setName("upgBtn");
+		this.upgBtn = new Button(this, 710, 922, "match_upgBtn").setName("upgBtn");
 
 		this.cannonBtn = new Button(this, 910, 292, "match_cannonBtn")
-			.setOrigin(0, 0)
-			.setDepth(9999)
 			.setName("cannonBtn")
 			.setVisible(false);
 
 		this.shieldBtn = new Button(this, 906, 579, "match_shieldBtn")
-			.setOrigin(0, 0)
 			.setName("shieldBtn")
 			.setVisible(false);
 
@@ -557,7 +517,6 @@ export default class Match extends Phaser.Scene {
 						const selector = this.add
 							.sprite(cannon.x, cannon.y - 50, "match_chooseCannon")
 							.setName("selfCannonSelector")
-							.setScale(0.7)
 							.setAlpha(0.8)
 							.setInteractive({ cursor: "pointer" })
 							.on("pointerover", () => selector.setAlpha(1))
@@ -649,15 +608,19 @@ export default class Match extends Phaser.Scene {
 				ease: "Linear",
 				duration: 100,
 				onComplete: () => {
-					this.cannonBtn = new Button(this, 910, 292, "match_cannonBtn")
-						.setOrigin(0, 0)
-						.setDepth(9999)
-						.setName("cannonBtn");
+					this.cannonBtn = new Button(
+						this,
+						910,
+						292,
+						"match_cannonBtn"
+					).setName("cannonBtn");
 
-					this.shieldBtn = new Button(this, 906, 579, "match_shieldBtn")
-						.setOrigin(0, 0)
-						.setDepth(9999)
-						.setName("shieldBtn");
+					this.shieldBtn = new Button(
+						this,
+						906,
+						579,
+						"match_shieldBtn"
+					).setName("shieldBtn");
 					// this.bldBtn.off("pointerdown", chooseBld);
 					// this.bldBtn.removeInteractive();
 					const handleAddCannon = () => {
@@ -674,7 +637,7 @@ export default class Match extends Phaser.Scene {
 								cannon.flipX = true;
 							}
 
-							// dont overlap existing cannons AND da base shields ok lol
+							// dont overlap existing cannons AND da base, shields ok lol
 							//todo remove this.
 							this.cantAddCannon =
 								this.p1CannonsContainer.list.some((builtC) => {
@@ -692,41 +655,87 @@ export default class Match extends Phaser.Scene {
 								cannon.x <= 27 ||
 								cannon.x >= 2580;
 
-							// Draw debug bounds
+							// Draw debug visualization
 							this.debugGraphics.clear();
-							// Draw p1Base bounds in blue
-							const baseBounds = this.p1Base.getBounds();
-							this.debugGraphics.lineStyle(2, 0x0000ff, 1);
-							this.debugGraphics.strokeRect(
-								baseBounds.x,
-								baseBounds.y,
-								baseBounds.width,
-								baseBounds.height
-							);
-							// Draw existing cannons bounds in green
+
+							// Draw p1Base hit area in blue
+							const baseHitArea = this.p1Base.input
+								? this.p1Base.input.hitArea
+								: null;
+							if (baseHitArea) {
+								this.debugGraphics.lineStyle(2, 0x0000ff, 1);
+								this.debugGraphics.strokeRect(
+									this.p1Base.x + baseHitArea.x,
+									this.p1Base.y + baseHitArea.y,
+									baseHitArea.width,
+									baseHitArea.height
+								);
+							} else {
+								// Fallback to bounds if no hit area
+								const baseBounds = this.p1Base.getBounds();
+								this.debugGraphics.lineStyle(2, 0x0000ff, 1);
+								this.debugGraphics.strokeRect(
+									baseBounds.x,
+									baseBounds.y,
+									baseBounds.width,
+									baseBounds.height
+								);
+							}
+
+							// Draw existing cannons hit areas in green
 							this.debugGraphics.lineStyle(2, 0x00ff00, 1);
 							this.p1CannonsContainer.list.forEach((builtC) => {
-								const cannonBounds = builtC.getBounds();
-								this.debugGraphics.strokeRect(
-									cannonBounds.x,
-									cannonBounds.y,
-									cannonBounds.width,
-									cannonBounds.height
-								);
+								const cannonHitArea = builtC.input
+									? builtC.input.hitArea
+									: null;
+								if (cannonHitArea) {
+									this.debugGraphics.strokeRect(
+										builtC.x + cannonHitArea.x,
+										builtC.y + cannonHitArea.y,
+										cannonHitArea.width,
+										cannonHitArea.height
+									);
+								} else {
+									// Fallback to bounds if no hit area
+									const cannonBounds = builtC.getBounds();
+									this.debugGraphics.strokeRect(
+										cannonBounds.x,
+										cannonBounds.y,
+										cannonBounds.width,
+										cannonBounds.height
+									);
+								}
 							});
-							// Draw current cannon bounds in red or white
-							const currentCannonBounds = cannon.getBounds();
+
+							// Draw current cannon hit area in red or white
+							const cannonHitArea = cannon.input ? cannon.input.hitArea : null;
 							this.debugGraphics.lineStyle(
 								2,
 								this.cantAddCannon ? 0xff0000 : 0xffffff,
 								1
 							);
-							this.debugGraphics.strokeRect(
-								currentCannonBounds.x,
-								currentCannonBounds.y,
-								currentCannonBounds.width,
-								currentCannonBounds.height
-							);
+
+							if (cannonHitArea) {
+								// Draw the hit area if it exists
+								this.debugGraphics.strokeRect(
+									cannon.x + cannonHitArea.x,
+									cannon.y + cannonHitArea.y,
+									cannonHitArea.width,
+									cannonHitArea.height
+								);
+								// Also draw a point at the origin for reference
+								this.debugGraphics.fillStyle(0xff00ff, 1);
+								this.debugGraphics.fillCircle(cannon.x, cannon.y, 5);
+							} else {
+								// Fallback to bounds if no hit area
+								const currentCannonBounds = cannon.getBounds();
+								this.debugGraphics.strokeRect(
+									currentCannonBounds.x,
+									currentCannonBounds.y,
+									currentCannonBounds.width,
+									currentCannonBounds.height
+								);
+							}
 
 							if (this.cantAddCannon) {
 								cannon.setTint(0xff0000);
@@ -884,7 +893,7 @@ export default class Match extends Phaser.Scene {
 	}
 
 	_decideWinner(p1RpsChoice, p2RpsChoice) {
-		console.log("_decideWinner() called");
+		console.log("decide winner");
 		console.info(this.state.players);
 
 		if (p1RpsChoice == p2RpsChoice) {
@@ -1131,8 +1140,10 @@ class Player {
 class Button extends Phaser.GameObjects.Sprite {
 	constructor(scene, x, y, texture) {
 		super(scene, x, y, texture);
-		this.setInteractive({ cursor: "pointer" });
-		this.setAlpha(0.7);
+		this.setInteractive({ cursor: "pointer" })
+			.setAlpha(0.7)
+			.setDepth(9999)
+			.setOrigin(0, 0);
 		this.on("pointerover", () => {
 			this.setAlpha(1);
 		});
@@ -1152,12 +1163,14 @@ class Cannon extends Phaser.GameObjects.Sprite {
 		this.pow = 1;
 		this.placed = false;
 
-		this.setDisplayOrigin(145, 388)
+		this.setDisplayOrigin(110, 276)
 			.setDepth(999)
 			.setInteractive()
 			.setVisible(true)
-			.setScale(0.7, 0.7)
 			.setName("p1Cannon");
+
+		console.log("set hitarea?");
+		this.input.hitArea.setTo(-88, -150, 167, 144);
 		scene.add.existing(this);
 	}
 
