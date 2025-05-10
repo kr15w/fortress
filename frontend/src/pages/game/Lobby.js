@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-
+import { loadAnims } from "./loadAnims";
 /**
  * @todo handle animations
  * @todo automate origin setting (use the relative position of the largest sprite)
@@ -8,212 +8,260 @@ import Phaser from "phaser";
  * @todo show usernaem
  * @todo add prelobby in case user reloads screen (how to handle?)
  */
+const ANIMS = {
+	lobby_player: [
+		{
+			key: "enter",
+
+			start: 0,
+			end: 3,
+			frameRate: 24,
+			repeat: -1,
+		},
+		{
+			key: "idle",
+
+			start: 4,
+			end: 4,
+
+			frameRate: 24,
+			repeat: -1,
+		},
+		{
+			key: "ready",
+			start: 5,
+			end: 16,
+			frameRate: 24,
+			repeat: 0,
+		},
+	],
+};
 
 export default class Lobby extends Phaser.Scene {
-  constructor() {
-    super("Lobby");
-  }
+	constructor() {
+		super("Lobby");
+	}
+	preload() {
+		this.load.image("lobby_table", "assets/lobby_table.png");
+		this.load.image("lobby_exitBtn", "assets/lobby_exitBtn.png");
+		this.load.atlas(
+			"lobby_exitText",
+			"assets/lobby_exitText.png",
+			"assets/lobby_exitText.json"
+		);
 
-  loadAnims() {
-    const ANIMS = {
-      lobby_player: [
-        {
-          key: "enter",
+		this.load.atlas(
+			"lobby_player",
+			"assets/lobby_player.png",
+			"assets/lobby_player.json"
+		);
+		this.load.image("lobby_bg", "assets/lobby_bg.png");
 
-          start: 0,
-          end: 3,
-          frameRate: 24,
-          repeat: -1,
-        },
-        {
-          key: "idle",
+		/* Get from server*/
+		this.p1Enter = false;
+		this.p2Enter = false;
+		this.p1Ready = false;
+		this.p2Ready = false; // if this is true, then p2Enter must be true
+	}
 
-          start: 4,
-          end: 4,
+	create() {
+		const SCENE_W = this.sys.game.canvas.width;
+		const SCENE_H = this.sys.game.canvas.height;
 
-          frameRate: 24,
-          repeat: -1,
-        },
-        {
-          key: "ready",
-          start: 5,
-          end: 16,
-          frameRate: 24,
-          repeat: 0,
-        },
-      ],
-    };
-    for (let s in ANIMS) {
-      //console.log("loading anims of "+s);
-      for (let a in ANIMS[s]) {
-        //console.log(ANIMS[s][a]);
-        this.anims.create({
-          key: ANIMS[s][a].key,
-          frames: this.anims.generateFrameNames(s, {
-            prefix: s,
-            start: ANIMS[s][a].start,
-            end: ANIMS[s][a].end,
-            zeroPad: 4,
-          }),
-          repeat: ANIMS[s][a].repeat,
-        });
-      }
-    }
-  }
-  preload() {
-    this.load.image("lobby_table", "assets/lobby_table.png");
-    this.load.atlas(
-      "lobby_player",
-      "assets/lobby_player.png",
-      "assets/lobby_player.json"
-    );
-    this.load.image("lobby_bg", "assets/lobby_bg.png");
+		/*static sprites*/
+		this.bg = this.add
+			.image(-244, -197, "lobby_bg")
+			.setOrigin(0, 0)
+			.setName("bg");
+		this.table = this.add
+			.sprite(760, 886, "lobby_table")
+			.setOrigin(0, 0)
+			.setName("tbl")
+			.setDepth(100)
+			.setScale(0.859);
+		this.exitBtn = this.add
+			.image(141, 1151, "lobby_exitBtn")
+			.setOrigin(0, 0)
+			.setAlpha(0)
+			.setName("exitBtn");
 
-    /* Get from server*/
-    this.p1Enter = false;
-    this.p2Enter = false;
-    this.p1Ready = false;
-    this.p2Ready = false; // if this is true, then p2Enter must be true
-  }
+		/*animated sprirtes*/
+		this.exitText = this.add
+			.sprite(145, 1022, "lobby_exitText")
+			.setOrigin(0)
+			.setName("exitText")
+			.setVisible(false);
+		this.p1 = this.add.sprite(0, 1184, "lobby_player").setName("p1");
+		this.p2 = this.add.sprite(0, 1184, "lobby_player").setName("p2");
 
-  create() {
-    const SCENE_W = this.sys.game.canvas.width;
-    const SCENE_H = this.sys.game.canvas.height;
+		// PIVOTS
+		// AUTOMATE THIS use the largest anim for the stuff
+		this.p1.setOrigin(291 / this.p1.width, 800 / this.p1.height);
+		this.p2.setOrigin(291 / this.p2.width, 800 / this.p2.height);
 
-    /*static sprites*/
-    this.bg = this.add.image(-244, -197, "lobby_bg").setOrigin(0, 0);
-    this.table = this.add.sprite(760, 886, "lobby_table").setOrigin(0, 0);
-    this.table.scale = 0.859;
-    this.table.setDepth(100);
+		// Create dots to visualize p1's and p2's origins
+		this.p1OriginDot = this.add.circle(0, 0, 5, 0x00ff00); // Green dot for p1
+		this.p1OriginDot.setDepth(200); // Make sure it's visible above everything
 
-    /*animated sprirtes*/
-    this.p1 = this.add.sprite(0, 1098, "lobby_player").setName("p1");
-    this.p2 = this.add.sprite(0, 1098, "lobby_player").setName("p2");
+		this.p2OriginDot = this.add.circle(0, 0, 5, 0xff0000); // Red dot for p2
+		this.p2OriginDot.setDepth(200); // Make sure it's visible above everything
 
-    // AUTOMATE THIS, use the largest anim for the stuff
-    this.p1.setOrigin(291 / this.p1.width, 800 / this.p1.height);
-    this.p2.setOrigin(291 / this.p2.width, 800 / this.p2.height);
+		loadAnims(ANIMS, this);
 
-    // Create dots to visualize p1's and p2's origins
-    this.p1OriginDot = this.add.circle(0, 0, 5, 0x00ff00); // Green dot for p1
-    this.p1OriginDot.setDepth(200); // Make sure it's visible above everything
+		this.p1.play("lobby_player_enter", true);
+		this.p2.play("lobby_player_enter", true);
 
-    this.p2OriginDot = this.add.circle(0, 0, 5, 0xff0000); // Red dot for p2
-    this.p2OriginDot.setDepth(200); // Make sure it's visible above everything
+		this.p1.setPosition(-this.p1.width, 1184);
 
-    this.loadAnims();
+		if (this.p2Enter) {
+			this.p2.setPosition(1922, 1184);
+			this.p2.play("lobby_player_idle");
+		} else {
+			this.p2.setPosition(SCENE_W + this.p2.width, 1184);
+		}
 
-    this.p1.play("enter", true);
-    this.p2.play("enter", true);
+		this.p1.scale = this.p2.scale = 1;
+		this.p2.scaleX = -1; // don't use flipX
 
-    this.p1.setPosition(-this.p1.width, 1098);
+		/******handle inputs */
+		// p1 enter
+		this.tweens.add({
+			targets: this.p1,
+			x: 627,
+			ease: "Linear",
+			duration: 1500,
+			repeat: 0,
+			yoyo: false,
+			onComplete: () => {
+				console.log("idle");
+				this.p1.play("lobby_player_idle");
+				this.p1Enter = true;
 
-    if (this.p2Enter) {
-      this.p2.setPosition(1922, 1098);
-      this.p2.play("idle");
-    } else {
-      this.p2.setPosition(SCENE_W + this.p2.width, 1098);
-    }
+				//add exit button
+				this.tweens.add({
+					targets: this.exitBtn,
+					alpha: 0.8,
+					ease: "Linear",
+					duration: 500,
+					onComplete: () => {
+						this.exitBtn
+							.setInteractive({ cursor: "pointer" })
+							.on("pointerdown", () => {
+								alert("quit it");
+							})
+							.on("pointerover", () => {
+								{
+									this.exitBtn.setAlpha(1);
+									this.exitText.setVisible(true);
+								}
+							})
+							.on("pointerout", () => {
+								this.exitBtn.setAlpha(0.7);
+								this.exitText.setVisible(false);
+							});
+						// p1 ready
+						//fixing hit area
 
-    this.p1.scale = this.p2.scale = 1;
-    this.p2.scaleX = -1; // don't use flipX
+						this.p1
+							.setInteractive({ cursor: "pointer" })
+							.on("pointerdown", (pointer) => {
+								if (this.p1Enter && !this.p1Ready) {
+									console.log("Player 1 ready");
+									this.p1Ready = true;
+									this.p1.play("lobby_player_ready");
+								} else if (this.p1Ready) {
+									console.log("Player 1 unready");
+									this.p1Ready = false;
+									this.p1.play("lobby_player_idle");
+								}
+							});
 
-    /******handle inputs */
-    //Emits a Player enters room event
-    this.tweens.add({
-      targets: this.p1,
-      x: 627,
-      ease: "Linear",
-      duration: 1500,
-      repeat: 0,
-      yoyo: false,
-      onComplete: () => {
-        console.log("idle");
-        this.p1.play("idle");
-        this.p1Enter = true;
-      },
-    });
+						//aaaaaaaaaaaaaaaaarrrrrgghh wip
+						this.p1.input.hitArea = new Phaser.Geom.Rectangle(
+							-81,
+							-603,
+							163,
+							628
+						);
+						console.warn(this.p1.input.hitArea);
 
-    //Fire when server acknowledges p2 enter
-    this.input.keyboard.on("keydown", (e) => {
-      if (e.key === "r" && !e.repeat) {
-        if (!this.p2Enter) {
-          console.log("p2 enters");
-          this.tweens.add({
-            targets: this.p2,
-            x: 1922,
-            ease: "Linear",
-            duration: 1000,
-            repeat: 0,
-            yoyo: false,
-            onComplete: () => {
-              console.log("idle");
-              this.p2.play("idle");
-              this.p2Enter = true;
-            },
-          });
-        }
-      }
-    });
-    this.input.keyboard.on("keydown", (e) => {
-      if (e.key === "e" && !e.repeat) {
-        if (!this.p2Enter) {
-          return;
-        }
-        //console.log("p2 RED");
-        if (this.p2Ready) {
-          this.p2.play("idle");
-        } else {
-          this.p2.play("ready");
-        }
-        this.p2Ready = !this.p2Ready;
-      }
-    });
+						//hmm
+						const graphics = this.add.graphics();
 
-    //WHY IS TI UNDEFINED
-    // DEFINING CLICKABLE AREA FOR A SPECIFIC FRAME IDK NOW DELEGATE IT SDFAJKL;ASDFJKL;
-    // Wait for animation to start before setting hit area
-    /*this.p1.on("animationstart", (animation, frame) => {
-			const frameWidth = frame.width;
-			const frameHeight = frame.height;
-			// Create a hit area based on the frame size
-			this.p1.setInteractive({
-				cursor: "pointer",
-				hitArea: new Phaser.Geom.Rectangle(0, 0, frameWidth, frameHeight),
-				hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-			});
+						graphics.lineStyle(1, 0xff0000, 1);
+						graphics.fillStyle(0x00ff00, 1);
+						//graphics.strokeRect(0, 0, 100, 100);
 
-			console.log("Set hit area to frame size:", frameWidth, "x", frameHeight);
+						graphics.fillRect(
+							this.p1.input.hitArea.x + 1000,
+							this.p1.input.hitArea.y + 1000,
+							this.p1.input.hitArea.width,
+							this.p1.input.hitArea.height
+						);
+
+						graphics.strokeRect(
+							this.p1.input.hitArea.x + this.p1.x,
+							this.p1.input.hitArea.y + this.p1.y,
+							this.p1.input.hitArea.width,
+							this.p1.input.hitArea.height
+						);
+						graphics.strokeCircle(this.p1.x, this.p1.y, 10);
+					},
+				});
+			},
 		});
-*/
-    // Initial interactive setup with placeholder
-    this.p1.setInteractive({
-      cursor: "pointer",
-    });
-    this.p1.on("pointerdown", (pointer) => {
-      if (this.p1Enter && !this.p1Ready) {
-        console.log("Player 1 ready");
-        this.p1Ready = true;
-        this.p1.play("ready");
-      } else if (this.p1Ready) {
-        console.log("Player 1 unready");
-        this.p1Ready = false;
-        this.p1.play("idle");
-      }
-    });
-  }
 
-  update() {
-    // Check if both players are ready to start the game
-    // Is it good to poll?
-    if (this.p1Ready && this.p2Ready) {
-      if (!this.startingGame) {
-        this.startingGame = true;
-        console.log("both ready, start in 2 sec");
-        this.time.delayedCall(2000, () => {
-          this.scene.start("Match");
-        });
-      }
-    }
-  }
+		//Fire when server acknowledges p2 enter
+		this.input.keyboard.on("keydown", (e) => {
+			if (e.key === "r" && !e.repeat) {
+				if (!this.p2Enter) {
+					console.log("p2 enters");
+					this.tweens.add({
+						targets: this.p2,
+						x: 1922,
+						ease: "Linear",
+						duration: 1000,
+						repeat: 0,
+						yoyo: false,
+						onComplete: () => {
+							console.log("idle");
+							this.p2.play("lobby_player_idle");
+							this.p2Enter = true;
+						},
+					});
+				}
+			}
+		});
+
+		//Fire when p2 readies
+		this.input.keyboard.on("keydown", (e) => {
+			if (e.key === "e" && !e.repeat) {
+				if (!this.p2Enter) {
+					return;
+				}
+				//console.log("p2 RED");
+				if (this.p2Ready) {
+					this.p2.play("lobby_player_idle");
+				} else {
+					this.p2.play("lobby_player_ready");
+				}
+				this.p2Ready = !this.p2Ready;
+			}
+		});
+	}
+
+	update() {
+		// Check if both players are ready to start the game
+		// Is it good to poll?
+		if (this.p1Ready && this.p2Ready) {
+			if (!this.startingGame) {
+				this.startingGame = true;
+				console.log("both ready, start in 2 sec");
+				this.time.delayedCall(2000, () => {
+					this.scene.stop("Lobby");
+					this.scene.start("Match");
+				});
+			}
+		}
+	}
 }
