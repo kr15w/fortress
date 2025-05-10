@@ -75,7 +75,7 @@ export default class Match extends Phaser.Scene {
 		this.load.image("match_upgBtn", "assets/match_upgBtn.png");
 		this.load.image("match_cannonBtn", "assets/match_cannonBtn.png");
 		this.load.image("match_shieldBtn", "assets/match_shieldBtn.png");
-		this.load.image("match_chooseCannon", "assets/match_targetCannon.png");
+		this.load.image("match_chooseCannon", "assets/match_chooseCannon.png");
 
 		this.load.atlas(
 			"match_targetCannon",
@@ -158,11 +158,11 @@ export default class Match extends Phaser.Scene {
 		this._createTowerBtns();
 
 		// Create containers for game objects
-		this.p1CannonsContainer = this.add
+		this.p1Cannons = this.add
 			.container(0, 0)
 			.setDepth(10)
 			.setName("p1CannonsContainer");
-		this.p2CannonsContainer = this.add
+		this.p2Cannons = this.add
 			.container(0, 0)
 			.setDepth(10)
 			.setName("p2CannonsContainer");
@@ -172,21 +172,15 @@ export default class Match extends Phaser.Scene {
 			.container(0, 0)
 			.setName("cannonSelectorsContainer")
 			.setDepth(10000);
-		/*
-		// Add debug cannons to containers
-		this.p1CannonsContainer.add(debugC);
-		this.p2CannonsContainer.add(debugC2);
-*/
-		// Using containers for game objects instead of arrays
+
 		this.p1Shields = [];
-		this.p2Cannons = [];
 		this.p2Shields = [];
 
 		this.targets = this.add
 			.container(0, 0)
 			.setDepth(9999)
 			.setName("targetsContainer");
-		this.rpsContainer = this.add
+		this.rpsButtons = this.add
 			.container(0, 0)
 			.setName("rps contaienr")
 			.setDepth(9999);
@@ -325,11 +319,11 @@ export default class Match extends Phaser.Scene {
 
 	_createRpsBtns() {
 		console.info("_createRpsBtns() called");
-		this.rpsContainer.removeAll(true);
+		this.rpsButtons.removeAll(true);
 		this.rpsText = this.add
 			.sprite(1762, 414, "match_rps_text")
 			.setName("rpsText");
-		this.rpsContainer.add(this.rpsText);
+		this.rpsButtons.add(this.rpsText);
 
 		this.rockBtn = new Button(this, 2105, 436, "match_rps_rock").setName(
 			"rockBtn"
@@ -337,7 +331,7 @@ export default class Match extends Phaser.Scene {
 		this.rockBtn.once("pointerdown", () => {
 			this.handleRpsInput("r", this.povName);
 		});
-		this.rpsContainer.add(this.rockBtn);
+		this.rpsButtons.add(this.rockBtn);
 
 		this.paperBtn = new Button(this, 1748, 520, "match_rps_paper").setName(
 			"paperBtn"
@@ -345,7 +339,7 @@ export default class Match extends Phaser.Scene {
 		this.paperBtn.once("pointerdown", () => {
 			this.handleRpsInput("p", this.povName);
 		});
-		this.rpsContainer.add(this.paperBtn);
+		this.rpsButtons.add(this.paperBtn);
 
 		this.scissorsBtn = new Button(
 			this,
@@ -356,7 +350,7 @@ export default class Match extends Phaser.Scene {
 		this.scissorsBtn.once("pointerdown", () => {
 			this.handleRpsInput("s", this.povName);
 		});
-		this.rpsContainer.add(this.scissorsBtn);
+		this.rpsButtons.add(this.scissorsBtn);
 	}
 
 	_createTowerBtns() {
@@ -396,7 +390,7 @@ export default class Match extends Phaser.Scene {
 		this.p2Body.play("match_p2Body_wait");
 		this.p2Hand.play("match_p2Hand_wait");
 		this.targets.removeAll(true);
-		this.rpsContainer.removeAll(true);
+		this.rpsButtons.removeAll(true);
 
 		this._createRpsBtns();
 		this._hideTowerButtons();
@@ -517,7 +511,7 @@ export default class Match extends Phaser.Scene {
 		// The build/atk/up buttons only
 		//show the arm lel
 		this.p1Left.visible = true;
-		this.p1CannonsContainer.setVisible(true);
+		this.p1Cannons.setVisible(true);
 		this.cannonSelectors.setVisible(true);
 
 		// Create new button instances instead of showing/hiding existing ones
@@ -554,14 +548,16 @@ export default class Match extends Phaser.Scene {
 
 					// Choose your weapon
 					this.cannonSelectors.removeAll(true);
-					this.p1CannonsContainer.list.forEach((cannon, p1Index) => {
-						const selector = this.add
-							.sprite(cannon.x, cannon.y - 50, "match_chooseCannon")
+					this.p1Cannons.list.forEach((cannon, p1Index) => {
+						const selector = new Button(
+							this,
+							cannon.x,
+							cannon.y,
+							"match_chooseCannon"
+						)
+							.setDisplayOrigin(131, 245)
 							.setName("selfCannonSelector")
-							.setAlpha(0.8)
 							.setInteractive({ cursor: "pointer" })
-							.on("pointerover", () => selector.setAlpha(1))
-							.on("pointerout", () => selector.setAlpha(0.8))
 							.on("pointerdown", () => {
 								console.warn(`With my ${p1Index}th cannon`);
 
@@ -579,7 +575,7 @@ export default class Match extends Phaser.Scene {
 									.setName("p2Base");
 								this.targets.add(baseTarget);
 								// cannon target
-								this.p2CannonsContainer.list.forEach((c) => {
+								this.p2Cannons.list.forEach((c) => {
 									console.log("add target at", c.x, c.y);
 
 									const cannonTarget = new Button(
@@ -615,7 +611,7 @@ export default class Match extends Phaser.Scene {
 										cannonId: p1Index,
 									});
 								};
-								this.p2CannonsContainer.list.forEach((c, p2Index) => {
+								this.p2Cannons.list.forEach((c, p2Index) => {
 									c.setInteractive({ cursor: "pointer" }).on(
 										"pointerdown",
 										(pointer) => {
@@ -685,7 +681,7 @@ export default class Match extends Phaser.Scene {
 								cannon.input.hitArea.height
 							);
 							this.cantAddCannon =
-								this.p1CannonsContainer.list.some((builtC) => {
+								this.p1Cannons.list.some((builtC) => {
 									//GET BY HITAREA< NOT getbounds
 									const baseHitbox = this.p1Base.input.hitArea;
 									const builtCHitbox = new Phaser.Geom.Rectangle(
@@ -772,7 +768,7 @@ export default class Match extends Phaser.Scene {
 
 							// Draw existing cannons hit areas in green
 							this.debugGraphics.lineStyle(2, 0x00ff00, 1);
-							this.p1CannonsContainer.list.forEach((builtC) => {
+							this.p1Cannons.list.forEach((builtC) => {
 								const cannonHitArea = builtC.input
 									? builtC.input.hitArea
 									: null;
@@ -841,9 +837,9 @@ export default class Match extends Phaser.Scene {
 										console.warn("add le caon", cannon);
 										this.input.off("pointermove", handleMove);
 										this.input.off("pointerdown", handleConfirm);
-										this.p1CannonsContainer.add(cannon);
+										this.p1Cannons.add(cannon);
 										cannon.placed = true; //any use?
-										console.log("cannons: ", this.p1CannonsContainer);
+										console.log("cannons: ", this.p1Cannons);
 										this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
 											x: cannon.x,
 										});
@@ -923,15 +919,18 @@ export default class Match extends Phaser.Scene {
 			if (this.cannonBtn) this.cannonBtn.destroy();
 			if (this.shieldBtn) this.shieldBtn.destroy();
 
-			this.p1CannonsContainer.list.forEach((cannon, index) => {
-				const selector = this.add
-					.sprite(cannon.x, cannon.y, "match_chooseCannon")
+			//how to reuse this?
+			this.p1Cannons.list.forEach((cannon, index) => {
+				//scale the shape of the sprite?
+
+				const selector = new Button(
+					this,
+					cannon.x,
+					cannon.y,
+					"match_chooseCannon"
+				)
 					.setName("selfCannonSelector")
-					.setScale(0.7)
-					.setAlpha(0.8)
 					.setInteractive({ cursor: "pointer" })
-					.on("pointerover", () => selector.setAlpha(1))
-					.on("pointerout", () => selector.setAlpha(0.8))
 					.on("pointerdown", () => {
 						this.targets.removeAll(true);
 						console.warn(`Upgrade my ${index}th cannon`);
@@ -942,6 +941,13 @@ export default class Match extends Phaser.Scene {
 
 						this.cannonSelectors.removeAll(true);
 					});
+				selector.setDisplayOrigin(131, 245);
+
+				console.warn(
+					"set shit to",
+					selector.displayOriginX,
+					selector.displayOriginY
+				);
 				this.cannonSelectors.add(selector);
 			});
 		};
@@ -1119,7 +1125,7 @@ export default class Match extends Phaser.Scene {
 					.setDisplayOrigin(107, 154)
 					.setDepth(10)
 					.setVisible(true);
-				this.p2CannonsContainer.add(oppCannon);
+				this.p2Cannons.add(oppCannon);
 				this.state.roundWinner.cannons.push({
 					x: info.x,
 					pow: 1,
@@ -1141,10 +1147,10 @@ export default class Match extends Phaser.Scene {
 				break;
 			case TowerActionTypes.ATTACK_CANNON:
 				console.log("info: ", info);
-				console.log(this.p2CannonsContainer.list);
+				console.log(this.p2Cannons.list);
 				console.log("remove opp's", info.target, "th cannon");
 				this.state.roundLoser.cannons.splice(info.target, 1);
-				this.p2CannonsContainer.list[info.target].destroy();
+				this.p2Cannons.list[info.target].destroy();
 				break;
 			/*case TowerActionTypes.UPGRADE_SHIELD:
         console.log("info: ", info);
@@ -1158,10 +1164,10 @@ export default class Match extends Phaser.Scene {
 
 				//player visuals, no update beyond 7+power
 				if (pow <= 7) {
-					this.p2CannonsContainer.list[info.cannonId].setFrame(
+					this.p2Cannons.list[info.cannonId].setFrame(
 						"match_p2Cannon000" + (pow - 1)
 					);
-					this.p1CannonsContainer.list[info.cannonId].setFrame(
+					this.p1Cannons.list[info.cannonId].setFrame(
 						"match_p1Cannon000" + (pow - 1)
 					);
 				}
@@ -1176,13 +1182,13 @@ export default class Match extends Phaser.Scene {
 	_showRpsButtons() {
 		console.warn("(do not use this, just create)show rps butons");
 		// Update to show container instead of individual elements
-		this.rpsContainer.removeAll(true);
+		this.rpsButtons.removeAll(true);
 	}
 
 	_hideRpsButtons() {
 		console.log("hide rpss butons");
 		// Update to hide container instead of individual elements
-		this.rpsContainer.removeAll(true);
+		this.rpsButtons.removeAll(true);
 	}
 }
 
