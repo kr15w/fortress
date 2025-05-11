@@ -41,6 +41,11 @@ const ANIMS = {
 			frameRate: 24,
 			repeat: 0,
 		},
+		{
+			key: "annoyed",
+			start: 16,
+			end: 16,
+		},
 	],
 };
 
@@ -108,6 +113,7 @@ export default class Lobby extends Phaser.Scene {
 			.setVisible(false);
 		this.p1 = this.add.sprite(0, 1184, "lobby_player").setName("p1");
 		this.p2 = this.add.sprite(0, 1184, "lobby_player").setName("p2");
+		this.lol = 0;
 
 		/*sign text*/
 		this.rmCodeSign = this.add
@@ -205,6 +211,7 @@ export default class Lobby extends Phaser.Scene {
 								}
 							})
 							.on("pointerout", () => {
+								this.lol++;
 								this.exitBtn.setAlpha(0.7);
 								this.exitText.setVisible(false);
 							});
@@ -215,11 +222,16 @@ export default class Lobby extends Phaser.Scene {
 							.setInteractive({ cursor: "pointer" })
 							.on("pointerover", () => {
 								if (!this.p1Ready) {
-									this.p1.play("lobby_player_notice");
+									if (this.lol > 15 && this.lol % 16 == 0) {
+										this.p1.play("lobby_player_annoyed");
+									} else {
+										this.p1.play("lobby_player_notice");
+									}
 								}
 							})
 							.on("pointerout", () => {
 								if (!this.p1Ready) {
+									this.lol++;
 									this.p1.play("lobby_player_idle");
 								}
 							})
