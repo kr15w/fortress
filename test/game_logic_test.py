@@ -3,7 +3,7 @@ import random
 import time
 from mock_browser_client import Mock_Browser_Client
 
-def main():
+def random_test():
     # Create clients for both players
     client1 = Mock_Browser_Client("http://127.0.0.1:5000")
     client2 = Mock_Browser_Client("http://127.0.0.1:5000")
@@ -119,5 +119,150 @@ def process_player_turn(client, game_state):
                     client.press_button("attackButton")
                     return
 
+def deterministic_test():
+    try:
+        # Step 1: Login test users
+        client1 = Mock_Browser_Client("http://127.0.0.1:5000")
+        client2 = Mock_Browser_Client("http://127.0.0.1:5000")
+        browser1 = client1.create_browser()
+        browser2 = client2.create_browser()
+        client1.login("testuser_8", "testpassword")
+        client2.login("testuser_9", "testpassword")
+
+        time.sleep(0.3)
+
+        # Step 2: Create room and join
+        client1.go_to_match_demo()
+        client1.press_button("joinRoomButton")
+        room_id = client1.get_room_id()
+        client2.go_to_match_demo()
+        client2.set_text_field("roomId", room_id)
+        client2.press_button("joinRoomButton")
+
+        time.sleep(0.3)
+
+        # Step 3: Make players ready
+        client1.press_button("readyButton")
+        client2.press_button("readyButton")
+
+        time.sleep(0.3)
+        # Step 4: Perform 4 rounds of RPS (steps 4-5)
+        for _ in range(4):
+            client1.press_button("rockButton")
+            client2.press_button("scissorsButton")
+            time.sleep(0.3)
+        assert json.loads(client1.get_game_state())["current_player_health"] == 4
+
+        time.sleep(0.3)
+        # Step 6: Build weapons (steps 6-7)
+        for _ in range(3):
+            client1.press_button("rockButton")
+            client2.press_button("scissorsButton")
+            time.sleep(0.3)
+            client1.press_button("buildWeaponButton")
+            time.sleep(0.3)
+        assert json.loads(client1.get_game_state())["current_player_weaponry"] == [1, 1, 1]
+
+        time.sleep(0.3)
+        # Step 8: Upgrade weapon (steps 8-9)
+        client1.press_button("rockButton")
+        client2.press_button("scissorsButton")
+        time.sleep(0.3)
+        client1.set_text_field("weaponIndex", "1")
+        client1.press_button("upgradeButton")
+        time.sleep(0.3)
+        assert json.loads(client1.get_game_state())["current_player_weaponry"] == [1, 2, 1]
+
+        time.sleep(0.3)
+        # Step 10: Player 2 RPS rounds (steps 10-11)
+        for _ in range(4):
+            client2.press_button("rockButton")
+            client1.press_button("scissorsButton")
+            time.sleep(0.3)
+        assert json.loads(client2.get_game_state())["current_player_health"] == 4
+
+        time.sleep(0.3)
+        # Step 12: Player 2 builds health (steps 12-13)
+        client2.press_button("rockButton")
+        client1.press_button("scissorsButton")
+        time.sleep(0.3)
+        client2.press_button("buildHealthButton")
+        time.sleep(0.3)
+        assert json.loads(client2.get_game_state())["current_player_health"] == 5
+
+        time.sleep(0.3)
+        # Step 14: Player 1 attacks (steps 14-15)
+        client1.press_button("rockButton")
+        client2.press_button("scissorsButton")
+        time.sleep(0.3)
+        client1.set_text_field("weaponIndex", "1")
+        client1.set_text_field("targetList", 'h')
+        client1.press_button("attackButton")
+        time.sleep(0.3)
+        assert json.loads(client2.get_game_state())["current_player_health"] == 4
+
+        time.sleep(0.3)
+        # Step 16: Player 2 builds weapon (steps 16-17)
+        client2.press_button("rockButton")
+        client1.press_button("scissorsButton")
+        time.sleep(0.3)
+        client2.press_button("buildWeaponButton")
+
+        time.sleep(0.3)
+        # Step 18: Player 2 upgrades weapon (steps 18-19)
+        for _ in range(2):
+            client2.press_button("rockButton")
+            client1.press_button("scissorsButton")
+            time.sleep(0.3)
+            client2.set_text_field("weaponIndex", "0")
+            client2.press_button("upgradeButton")
+            time.sleep(0.3)
+        assert json.loads(client2.get_game_state())["current_player_weaponry"] == [3]
+
+        time.sleep(0.3)
+        # Step 20: Player 2 attacks (steps 20-21)
+        client2.press_button("rockButton")
+        client1.press_button("scissorsButton")
+        time.sleep(0.3)
+        client2.set_text_field("weaponIndex", "0")
+        client2.set_text_field("targetList", '0')
+        client2.press_button("attackButton")
+        time.sleep(0.3)
+        assert json.loads(client1.get_game_state())["current_player_weaponry"] == [2, 1]
+
+        time.sleep(0.3)
+        # Step 22: Player 2 attacks health (steps 22-23)
+        client2.press_button("rockButton")
+        client1.press_button("scissorsButton")
+        time.sleep(0.3)
+        client2.set_text_field("weaponIndex", "0")
+        client2.set_text_field("targetList", 'h')
+        client2.press_button("attackButton")
+        time.sleep(0.3)
+        assert json.loads(client1.get_game_state())["current_player_health"] == 1
+
+        time.sleep(0.3)
+        # Step 23: Final attack (step 23)
+        client2.press_button("rockButton")
+        client1.press_button("scissorsButton")
+        time.sleep(0.3)
+        client2.set_text_field("weaponIndex", "0")
+        client2.set_text_field("targetList", 'h')
+        client2.press_button("attackButton")
+        time.sleep(0.3)
+
+        assert json.loads(client1.get_game_state())["current_player_health"] == -2
+        assert json.loads(client1.get_game_state())["state"] == 2
+        assert json.loads(client2.get_game_state())["state"] == 2
+
+        client1.close_browser()
+        client2.close_browser()
+    
+        return True
+    except exception as e:
+        print(e)
+        return False
+
 if __name__ == "__main__":
-    print(f"Winner: {main()}")
+    print("Deterministic test result:", deterministic_test())
+    print("Random test result:", random_test())
