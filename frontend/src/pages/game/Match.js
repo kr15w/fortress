@@ -746,7 +746,7 @@ export default class Match extends Phaser.Scene {
 							console.info("handleResize() called");
 							shield.handleResize(pointer);
 							this.cantAddShield = this.p1Shields.some(
-								(scale) => Math.abs(scale - shield.scale) <= 0.001
+								(builtS) => Math.abs(builtS.scale - shield.scale) <= 0.001
 							);
 
 							if (this.cantAddShield) {
@@ -758,6 +758,7 @@ export default class Match extends Phaser.Scene {
 
 						this.input.on("pointermove", handleResize, this);
 
+						// confirm add shields
 						this.time.addEvent({
 							delay: 50,
 							callback: () => {
@@ -767,10 +768,10 @@ export default class Match extends Phaser.Scene {
 										this.input.off("pointermove", handleResize);
 										this.p1Shields.push(shield);
 										console.log(this.p1Shields);
-										this.handleTowerInput(
-											TowerActionTypes.BUILD_SHIELD,
-											shield.scale
-										);
+										this.handleTowerInput(TowerActionTypes.BUILD_SHIELD, {
+											scaleX: shield.scaleX,
+											scaleY: shield.scaleY,
+										});
 									}
 								};
 								this.input.once("pointerdown", handleConfirm);
@@ -974,10 +975,14 @@ export default class Match extends Phaser.Scene {
 
 				//player visuals
 				const oppSize = info.scale;
-				this.add
-					.sprite(1280, 523, "match_p2Shield")
-					.setDisplayOrigin(283, 203)
-					.setScale(info.scale);
+				console.log(
+					this.add
+						.sprite(1280, 526, "match_p2Shield")
+						.setDisplayOrigin(283, 203)
+						.setName("p2shieldagain")
+						.setScale(info.scaleX, info.scaleY)
+						.setDepth(10)
+				);
 
 				// shield upgrades are SCRAPPED!!!
 
@@ -1098,7 +1103,7 @@ class Player {
 		 *
 		 *
 		 */
-		this.hp = 0;
+		this.hp = 4;
 		//this.shields = [];
 		this.cannons = [];
 	}
@@ -1187,7 +1192,7 @@ class P2Cannon extends Phaser.GameObjects.Sprite {
 class Shield extends Phaser.GameObjects.Sprite {
 	constructor(scene, pointer) {
 		super(scene, 1280, 1438, "match_p1Shield");
-		this.setDisplayOrigin(817, 519)
+		this.setDisplayOrigin(633, 454)
 			.setDepth(10)
 			.setInteractive()
 			.setVisible(true);
@@ -1202,12 +1207,11 @@ class Shield extends Phaser.GameObjects.Sprite {
 			pointer.y
 		);
 
-		const newScale = roundToNearest(
-			Phaser.Math.Clamp(distance / 500, 0.85, 1.5),
-			0.04
+		//max 1.85, 1.47
+		this.setScale(
+			roundToNearest(Phaser.Math.Clamp(distance / 500, 1, 1.85), 0.04),
+			roundToNearest(Phaser.Math.Clamp(distance / 500, 1, 1.47), 0.04)
 		);
-
-		this.setScale(newScale);
 	}
 }
 
