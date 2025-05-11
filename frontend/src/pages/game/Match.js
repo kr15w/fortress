@@ -548,7 +548,7 @@ export default class Match extends Phaser.Scene {
 									.setName("p2Base");
 								this.targets.add(baseTarget);
 								// cannon target
-								this.p2Cannons.list.forEach((c) => {
+								this.p2Cannons.list.forEach((c, p2Index) => {
 									console.log("add target at", c.x, c.y);
 
 									const cannonTarget = new Button(
@@ -561,6 +561,16 @@ export default class Match extends Phaser.Scene {
 										.setDepth(15)
 										.setVisible(true)
 										.setName("p2Cannon_" + c.name);
+
+									cannonTarget.on("pointerdown", () => {
+										this.targets.removeAll(true);
+										console.log("Attacking opponent's cannon", p2Index);
+										this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
+											target: p2Index, //-1 for tower, 0+ for opponent cannon?????
+											cannonId: p1Index,
+										});
+									});
+
 									this.targets.add(cannonTarget);
 								});
 								this.targets.setVisible(true);
@@ -575,24 +585,6 @@ export default class Match extends Phaser.Scene {
 								};
 
 								baseTarget.once("pointerdown", chooseAtkTower);
-
-								const chooseAtkCannon = (c, p2Index) => {
-									this.targets.removeAll(true);
-									console.log("Attacking opopnent's cannon", p2Index);
-									this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
-										target: p2Index, //-1 for tower, 0+ for opponent cannon
-										cannonId: p1Index,
-									});
-								};
-								this.p2Cannons.list.forEach((c, p2Index) => {
-									c.setInteractive({ cursor: "pointer" }).on(
-										"pointerdown",
-										(pointer) => {
-											console.warn("each cannon's index:", p2Index);
-											chooseAtkCannon(c, p2Index);
-										}
-									);
-								});
 							});
 
 						this.cannonSelectors.add(selector);
