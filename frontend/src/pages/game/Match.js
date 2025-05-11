@@ -4,11 +4,12 @@ import ANIMS from "./match_anims.json";
 
 /**
  * done add tie anim
+ * @todo p2 shielld!!!!!!!!!
  * @todo add rmb to cansel
- * @todo how to calculate p2 shield?
- * @todo show more clearly what rps is chosen
+ * @todo how to calculate p2 shield??????????????????????????????????????
+ * done show more clearly what rps is chosen
  * @todo make everything prettier
- * @todo put buttons in a container
+ * done put buttons in a container
  * done buttons glow on hover
  */
 const SCENE_H = 1440;

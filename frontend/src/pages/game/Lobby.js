@@ -22,15 +22,22 @@ const ANIMS = {
 			key: "idle",
 
 			start: 4,
-			end: 4,
+			end: 7,
 
-			frameRate: 24,
+			frameRate: 8,
 			repeat: -1,
 		},
 		{
 			key: "ready",
-			start: 5,
-			end: 16,
+			start: 8,
+			end: 10,
+			frameRate: 24,
+			repeat: 0,
+		},
+		{
+			key: "notice",
+			start: 11,
+			end: 15,
 			frameRate: 24,
 			repeat: 0,
 		},
@@ -43,6 +50,13 @@ export default class Lobby extends Phaser.Scene {
 	}
 	preload() {
 		this.load.image("lobby_table", "assets/lobby_table.png");
+		this.load.atlas(
+			"lobby_rmCodeText",
+			"assets/lobby_rmCodeText.png",
+			"assets/lobby_rmCodeText.json"
+		);
+		this.load.image("lobby_rmCodeSign", "assets/lobby_rmCodeSign.png");
+
 		this.load.image("lobby_exitBtn", "assets/lobby_exitBtn.png");
 		this.load.atlas(
 			"lobby_exitText",
@@ -65,6 +79,7 @@ export default class Lobby extends Phaser.Scene {
 	}
 
 	create() {
+		const RMCODE = "AAUD".toUpperCase(); //all uppcase alphanumeric, get from server
 		const SCENE_W = this.sys.game.canvas.width;
 		const SCENE_H = this.sys.game.canvas.height;
 
@@ -94,6 +109,47 @@ export default class Lobby extends Phaser.Scene {
 		this.p1 = this.add.sprite(0, 1184, "lobby_player").setName("p1");
 		this.p2 = this.add.sprite(0, 1184, "lobby_player").setName("p2");
 
+		/*sign text*/
+		this.rmCodeSign = this.add
+			.sprite(1166, 569, "lobby_rmCodeSign")
+			.setName("rmCodeSign")
+			.setOrigin(0)
+			.setDepth(998);
+		this.rmCodeDigits = this.add.container(0, 0).setDepth(999);
+		for (let i = 0; i < 4; i++) {
+			this.rmCodeDigits.add(
+				this.add
+					.sprite(1200 + i * 200, 634, "lobby_rmCodeText")
+					.setName("rmCodeDigits" + i)
+					.setOrigin(0)
+					.setFrame("lobby_rmCodeText000" + i)
+			);
+		}
+		this.rmCodeDigits.list[0].setPosition(1204, 635);
+		this.rmCodeDigits.list[1].setPosition(1247, 648);
+		this.rmCodeDigits.list[2].setPosition(1293, 648);
+		this.rmCodeDigits.list[3].setPosition(1338, 663);
+
+		//set rmcode
+		//looks so stupid
+		for (let i in RMCODE) {
+			if (RMCODE[i] >= "A" && RMCODE[i] <= "Z") {
+				//A to Z
+				let frameNum = RMCODE.charCodeAt(i) - "A".charCodeAt(0);
+				this.rmCodeDigits.list[i].setFrame(
+					"lobby_rmCodeText" + String(frameNum).padStart(4, "0")
+				);
+				console.log(frameNum);
+			} else {
+				//0 to 9
+				let frameNum = RMCODE.charCodeAt(i) - "0".charCodeAt(0);
+				this.rmCodeDigits.list[i].setFrame(
+					"lobby_rmCodeText" + String(frameNum + 26).padStart(4, "0")
+				);
+				console.log(frameNum);
+			}
+		}
+
 		// PIVOTS
 		// AUTOMATE THIS use the largest anim for the stuff
 		this.p1.setOrigin(291 / this.p1.width, 800 / this.p1.height);
@@ -117,7 +173,7 @@ export default class Lobby extends Phaser.Scene {
 		this.p2.scaleX = -1; // don't use flipX
 
 		/******handle inputs */
-		// p1 enter
+		// p1 enter and ready afterwards
 		this.tweens.add({
 			targets: this.p1,
 			x: 627,
@@ -130,7 +186,7 @@ export default class Lobby extends Phaser.Scene {
 				this.p1.play("lobby_player_idle");
 				this.p1Enter = true;
 
-				//add exit button
+				//add exit button?
 				this.tweens.add({
 					targets: this.exitBtn,
 					alpha: 0.8,
@@ -157,6 +213,16 @@ export default class Lobby extends Phaser.Scene {
 
 						this.p1
 							.setInteractive({ cursor: "pointer" })
+							.on("pointerover", () => {
+								if (!this.p1Ready) {
+									this.p1.play("lobby_player_notice");
+								}
+							})
+							.on("pointerout", () => {
+								if (!this.p1Ready) {
+									this.p1.play("lobby_player_idle");
+								}
+							})
 							.on("pointerdown", (pointer) => {
 								if (this.p1Enter && !this.p1Ready) {
 									console.log("Player 1 ready");
