@@ -1,12 +1,17 @@
 import json
 import random
 import time
+import os
+import shutil
 from mock_browser_client import Mock_Browser_Client
+
+BASE_URL = "http://127.0.0.1:5000"
+ACTION_TIMEOUT = 0.3
 
 def random_test():
     # Create clients for both players
-    client1 = Mock_Browser_Client("http://127.0.0.1:5000")
-    client2 = Mock_Browser_Client("http://127.0.0.1:5000")
+    client1 = Mock_Browser_Client(BASE_URL)
+    client2 = Mock_Browser_Client(BASE_URL)
     
     try:
         # Setup both browsers
@@ -46,7 +51,7 @@ def random_test():
 
         # Main game loop
         while True:
-            time.sleep(0.3)  # Throttle requests
+            time.sleep(ACTION_TIMEOUT)  # Throttle requests
             
             # Process Player 1
             game_state1 = json.loads(client1.get_game_state())
@@ -122,14 +127,14 @@ def process_player_turn(client, game_state):
 def deterministic_test():
     try:
         # Step 1: Login test users
-        client1 = Mock_Browser_Client("http://127.0.0.1:5000")
-        client2 = Mock_Browser_Client("http://127.0.0.1:5000")
+        client1 = Mock_Browser_Client(BASE_URL)
+        client2 = Mock_Browser_Client(BASE_URL)
         browser1 = client1.create_browser()
         browser2 = client2.create_browser()
         client1.login("testuser_8", "testpassword")
         client2.login("testuser_9", "testpassword")
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
 
         # Step 2: Create room and join
         client1.go_to_match_demo()
@@ -139,117 +144,117 @@ def deterministic_test():
         client2.set_text_field("roomId", room_id)
         client2.press_button("joinRoomButton")
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
 
         # Step 3: Make players ready
         client1.press_button("readyButton")
         client2.press_button("readyButton")
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 4: Perform 4 rounds of RPS (steps 4-5)
         for _ in range(4):
             client1.press_button("rockButton")
             client2.press_button("scissorsButton")
-            time.sleep(0.3)
+            time.sleep(ACTION_TIMEOUT)
         assert json.loads(client1.get_game_state())["current_player_health"] == 4
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 6: Build weapons (steps 6-7)
         for _ in range(3):
             client1.press_button("rockButton")
             client2.press_button("scissorsButton")
-            time.sleep(0.3)
+            time.sleep(ACTION_TIMEOUT)
             client1.press_button("buildWeaponButton")
-            time.sleep(0.3)
+            time.sleep(ACTION_TIMEOUT)
         assert json.loads(client1.get_game_state())["current_player_weaponry"] == [1, 1, 1]
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 8: Upgrade weapon (steps 8-9)
         client1.press_button("rockButton")
         client2.press_button("scissorsButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         client1.set_text_field("weaponIndex", "1")
         client1.press_button("upgradeButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         assert json.loads(client1.get_game_state())["current_player_weaponry"] == [1, 2, 1]
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 10: Player 2 RPS rounds (steps 10-11)
         for _ in range(4):
             client2.press_button("rockButton")
             client1.press_button("scissorsButton")
-            time.sleep(0.3)
+            time.sleep(ACTION_TIMEOUT)
         assert json.loads(client2.get_game_state())["current_player_health"] == 4
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 12: Player 2 builds health (steps 12-13)
         client2.press_button("rockButton")
         client1.press_button("scissorsButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         client2.press_button("buildHealthButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         assert json.loads(client2.get_game_state())["current_player_health"] == 5
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 14: Player 1 attacks (steps 14-15)
         client1.press_button("rockButton")
         client2.press_button("scissorsButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         client1.set_text_field("weaponIndex", "1")
         client1.set_text_field("targetList", 'h')
         client1.press_button("attackButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         assert json.loads(client2.get_game_state())["current_player_health"] == 4
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 16: Player 2 builds weapon (steps 16-17)
         client2.press_button("rockButton")
         client1.press_button("scissorsButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         client2.press_button("buildWeaponButton")
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 18: Player 2 upgrades weapon (steps 18-19)
         for _ in range(2):
             client2.press_button("rockButton")
             client1.press_button("scissorsButton")
-            time.sleep(0.3)
+            time.sleep(ACTION_TIMEOUT)
             client2.set_text_field("weaponIndex", "0")
             client2.press_button("upgradeButton")
-            time.sleep(0.3)
+            time.sleep(ACTION_TIMEOUT)
         assert json.loads(client2.get_game_state())["current_player_weaponry"] == [3]
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 20: Player 2 attacks (steps 20-21)
         client2.press_button("rockButton")
         client1.press_button("scissorsButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         client2.set_text_field("weaponIndex", "0")
         client2.set_text_field("targetList", '0')
         client2.press_button("attackButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         assert json.loads(client1.get_game_state())["current_player_weaponry"] == [2, 1]
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 22: Player 2 attacks health (steps 22-23)
         client2.press_button("rockButton")
         client1.press_button("scissorsButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         client2.set_text_field("weaponIndex", "0")
         client2.set_text_field("targetList", 'h')
         client2.press_button("attackButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         assert json.loads(client1.get_game_state())["current_player_health"] == 1
 
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         # Step 23: Final attack (step 23)
         client2.press_button("rockButton")
         client1.press_button("scissorsButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
         client2.set_text_field("weaponIndex", "0")
         client2.set_text_field("targetList", 'h')
         client2.press_button("attackButton")
-        time.sleep(0.3)
+        time.sleep(ACTION_TIMEOUT)
 
         assert json.loads(client1.get_game_state())["current_player_health"] == -2
         assert json.loads(client1.get_game_state())["state"] == 2
@@ -265,7 +270,7 @@ def deterministic_test():
 
 
 def check_win_lose_count(id,win,lose):
-    client = Mock_Browser_Client("http://127.0.0.1:5000")
+    client = Mock_Browser_Client(BASE_URL)
     
     # Setup browser
     browser1 = client.create_browser()
@@ -278,7 +283,20 @@ def check_win_lose_count(id,win,lose):
 
     return stats == {'win_count': str(win), 'lose_count': str(lose)}
 
-if __name__ == "__main__":
+def main():
+    # Check if production database exists
+    if os.path.exists("../backend/users.db"):
+        print("WARNING: Production database exists! Aborting tests to prevent data loss.")
+        return False
+
+    # Setup test database
+    if os.path.exists("stub_users.db"):
+        shutil.copy("stub_users.db", "../backend/users.db")
+    else:
+        print("ERROR: stub_users.db not found in test directory")
+        return False
+
+    # Run tests
     deterministic_test_result = deterministic_test()
     print("Deterministic test result:", deterministic_test_result)
     deterministic_test_db_updated = check_win_lose_count(10,6,0) and check_win_lose_count(9,0,6)
@@ -293,4 +311,22 @@ if __name__ == "__main__":
     
     print("random_test_db_updated:", random_test_db_updated)
 
+    # Cleanup
+    if os.path.exists("../backend/users.db"):
+        os.remove("../backend/users.db")
+
+    # Check results
+    all_passed = (deterministic_test_result and
+                 deterministic_test_db_updated and
+                 random_test_result and
+                 random_test_db_updated)
     
+    if all_passed:
+        print("Congratulations! All tests passed successfully!")
+    else:
+        print("Some tests failed. Please check the output above.")
+
+    return all_passed
+
+if __name__ == "__main__":
+    main()
