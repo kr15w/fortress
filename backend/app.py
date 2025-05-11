@@ -16,10 +16,11 @@ from flask_oauthlib.client import OAuth
 import string
 import random
 from flask_mail import Mail, Message
+import os
+from dotenv import load_dotenv
 
-
-
-
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -34,16 +35,16 @@ clients = {}
 user_tokens = {}  # user_id -> token mapping
 game_flask.user_tokens = user_tokens
 
-app.config['GOOGLE_CLIENT_ID'] = ''
-app.config['GOOGLE_CLIENT_SECRET'] = ''
+app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
 app.config['GOOGLE_DISCOVERY_URL'] = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = ''
-app.config['MAIL_PASSWORD'] = ''
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 # Initialize OAuth
 oauth = OAuth(app)
 
