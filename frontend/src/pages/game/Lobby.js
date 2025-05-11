@@ -236,6 +236,7 @@ export default class Lobby extends Phaser.Scene {
 								}
 							})
 							.on("pointerdown", (pointer) => {
+								this.lol = 0;
 								if (this.p1Enter && !this.p1Ready) {
 									console.log("Player 1 ready");
 									this.p1Ready = true;
