@@ -19,12 +19,12 @@ def main():
         
         if not success1 or not success2:
             print("Login failed for one or both players")
-            return
+            return False
 
         # Player 1 creates room
         if not client1.go_to_match_demo() or not client1.press_button("joinRoomButton"):
             print("Player 1 failed to create room")
-            return
+            return False
             
         room_id = client1.get_room_id()
         print(f"Room created with ID: {room_id}")
@@ -34,13 +34,13 @@ def main():
                 client2.set_text_field("roomId", room_id) and 
                 client2.press_button("joinRoomButton")):
             print("Player 2 failed to join room")
-            return
+            return False
 
         # Both players ready up
         if not (client1.press_button("readyButton") and 
                 client2.press_button("readyButton")):
             print("Failed to ready up players")
-            return
+            return False
 
         print("Both players ready - game starting")
 
@@ -54,22 +54,31 @@ def main():
                 continue
                 
             if game_state1["state"] == 2:  # Game ended
+                if game_state1.get("winner", False):
+                    game_winner = 1
+                else:
+                    game_winner = 2
                 break
+                 
                 
             process_player_turn(client1, game_state1)
             
             # Process Player 2
             game_state2 = json.loads(client2.get_game_state())
-            if game_state2["state"] == 2:  # Game ended
-                break
+
                 
             process_player_turn(client2, game_state2)
 
         print("Game ended")
-
-    finally:
         client1.close_browser()
         client2.close_browser()
+        return game_winner
+
+    except exception as e:
+        print(e)
+        client1.close_browser()
+        client2.close_browser()
+        return False
 
 def process_player_turn(client, game_state):
     if game_state["state"] == 0:  # RPS phase
@@ -111,4 +120,4 @@ def process_player_turn(client, game_state):
                     return
 
 if __name__ == "__main__":
-    main()
+    print(f"Winner: {main()}")
