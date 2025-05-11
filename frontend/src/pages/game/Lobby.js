@@ -2,9 +2,9 @@ import Phaser from "phaser";
 import { loadAnims } from "./loadAnims";
 /**
  * @todo handle animations
- * @todo automate origin setting (use the relative position of the largest sprite)
+ * nah automate origin setting (use the relative position of the largest sprite)
  * @todo emit a signal on each event
- * @todo hint at player to click on char to be ready
+ * done hint at player to click on char to be ready
  * @todo show usernaem
  * @todo add prelobby in case user reloads screen (how to handle?)
  */
@@ -94,11 +94,10 @@ export default class Lobby extends Phaser.Scene {
 			.setOrigin(0, 0)
 			.setName("bg");
 		this.table = this.add
-			.sprite(760, 886, "lobby_table")
+			.sprite(760, 884, "lobby_table")
 			.setOrigin(0, 0)
 			.setName("tbl")
-			.setDepth(100)
-			.setScale(0.859);
+			.setDepth(100);
 		this.exitBtn = this.add
 			.image(141, 1151, "lobby_exitBtn")
 			.setOrigin(0, 0)

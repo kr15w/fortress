@@ -105,7 +105,7 @@ const Menu: React.FC = () => {
 								asChild
 							>
 								<Link
-									target="_blank"
+									//target="_blank"
 									to="/game"
 									className="flex items-center justify-center gap-3"
 								>
@@ -124,7 +124,7 @@ const Menu: React.FC = () => {
 							>
 								<Link
 									to="/game"
-									target="_blank"
+									//target="_blank"
 									className="flex items-center justify-center gap-3"
 								>
 									<LogIn className="h-6 w-6" />
