@@ -35,3 +35,7 @@ backend/venv
 backend/__pycache__
 backend/users.db
 backend/tmp_keys.txt
+
+
+test/venv
+test/__pycache__
