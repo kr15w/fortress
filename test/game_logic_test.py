@@ -263,6 +263,34 @@ def deterministic_test():
         print(e)
         return False
 
+
+def check_win_lose_count(id,win,lose):
+    client = Mock_Browser_Client("http://127.0.0.1:5000")
+    
+    # Setup browser
+    browser1 = client.create_browser()
+    success1, message1 = client.login("testuser_0", "testpassword")
+
+    # Get win/lose counts for user_id=4
+    stats = client.get_win_lose_counts(id)
+    
+    client.close_browser()
+
+    return stats == {'win_count': str(win), 'lose_count': str(lose)}
+
 if __name__ == "__main__":
-    print("Deterministic test result:", deterministic_test())
-    print("Random test result:", random_test())
+    deterministic_test_result = deterministic_test()
+    print("Deterministic test result:", deterministic_test_result)
+    deterministic_test_db_updated = check_win_lose_count(10,6,0) and check_win_lose_count(9,0,6)
+    print("deterministic_test_db_updated:", deterministic_test_db_updated)
+
+    random_test_result = random_test()
+    print("Random test winner:", random_test_result)
+    if random_test_result == 2:
+        random_test_db_updated = check_win_lose_count(4,6,7) and check_win_lose_count(6,7,6)
+    else:
+        random_test_db_updated = check_win_lose_count(4,7,6) and check_win_lose_count(6,6,7)
+    
+    print("random_test_db_updated:", random_test_db_updated)
+
+    

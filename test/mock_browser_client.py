@@ -132,6 +132,7 @@ class Mock_Browser_Client:
             return True
         except Exception:
             return False
+
     def set_text_field(self, field_name, content):
         try:
             field = self.driver.find_element(By.ID, field_name)
@@ -147,53 +148,38 @@ class Mock_Browser_Client:
         except Exception:
             return ""
 
+    def get_win_lose_counts(self, user_id):
+        try:
+            # Navigate to profile page
+            self.driver.get(f"{self.base_url}/profile/{user_id}")
+            
+            # Wait for stats to load
+            time.sleep(1)
+            
+            text = self.driver.find_element("tag name", "body").text
+            wins = text.split('\nWins\n')[1].split('\n')[0]
+            losses = text.split('\nLosses\n')[1].split('\n')[0]
+
+            return {
+                "win_count": wins,
+                "lose_count": losses
+            }
+            
+        except TimeoutException:
+            return {"error": "Timeout waiting for profile stats to load"}
+        except Exception as e:
+            return {"error": f"Error getting win/lose counts: {str(e)}"}
 
 
 if __name__ == "__main__":
-    # Create first client for testuser_3 (room creator)
     client1 = Mock_Browser_Client("http://127.0.0.1:5000")
-    client2 = Mock_Browser_Client("http://127.0.0.1:5000")
     
-    try:
-        # Setup both browsers
-        browser1 = client1.create_browser()
-        browser2 = client2.create_browser()
-        
-        # Login testuser_3 and create room
-        success1, message1 = client1.login("testuser_3", "testpassword")
-        print(f"testuser_3 login {'successful' if success1 else 'failed'}: {message1}")
-        
-        if success1:
-            if client1.go_to_match_demo():
-                print("testuser_3 navigated to match demo page")
-                if client1.press_button("joinRoomButton"):
-                    room_id = client1.get_room_id()
-                    print(f"Room created with ID: {room_id}")
-                    
-                    # Now login testuser_5 and join same room
-                    success2, message2 = client2.login("testuser_5", "testpassword")
-                    print(f"\ntestuser_5 login {'successful' if success2 else 'failed'}: {message2}")
-                    
-                    if success2:
-                        if client2.go_to_match_demo():
-                            print("testuser_5 navigated to match demo page")
-                            if client2.set_text_field("roomId", room_id):
-                                print(f"testuser_5 set room ID to {room_id}")
-                                if client2.press_button("joinRoomButton"):
-                                    print("testuser_5 joined room successfully")
-                                    print(client2.get_game_state())
-                                else:
-                                    print("testuser_5 failed to click join button")
-                            else:
-                                print("testuser_5 failed to set room ID")
-                        else:
-                            print("testuser_5 failed to navigate to match demo")
-                else:
-                    print("testuser_3 failed to create room")
-            else:
-                print("testuser_3 failed to navigate to match demo")
-        
-        input("\nPress Enter to close browsers...")
-    finally:
-        client1.close_browser()
-        client2.close_browser()
+    # Setup browser
+    browser1 = client1.create_browser()
+    success1, message1 = client1.login("testuser_6", "testpassword")
+
+    # Get win/lose counts for user_id=4
+    stats = client1.get_win_lose_counts(4)
+    print(f"Win/Lose counts for user 4: {stats}")
+    
+    client1.close_browser()
