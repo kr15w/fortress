@@ -128,6 +128,7 @@ export default class Lobby extends Phaser.Scene {
 					.setName("rmCodeDigits" + i)
 					.setOrigin(0)
 					.setFrame("lobby_rmCodeText000" + i)
+					.setTint(0x1f58b5)
 			);
 		}
 		this.rmCodeDigits.list[0].setPosition(1204, 635);
