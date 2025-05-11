@@ -45,8 +45,13 @@ class Mock_Browser_Client:
             
             # Check for successful redirect (5 second timeout)
             try:
+                # First verify we're not still on signup page
+                WebDriverWait(self.driver, 5).until_not(
+                    EC.url_contains("/signup")
+                )
+                # Then verify we're on base URL
                 WebDriverWait(self.driver, 5).until(
-                    EC.url_to_be(self.base_url)
+                    EC.url_contains(self.base_url)
                 )
                 return True, "Signup successful"
             except TimeoutException:
@@ -105,11 +110,11 @@ if __name__ == "__main__":
     try:
         browser = client.create_browser()
         # Test signup
-        #success, message = client.signup("testuser", "test@example.com", "testpassword", "XXXX-XXXX-XXXX-XXXX")
-        #print(f"Signup {'successful' if success else 'failed'}: {message}")
+        success, message = client.signup("testuser", "test@example.com", "testpassword", "XXXX-XXXX-XXXX-XXXX")
+        print(f"Signup {'successful' if success else 'failed'}: {message}")
         # Test login
-        success, message = client.login("testuser", "testpassword")
-        print(f"Login {'successful' if success else 'failed'}: {message}")
-        input("Press Enter to close browser...")
+        #success, message = client.login("testuser", "testpassword")
+        #print(f"Login {'successful' if success else 'failed'}: {message}")
+        #input("Press Enter to close browser...")
     finally:
         client.close_browser()
