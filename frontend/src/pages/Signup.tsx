@@ -72,6 +72,7 @@ const Signup: React.FC = () => {
 
     setIsLoading(true)
     try {
+      formData.licenseKey = formData.licenseKey.replace(/-/g, "") // Remove dashes for API call
       await register({
         username: formData.username,
         password: formData.password,
