@@ -740,6 +740,7 @@ export default class Match extends Phaser.Scene {
 
 					//disable later to avoid double clickin
 					const handleAddShield = () => {
+						this.cannonBtn.removeInteractive();
 						let shield = new Shield(this, this.input.mousePointer);
 
 						const handleResize = (pointer) => {
@@ -974,15 +975,13 @@ export default class Match extends Phaser.Scene {
 				this.state.roundWinner.hp += 1;
 
 				//player visuals
-				const oppSize = info.scale;
-				console.log(
-					this.add
-						.sprite(1280, 526, "match_p2Shield")
-						.setDisplayOrigin(283, 203)
-						.setName("p2shieldagain")
-						.setScale(info.scaleX, info.scaleY)
-						.setDepth(10)
-				);
+				const p2Shield = this.add
+					.sprite(1280, 526, "match_p2Shield")
+					.setDisplayOrigin(283, 203)
+					.setName("p2shieldagain")
+					.setScale(info.scaleX, info.scaleY)
+					.setDepth(10);
+				this.p2Shields.push(p2Shield);
 
 				// shield upgrades are SCRAPPED!!!
 
@@ -1024,8 +1023,35 @@ export default class Match extends Phaser.Scene {
 					alert("gg gamoe over");
 					this.events.emit("gameOver");
 				}
-				this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-				this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+
+				//attack shield instead
+
+				//sort the shields by scaleY in descending order (largest first)
+				this.p2Shields.sort((a, b) => {
+					return b.scaleY - a.scaleY; // Return the comparison result for proper sorting
+				});
+
+				this.p2Shields.forEach((s) => {
+					console.warn(s.scaleX + " uwwu " + s.scaleY);
+				});
+
+				// Remove the outermost shield (the one with the largest scaleY) if any exist
+				if (this.p2Shields.length > 0) {
+					const outerShield = this.p2Shields.shift(); // Remove and get the first shield (largest scaleY)
+					console.log(
+						"Removing outermost shield with scaleY:",
+						outerShield.scaleY
+					);
+					outerShield.destroy(); // Remove the shield sprite from the scene
+				}
+
+				//where to update visuals
+				if (this.state.players[0].hp <= 4) {
+					this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+				}
+				if (this.state.players[1].hp <= 4) {
+					this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+				}
 
 				//temp
 				this.targets.removeAll(true);
