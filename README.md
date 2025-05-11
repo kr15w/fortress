@@ -1,6 +1,10 @@
 
 ## Development Setup
 
+### Testing
+
+Refer to [test/README.md](test/)
+
 ### Game Logic
 
 Fully playable game at `http://<your ip>:5000/api/match_demo`
