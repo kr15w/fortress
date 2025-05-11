@@ -117,9 +117,14 @@ class Mock_Browser_Client:
 
     def get_game_state(self):
         try:
-            return self.driver.find_element(By.ID, "gameState").text
-        except Exception:
-            return ""
+            element = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.ID, "gameState"))
+            )
+            
+            return element.get_attribute("value")
+        except Exception as e:
+            print(f"Error getting game state: {str(e)}")
+            return "{}"  # Return empty JSON object on error
 
     def press_button(self, button_name):
         try:
@@ -176,6 +181,7 @@ if __name__ == "__main__":
                                 print(f"testuser_5 set room ID to {room_id}")
                                 if client2.press_button("joinRoomButton"):
                                     print("testuser_5 joined room successfully")
+                                    print(client2.get_game_state())
                                 else:
                                     print("testuser_5 failed to click join button")
                             else:
