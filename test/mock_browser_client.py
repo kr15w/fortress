@@ -66,12 +66,50 @@ class Mock_Browser_Client:
         except Exception as e:
             return False, f"Error during signup: {str(e)}"
 
+    def login(self, username, password):
+        try:
+            # Navigate to login page
+            self.driver.get(self.base_url)
+            
+            # Wait for form and fill fields
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.ID, "username"))
+            )
+            self.driver.find_element(By.ID, "username").send_keys(username)
+            self.driver.find_element(By.ID, "password").send_keys(password)
+            
+            # Submit form
+            self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+            
+            # Check for successful redirect to /menu
+            try:
+                WebDriverWait(self.driver, 5).until(
+                    EC.url_contains("/menu")
+                )
+                return True, "Login successful"
+            except TimeoutException:
+                # Check for error message
+                page_source = self.driver.page_source
+                if "Login failed. Please check your credentials." in page_source:
+                    return False, "Login failed. Please check your credentials."
+                else:
+                    return False, "Unknown error occurred during login"
+                    
+        except TimeoutException as e:
+            return False, f"Timeout waiting for element: {str(e)}"
+        except Exception as e:
+            return False, f"Error during login: {str(e)}"
+
 if __name__ == "__main__":
     client = Mock_Browser_Client("http://127.0.0.1:5000")
     try:
         browser = client.create_browser()
-        success, message = client.signup("testuser", "test@example.com", "testpassword", "XXXX-XXXX-XXXX-XXXX")
-        print(f"Signup {'successful' if success else 'failed'}: {message}")
+        # Test signup
+        #success, message = client.signup("testuser", "test@example.com", "testpassword", "XXXX-XXXX-XXXX-XXXX")
+        #print(f"Signup {'successful' if success else 'failed'}: {message}")
+        # Test login
+        success, message = client.login("testuser", "testpassword")
+        print(f"Login {'successful' if success else 'failed'}: {message}")
         input("Press Enter to close browser...")
     finally:
         client.close_browser()
