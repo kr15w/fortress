@@ -19,21 +19,9 @@ import {
 	LogIn,
 	AlertTriangle,
 } from "lucide-react";
+
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { decryptUsername } from "@/utils/auth";
-  GamepadIcon,
-  PlayCircle,
-  LogIn,
-} from "lucide-react"
-import { Separator } from "@/components/ui/separator"
-import { decryptUsername } from "@/utils/auth"
 
 // Define UserStats type to match user-stats-table
 type UserStats = {
@@ -141,14 +129,12 @@ const Menu: React.FC = () => {
 							</Button>
 						</div>
 
-            <Separator />
-     
-         
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-}
+						<Separator />
+					</CardContent>
+				</Card>
+			</div>
+		</div>
+	);
+};
 
 export default Menu;
