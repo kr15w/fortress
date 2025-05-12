@@ -55,6 +55,7 @@ class Game:
         self.state = 0  # 0: RPS, 1: Action, 2: End
         self.player1_rps_win = 0
         self.player2_rps_win = 0
+        self.reason_for_update = ''
         self.winner = None
     
     def get_player(self, player_num):
@@ -79,6 +80,7 @@ class Game:
                 if self.winner == 0:  # Tie
                     print("RPS tie - resetting choices")
                     self._reset_rps()
+                    self.reason_for_update = "RPS tie - new round starting"
                     return True, "RPS tie - new round starting"
                 
                 winner_player = self.player1 if self.winner == 1 else self.player2
@@ -86,10 +88,12 @@ class Game:
                     print("Winner has no cannons and low health - auto-building health")
                     winner_player.build('health')
                     self._reset_rps()
+                    self.reason_for_update = "The winner built health"
                 else:
                     print("Moving to action state")
                     self.state = 1
                     self._reset_rps()
+                    self.reason_for_update = "RPS round completed"
                 return True, "RPS round end"
             else:
                 return False, "RPS choice recorded"
@@ -101,6 +105,7 @@ class Game:
             if action == 'build':
                 winner.build(value)
                 self.state = 0
+                self.reason_for_update = f"The winner built {value}"
                 return True, f"Player {self.winner} built {value}"
             elif action == 'attack':
                 success, message = winner.attack(value[0], value[1], loser)
@@ -108,13 +113,16 @@ class Game:
                     return False, message
                 if loser.health <= 0:
                     self.state = 2
+                    self.reason_for_update = f"The winner used cannon index {value[0]} to attack {value[1]}"
                     return True, "Game ended"
                 else:
                     self.state = 0
+                    self.reason_for_update = f"The winner used cannon index {value[0]} to attack {value[1]}"
                     return True, "Attack successful"
             elif action == 'upgrade':
                 winner.upgrade(value)
                 self.state = 0
+                self.reason_for_update = f"The winner upgraded cannon index {value}"
                 return True, f"Player {self.winner} upgraded cannon {value}"
         return False, "Invalid game state"
     

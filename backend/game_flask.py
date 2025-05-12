@@ -106,7 +106,8 @@ def refresh(room_id, player_name, sid,result='Maunal refresh'):
             'opponent_ready': game_rooms[room_id]['ready'].get(opponent_name, False),
             'current_player_rematch': game_rooms[room_id]['rematch'].get(player_name, False),
             'opponent_rematch': game_rooms[room_id]['rematch'].get(opponent_name, False),
-            'game_started': game_rooms[room_id].get('game_started', False)
+            'game_started': game_rooms[room_id].get('game_started', False),
+            'state_diff' : game_rooms[room_id]['game'].reason_for_update
          }
         
         emit('game_state_refresh', game_state, room=sid)
