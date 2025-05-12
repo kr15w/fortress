@@ -526,23 +526,11 @@ export default class Match extends Phaser.Scene {
 		} else if (state.roundWinner && state.roundWinner.name === this.povName) {
 			// Player 1 is the winner, add shield to p1Shields
 			// Note: The actual shield sprite is created during user interaction
-			// This just ensures the client state is updated with server state
 			console.log(
 				"Client: Player 1 shield registered with scale",
 				info.scaleX,
 				info.scaleY
 			);
-
-			/*// If the shield wasn't already added during user interaction, add it now
-			if (!this.shieldAdded) {
-				const p1Shield = this.add
-					.sprite(1280, 1438, "match_p1Shield")
-					.setDisplayOrigin(633, 454)
-					.setDepth(10)
-					.setScale(info.scaleX, info.scaleY);
-				this.p1Shields.push(p1Shield);
-				this.shieldAdded = true;
-			}*/
 		}
 
 		// Start the next round
@@ -594,11 +582,11 @@ export default class Match extends Phaser.Scene {
 
 			// Add the cannon to the container
 			this.p2Cannons.add(oppCannon);
-		} else if (state.roundWinner && state.roundWinner.name === this.povName) {
+		} else {
 			// Player 1 is the winner, update cannon in p1Cannons if needed
 			// Note: The actual cannon sprite is usually created during user interaction
 			console.log("Client: Player 1 cannon registered at position", info.x);
-
+			/*
 			// If the cannon wasn't already added during user interaction, add it now
 			if (!this.cannonAdded) {
 				const cannon = new Cannon(this, { x: info.x }, info.x);
@@ -613,7 +601,7 @@ export default class Match extends Phaser.Scene {
 				}
 
 				this.cannonAdded = true;
-			}
+			}*/
 		}
 
 		// Start the next round
@@ -632,30 +620,44 @@ export default class Match extends Phaser.Scene {
 			return;
 		}
 
+		// Get the attacker index, preferring attackerIndex if available, falling back to cannonId for backward compatibility
+		const attackerIndex =
+			info.attackerIndex !== undefined
+				? info.attackerIndex
+				: info.cannonId || 0;
+
 		// Highlight the attacking cannon (tint it blue)
-		if (info.cannonId !== undefined) {
-			if (state.roundWinner.name === this.povName) {
-				// Player 1's cannon is attacking
-				if (this.p1Cannons.list[info.cannonId]) {
-					console.log("Client: Highlighting player 1 cannon", info.cannonId);
-					this.p1Cannons.list[info.cannonId].setTint(0x0000ff); // Blue tint
+		if (state.roundWinner.name === this.povName) {
+			// Player 1's cannon is attacking
+			if (this.p1Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 1 attacking cannon at index",
+					attackerIndex
+				);
+				this.p1Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
 
-					// Clear the tint after 1 second
-					this.time.delayedCall(1000, () => {
-						this.p1Cannons.list[info.cannonId]?.clearTint();
-					});
-				}
-			} else {
-				// Player 2's cannon is attacking
-				if (this.p2Cannons.list[info.cannonId]) {
-					console.log("Client: Highlighting player 2 cannon", info.cannonId);
-					this.p2Cannons.list[info.cannonId].setTint(0x0000ff); // Blue tint
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p1Cannons.list[attackerIndex]) {
+						this.p1Cannons.list[attackerIndex].clearTint();
+					}
+				});
+			}
+		} else {
+			// Player 2's cannon is attacking
+			if (this.p2Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 2 attacking cannon at index",
+					attackerIndex
+				);
+				this.p2Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
 
-					// Clear the tint after 1 second
-					this.time.delayedCall(1000, () => {
-						this.p2Cannons.list[info.cannonId]?.clearTint();
-					});
-				}
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p2Cannons.list[attackerIndex]) {
+						this.p2Cannons.list[attackerIndex].clearTint();
+					}
+				});
 			}
 		}
 
@@ -664,16 +666,33 @@ export default class Match extends Phaser.Scene {
 			// Player 2 lost a shield
 			if (this.p2Shields.length > 0) {
 				const outerShield = this.p2Shields.shift();
-				console.log("Client: Removing player 2 shield");
-				outerShield.destroy();
+				console.log("Client: Removing player 2 shield", outerShield);
+
+				// Make sure the shield is a valid Phaser game object before destroying
+				if (outerShield && typeof outerShield.destroy === "function") {
+					outerShield.destroy();
+				} else {
+					console.error(
+						"Invalid shield object in p2Shields array",
+						outerShield
+					);
+				}
 			}
 		} else if (state.roundLoser.name === this.povName) {
 			// Player 1 lost a shield
 			if (this.p1Shields.length > 0) {
 				const outerShield = this.p1Shields.shift();
-				console.warn(outerShield.destroy, ":(");
-				console.log("Client: Removing player 1 shield??!");
-				outerShield.destroy();
+				console.log("Client: Removing player 1 shield", outerShield);
+
+				// Make sure the shield is a valid Phaser game object before destroying
+				if (outerShield && typeof outerShield.destroy === "function") {
+					outerShield.destroy();
+				} else {
+					console.error(
+						"Invalid shield object in p1Shields array",
+						outerShield
+					);
+				}
 			}
 		}
 
@@ -700,68 +719,77 @@ export default class Match extends Phaser.Scene {
 		console.log("Attack info:", info);
 
 		// Highlight the attacking cannon (tint it blue)
-		if (info.cannonId !== undefined) {
-			if (state.roundWinner.name === this.povName) {
-				// Player 1's cannon is attacking
-				if (this.p1Cannons.list[info.cannonId]) {
-					console.log(
-						"Client: Highlighting player 1 attacking cannon",
-						info.cannonId
-					);
-					this.p1Cannons.list[info.cannonId].setTint(0x0000ff); // Blue tint
+		const attackerIndex =
+			info.attackerIndex !== undefined ? info.attackerIndex : 0;
+		const attackerCannonId = info.attackerCannonId;
 
-					// Clear the tint after 1 second
-					this.time.delayedCall(1000, () => {
-						this.p1Cannons.list[info.cannonId]?.clearTint();
-					});
-				}
-			} else {
-				// Player 2's cannon is attacking
-				if (this.p2Cannons.list[info.cannonId]) {
-					console.log(
-						"Client: Highlighting player 2 attacking cannon",
-						info.cannonId
-					);
-					this.p2Cannons.list[info.cannonId].setTint(0x0000ff); // Blue tint
+		// Determine which player is attacking
+		if (state.roundWinner.name === this.povName) {
+			// Player 1 is attacking
+			if (this.p1Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 1 attacking cannon at index",
+					attackerIndex
+				);
+				this.p1Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
 
-					// Clear the tint after 1 second
-					this.time.delayedCall(1000, () => {
-						this.p2Cannons.list[info.cannonId]?.clearTint();
-					});
-				}
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p1Cannons.list[attackerIndex]) {
+						this.p1Cannons.list[attackerIndex].clearTint();
+					}
+				});
+			}
+		} else {
+			// Player 2 is attacking
+			if (this.p2Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 2 attacking cannon at index",
+					attackerIndex
+				);
+				this.p2Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
+
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p2Cannons.list[attackerIndex]) {
+						this.p2Cannons.list[attackerIndex].clearTint();
+					}
+				});
 			}
 		}
 
-		// Remove the target cannon
-		if (info.target !== undefined) {
-			// Find the target cannon in the appropriate container
+		// Highlight and remove the target cannon
+		const targetIndex = info.target !== undefined ? info.target : -1;
+
+		if (targetIndex >= 0) {
+			// Determine which player's cannon is being targeted
 			if (state.roundLoser.name === "discovry") {
 				// Player 2's cannon is being destroyed
-				if (this.p2Cannons.list[info.target]) {
-					console.log("Client: Removing player 2 cannon at index", info.target);
+				if (this.p2Cannons.list[targetIndex]) {
+					console.log("Client: Removing player 2 cannon at index", targetIndex);
 
 					// Highlight the target cannon (tint it red) before destroying
-					this.p2Cannons.list[info.target].setTint(0xff0000); // Red tint
+					this.p2Cannons.list[targetIndex].setTint(0xff0000); // Red tint
 
 					// Destroy after a short delay for visual effect
 					this.time.delayedCall(500, () => {
-						if (this.p2Cannons.list[info.target]) {
-							this.p2Cannons.list[info.target].destroy();
+						if (this.p2Cannons.list[targetIndex]) {
+							this.p2Cannons.list[targetIndex].destroy();
 						}
 					});
 				}
 			} else if (state.roundLoser.name === this.povName) {
 				// Player 1's cannon is being destroyed
-				if (this.p1Cannons.list[info.target]) {
-					console.log("Client: Removing player 1 cannon at index", info.target);
+				if (this.p1Cannons.list[targetIndex]) {
+					console.log("Client: Removing player 1 cannon at index", targetIndex);
 
 					// Highlight the target cannon (tint it red) before destroying
-					this.p1Cannons.list[info.target].setTint(0xff0000); // Red tint
+					this.p1Cannons.list[targetIndex].setTint(0xff0000); // Red tint
 
 					// Destroy after a short delay for visual effect
 					this.time.delayedCall(500, () => {
-						if (this.p1Cannons.list[info.target]) {
-							this.p1Cannons.list[info.target].destroy();
+						if (this.p1Cannons.list[targetIndex]) {
+							this.p1Cannons.list[targetIndex].destroy();
 						}
 					});
 				}
@@ -954,10 +982,34 @@ export default class Match extends Phaser.Scene {
 
 									cannonTarget.on("pointerdown", () => {
 										this.targets.removeAll(true);
-										console.log("Attacking opponent's cannon", p2Index);
+										console.log(
+											"Attacking opponent's cannon",
+											p2Index,
+											"with my cannon",
+											p1Index
+										);
+
+										// Get cannon IDs if available
+										let attackerCannonId = null;
+										let targetCannonId = null;
+
+										// Get attacker cannon ID if available
+										if (cannon.cannonId) {
+											attackerCannonId = cannon.cannonId;
+										}
+
+										// Get target cannon ID if available
+										if (c.cannonId) {
+											targetCannonId = c.cannonId;
+										}
+
 										this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
-											target: p2Index, //-1 for tower, 0+ for opponent cannon?????
-											cannonId: p1Index,
+											// Target information
+											target: p2Index,
+											targetCannonId: targetCannonId,
+											// Attacker information
+											attackerIndex: p1Index,
+											attackerCannonId: attackerCannonId,
 										});
 									});
 
@@ -967,11 +1019,20 @@ export default class Match extends Phaser.Scene {
 
 								const chooseAtkTower = () => {
 									console.info("chooseAtkTower() called");
+
+									// Get attacker cannon ID if available
+									let attackerCannonId = null;
+									if (cannon.cannonId) {
+										attackerCannonId = cannon.cannonId;
+									}
+
 									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-										target: -1, //-1 for tower, 0+ for opponent cannon
-										cannonId: p1Index,
+										target: -1, // -1 indicates tower target
+										// Attacker information
+										attackerIndex: p1Index,
+										attackerCannonId: attackerCannonId,
+										cannonId: p1Index, // Keep for backward compatibility
 									});
-									//console.warn("owo");
 								};
 
 								baseTarget.once("pointerdown", chooseAtkTower);
@@ -1418,11 +1479,24 @@ export default class Match extends Phaser.Scene {
 				if (!this.cannonCounter) this.cannonCounter = 1;
 
 				// Create a new cannon with position and power
-				this.state.roundWinner.cannons.push({
+				const newCannon = {
 					id: this.cannonCounter++,
 					x: info.x, // xPos for client rendering
 					pow: 1, // Initial power value
-				});
+				};
+
+				// Add the cannon to the player's cannons array
+				this.state.roundWinner.cannons.push(newCannon);
+
+				// Print the cannon object to the server console
+				console.log("Server: Added new cannon object:", newCannon);
+				console.log(
+					"Server: Player now has",
+					this.state.roundWinner.cannons.length,
+					"cannons:",
+					this.state.roundWinner.cannons
+				);
+
 				this.events.emit("towerResultBuildCannon", { info, state: this.state });
 				break;
 
@@ -1458,6 +1532,8 @@ export default class Match extends Phaser.Scene {
 				this.events.emit("towerResultAttackTower", {
 					info: {
 						cannonId: info.cannonId,
+						attackerIndex: info.attackerIndex,
+						attackerCannonId: info.attackerCannonId,
 						fatal: isFatal,
 					},
 					state: this.state,
@@ -1467,16 +1543,44 @@ export default class Match extends Phaser.Scene {
 			case TowerActionTypes.ATTACK_CANNON:
 				console.log("Server: Attacking cannon", info);
 
+				// Find the attacking cannon object for logging
+				let attackingCannonObj = null;
+				if (info.attackerIndex !== undefined && this.state.roundWinner.cannons[info.attackerIndex]) {
+					attackingCannonObj = this.state.roundWinner.cannons[info.attackerIndex];
+					console.log("Server: Attacking cannon object (by index):", attackingCannonObj);
+				} else if (info.attackerCannonId) {
+					attackingCannonObj = this.state.roundWinner.cannons.find(
+						(cannon) => cannon.id === info.attackerCannonId
+					);
+					console.log("Server: Attacking cannon object (by ID):", attackingCannonObj);
+				}
+
+				// Enhanced info object to track both the attacking cannon and the target cannon
+				let enhancedInfo = {
+					// The attacking cannon index or ID
+					attackerIndex: info.attackerIndex || 0,
+					attackerCannonId: info.attackerCannonId,
+					// The target cannon index or ID
+					target: info.target,
+					targetCannonId: info.targetCannonId,
+				};
+
 				// Find the target cannon by ID or index
 				let targetIndex = -1;
-				if (info.cannonId) {
+				if (info.targetCannonId) {
 					// Find by cannon ID
 					targetIndex = this.state.roundLoser.cannons.findIndex(
-						(cannon) => cannon.id === info.cannonId
+						(cannon) => cannon.id === info.targetCannonId
 					);
+					enhancedInfo.target = targetIndex; // Store the index for the client
 				} else if (info.target !== undefined) {
 					// Use target index directly
 					targetIndex = info.target;
+					// Try to get the cannon ID if available
+					if (this.state.roundLoser.cannons[targetIndex]) {
+						enhancedInfo.targetCannonId =
+							this.state.roundLoser.cannons[targetIndex].id;
+					}
 				}
 
 				// Remove the target cannon if found
@@ -1490,9 +1594,9 @@ export default class Match extends Phaser.Scene {
 					console.warn("Server: Target cannon not found");
 				}
 
-				// Emit event with updated state for clients to update visuals
+				// Emit event with updated state and enhanced info for clients to update visuals
 				this.events.emit("towerResultAttackCannon", {
-					info,
+					info: enhancedInfo,
 					state: this.state,
 				});
 				break;
