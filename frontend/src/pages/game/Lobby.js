@@ -82,9 +82,38 @@ export default class Lobby extends Phaser.Scene {
                     this.updateRoomCode(this.RMCODE);
                 }
 			}
-			else if (msg.startsWith())
 				
         });
+
+		socket.on('game_state_refresh', (msg) => {
+		          console.log('Received game_state_refresh:', msg);
+
+
+				  if (!this.p2Enter) {
+					console.log("p2 enters");
+					this.tweens.add({
+						targets: this.p2,
+						x: 1922,
+						ease: "Linear",
+						duration: 1000,
+						repeat: 0,
+						yoyo: false,
+						onComplete: () => {
+							console.log("idle");
+							this.p2.play("lobby_player_idle");
+							this.p2Enter = true;
+						},
+					});
+					}
+
+		          console.log('opponent_ready:', msg.opponent_ready);
+				  this.p2Ready = msg.opponent_ready;
+					if (!this.p2Ready) {
+						this.p2.play("lobby_player_idle");
+					} else {
+						this.p2.play("lobby_player_ready");
+					}
+		      });
 
         // Then fetch the token and emit
         fetch('/api/token')
@@ -125,11 +154,11 @@ export default class Lobby extends Phaser.Scene {
             } else {
                 frameNum = 0; // Default to 'A' for invalid characters
             }
-            /*
+            
             this.rmCodeDigits.list[i].setFrame(
                 "lobby_rmCodeText" + String(frameNum).padStart(4, "0")
             );
-			*/
+			
         }
     }
 
@@ -310,11 +339,12 @@ export default class Lobby extends Phaser.Scene {
 								}
 								var isReady = this.p1Ready === true;
 								var message = JSON.stringify({
-									player_name: playerName,
-									room_id: RMCODE,
+									player_name: this.playerName,
+									room_id: this.RMCODE,
 									action: 'ready',
-									value: isReady
+									value: this.p1Ready
 								});
+								console.log(message.toString());
 								socket.emit('message_from_client', message);
 							});
 					},
@@ -363,10 +393,11 @@ export default class Lobby extends Phaser.Scene {
 
 
 	update() {
-		socket.on('game_state_refresh', function(gameState) {
-			this.p2Enter = gameState.opponent_name ? true : false;
-			this.p2Ready = gameState.opponent_ready ? true : false;
-		});
+		//socket.on('game_state_refresh', function(gameState) {
+		//	alert(gameState)
+			//this.p2Enter = gameState.opponent_name ? true : false;
+			//this.p2Ready = gameState.opponent_ready ? true : false;
+		//});
 		// Check if both players are ready to start the game
 		if (this.p1Ready && this.p2Ready) {
 			if (!this.startingGame) {
