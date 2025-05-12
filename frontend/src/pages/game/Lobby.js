@@ -1,5 +1,9 @@
 import Phaser from "phaser";
 import { loadAnims } from "./loadAnims";
+import { io } from 'socket.io-client';
+let playerName;
+let RMCODE = sessionStorage.getItem("roomCode") || ""; // Get room code from sessionStorage
+let socket;
 /**
  * @todo handle animations
  * nah automate origin setting (use the relative position of the largest sprite)
@@ -52,7 +56,61 @@ const ANIMS = {
 export default class Lobby extends Phaser.Scene {
 	constructor() {
 		super("Lobby");
+		socket = io('http://localhost:5000');
+
+		socket.on('message_from_server', (msg) => {
+            console.log('Received from server:', msg);
+            if (msg.startsWith('Room Created: ')) {
+                if (!sessionStorage.getItem("roomCode")) {
+                    this.RMCODE = msg.substring('Room Created: '.length);
+                    console.log('New Room ID:', this.RMCODE);
+                	alert('Room ID: ' + this.RMCODE);
+					this.updateRoomCode(this.RMCODE);
+				}
+				else if (msg === 'Error: Room does not exist.') {
+					alert('Invalid room code. Please try again.');
+					// Redirect back to menu
+					window.location.href = '/menu';
+				}
+            }
+        });
+
+        // Then fetch the token and emit
+        fetch('/api/token')
+            .then(response => response.json())
+            .then(data => {
+                this.playerName = data.token;
+                console.log('Got player name:', this.playerName);
+                
+                // Now emit the message with the player name
+                const message = JSON.stringify({
+                    player_name: this.playerName
+                });
+                console.log('Sending message:', message);
+                socket.emit('message_from_client', message);
+            })
+            .catch(error => console.error('Error fetching token:', error));
 	}
+
+	updateRoomCode(code) {
+		code.toUpperCase()
+        if (!this.rmCodeDigits) return; // Guard against calling before create()
+        
+        for (let i in code) {
+            if (code[i] >= "A" && code[i] <= "Z") {
+                let frameNum = code.charCodeAt(i) - "A".charCodeAt(0);
+                this.rmCodeDigits.list[i].setFrame(
+                    "lobby_rmCodeText" + String(frameNum).padStart(4, "0")
+                );
+            } else {
+                let frameNum = code.charCodeAt(i) - "0".charCodeAt(0);
+                this.rmCodeDigits.list[i].setFrame(
+                    "lobby_rmCodeText" + String(frameNum + 26).padStart(4, "0")
+                );
+            }
+        }
+    }
+
 	preload() {
 		this.load.image("lobby_table", "assets/lobby_table.png");
 		this.load.atlas(
@@ -84,7 +142,7 @@ export default class Lobby extends Phaser.Scene {
 	}
 
 	create() {
-		const RMCODE = "AAUD".toUpperCase(); //all uppcase alphanumeric, get from server
+
 		const SCENE_W = this.sys.game.canvas.width;
 		const SCENE_H = this.sys.game.canvas.height;
 
@@ -136,25 +194,7 @@ export default class Lobby extends Phaser.Scene {
 		this.rmCodeDigits.list[2].setPosition(1293, 648);
 		this.rmCodeDigits.list[3].setPosition(1338, 663);
 
-		//set rmcode
-		//looks so stupid
-		for (let i in RMCODE) {
-			if (RMCODE[i] >= "A" && RMCODE[i] <= "Z") {
-				//A to Z
-				let frameNum = RMCODE.charCodeAt(i) - "A".charCodeAt(0);
-				this.rmCodeDigits.list[i].setFrame(
-					"lobby_rmCodeText" + String(frameNum).padStart(4, "0")
-				);
-				console.log(frameNum);
-			} else {
-				//0 to 9
-				let frameNum = RMCODE.charCodeAt(i) - "0".charCodeAt(0);
-				this.rmCodeDigits.list[i].setFrame(
-					"lobby_rmCodeText" + String(frameNum + 26).padStart(4, "0")
-				);
-				console.log(frameNum);
-			}
-		}
+
 
 		// PIVOTS
 		// AUTOMATE THIS use the largest anim for the stuff
@@ -246,6 +286,14 @@ export default class Lobby extends Phaser.Scene {
 									this.p1Ready = false;
 									this.p1.play("lobby_player_idle");
 								}
+								var isReady = this.p1Ready === true;
+								var message = JSON.stringify({
+									player_name: playerName,
+									room_id: RMCODE,
+									action: 'ready',
+									value: isReady
+								});
+								socket.emit('message_from_client', message);
 							});
 						/*
 						//aaaaaaaaaaaaaaaaarrrrrgghh wip
@@ -322,9 +370,13 @@ export default class Lobby extends Phaser.Scene {
 		});
 	}
 
+
 	update() {
+		socket.on('game_state_refresh', function(gameState) {
+			this.p2Enter = gameState.opponent_name ? true : false;
+			this.p2Ready = gameState.opponent_ready ? true : false;
+		});
 		// Check if both players are ready to start the game
-		// Is it good to poll?
 		if (this.p1Ready && this.p2Ready) {
 			if (!this.startingGame) {
 				this.startingGame = true;

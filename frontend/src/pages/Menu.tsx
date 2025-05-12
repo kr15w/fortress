@@ -10,7 +10,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import {
 	GamepadIcon,
 	Code,
@@ -33,8 +41,24 @@ type UserStats = {
 	total_shield_count: number;
 };
 
+
 const Menu: React.FC = () => {
 	const [userId, setUserId] = useState<string | null>(null);
+	/////// below new
+	const [showRoomDialog, setShowRoomDialog] = useState(false);
+    const [roomCode, setRoomCode] = useState("");
+	const handleJoinRoom = () => {
+        if (roomCode.trim()) {
+            // Store room code in sessionStorage
+            sessionStorage.setItem("roomCode", roomCode.trim());
+            // Navigate to game
+            window.location.href = "/game";
+        }
+    };
+	const handleRoomCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setRoomCode(e.target.value);
+    };
+	////// above new
 
 	useEffect(() => {
 		// Try to get userId from sessionStorage first
@@ -44,32 +68,32 @@ const Menu: React.FC = () => {
 			return;
 		}
 
-		// If not in sessionStorage, fetch from API
-		const fetchUserId = async () => {
-			try {
-				const response = await fetch("/api/user-stats");
-				if (response.ok) {
-					const data = (await response.json()) as UserStats[];
-					console.log("user-stats", data);
-					// Find the current user's data
-					if (data && data.length > 0) {
-						// Find the user that matches the current username in sessionStorage
-						const username = decryptUsername(
-							sessionStorage.getItem("currentUser")
-						);
-						const currentUser = data.find((user) => user.username === username);
-						if (currentUser) {
-							const currentUserId = currentUser.id.toString();
-							sessionStorage.setItem("userId", currentUserId);
-							setUserId(currentUserId);
-							console.log("userId", currentUserId);
-						}
-					}
-				}
-			} catch (error) {
-				console.error("Error fetching user ID:", error);
-			}
-		};
+        // If not in sessionStorage, fetch from API
+        const fetchUserId = async () => {
+            try {
+                const response = await fetch("/api/user-stats");
+                if (response.ok) {
+                    const data = (await response.json()) as UserStats[];
+                    console.log("user-stats", data);
+                    // Find the current user's data
+                    if (data && data.length > 0) {
+                        // Find the user that matches the current username in sessionStorage
+                        const username = decryptUsername(
+                            sessionStorage.getItem("currentUser")
+                        );
+                        const currentUser = data.find((user) => user.username === username);
+                        if (currentUser) {
+                            const currentUserId = currentUser.id.toString();
+                            sessionStorage.setItem("userId", currentUserId);
+                            setUserId(currentUserId);
+                            console.log("userId", currentUserId);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user ID:", error);
+            }
+        };
 
 		fetchUserId();
 	}, []);
@@ -110,29 +134,44 @@ const Menu: React.FC = () => {
 								</Link>
 							</Button>
 
-							<Button
-								variant="default"
-								size="lg"
-								className="h-20 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-								asChild
-							>
-								<Link
-									to="/game"
-									//target="_blank"
-									className="flex items-center justify-center gap-3"
-								>
-									<LogIn className="h-6 w-6" />
-									<span className="text-lg font-semibold text-white">
-										Join a Game
-									</span>
-								</Link>
-							</Button>
+                            <Button
+                                variant="default"
+                                size="lg"
+                                className="h-20 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                                onClick={() => setShowRoomDialog(true)}
+                            >
+                                <LogIn className="h-6 w-6" />
+                                <span className="text-lg font-semibold text-white">
+                                    Join a Game
+                                </span>
+                            </Button>
 						</div>
 
 						<Separator />
 					</CardContent>
 				</Card>
 			</div>
+            <Dialog open={showRoomDialog} onOpenChange={setShowRoomDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Enter Room Code</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            placeholder="Enter 4-digit room code"
+                            value={roomCode}
+                            onChange={handleRoomCodeChange}
+                            maxLength={4}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowRoomDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleJoinRoom}>Join Room</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 		</div>
 	);
 };

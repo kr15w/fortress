@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 import json
 import uuid
 from game import Game
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 from decimal import Decimal
 db = DatabaseService('sqlite:///users.db')
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 
 if __name__ == '__main__':
@@ -55,7 +57,8 @@ def index():
     return render_template('match_demo.html')
 
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 @socketio.on('connect')
 def handle_connect(auth):
     print(f'Client connected: {request.sid}')
@@ -279,4 +282,4 @@ def handle_message(data):
         emit('message_from_server', f'Invalid JSON received: {data}', room=request.sid)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
