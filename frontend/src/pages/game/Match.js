@@ -574,7 +574,7 @@ export default class Match extends Phaser.Scene {
 				oppCannon.id = latestCannon.id;
 				oppCannon.pow = latestCannon.pow;
 				console.log(
-					"Client: Cannon added with ID",
+					"Client: p2 Cannon added with ID",
 					oppCannon.id,
 					"and power",
 					oppCannon.pow
@@ -593,8 +593,8 @@ export default class Match extends Phaser.Scene {
 				this.p1Cannons.list[this.p1Cannons.list.length - 1]
 			);*/
 			const latestCannon = this.p1Cannons.list[this.p1Cannons.list.length - 1];
-			latestCannon.id = state.cannonCount++;
-			latestCannon.pow = latestCannon.pow;
+			latestCannon.id = info.newId;
+			latestCannon.pow = 1;
 			console.log(
 				"Client: Player 1 cannon assigned ID",
 				latestCannon.id,
@@ -1261,6 +1261,7 @@ export default class Match extends Phaser.Scene {
 
 			//how to reuse this?
 			this.p1Cannons.list.forEach((cannon, index) => {
+				console.warn("1264, cannon id:", cannon.id);
 				//scale the shape of the sprite?
 
 				const selector = new Button(
@@ -1494,11 +1495,13 @@ export default class Match extends Phaser.Scene {
 				console.log("Server: Building cannon at position:", info.x);
 
 				// Create a new cannon with position and power
+
 				const newCannon = {
-					id: this.state.cannonCount++, //why is this zero......
+					id: this.state.cannonCount,
 					x: info.x, // xPos for client rendering
 					pow: 1, // Initial power value
 				};
+				this.state.cannonCount++;
 
 				// Add the cannon to the player's cannons array
 				this.state.roundWinner.cannons.push(newCannon);
@@ -1512,7 +1515,14 @@ export default class Match extends Phaser.Scene {
 					this.state.roundWinner.cannons
 				);
 
-				this.events.emit("towerResultBuildCannon", { info, state: this.state });
+				this.events.emit("towerResultBuildCannon", {
+					info: {
+						x: info.x,
+						newId: newCannon.id,
+						pow: 1,
+					},
+					state: this.state,
+				});
 				break;
 
 			case TowerActionTypes.ATTACK_TOWER:
