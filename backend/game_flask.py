@@ -94,9 +94,9 @@ def refresh(room_id, player_name, sid,result='Maunal refresh'):
             'winner': ( current_player == player1 and winner == 1 ) or ( current_player == player2 and winner == 2 )  ,
             'state': state,
             'current_player_health': current_player.health,
-            'current_player_weaponry': current_player.weaponry,
+            'current_player_cannon': current_player.cannon,
             'opponent_health': opponent.health,
-            'opponent_weaponry': opponent.weaponry,
+            'opponent_cannon': opponent.cannon,
             'opponent_id' : opponent_name,
             'opponent_name' : dump_users.id_to_name(opponent_name),
             'current_player_ready': game_rooms[room_id]['ready'].get(player_name, False),
@@ -229,7 +229,7 @@ def handle_message(data):
                                         winner_player = game.player2
                                         loser_player = game.player1
                                     for username, player in [(winner_username, winner_player), (loser_username, loser_player)]:
-                                        db.increment_count(username, getattr(player, 'weapond_deployed', 0), 'bomb')
+                                        db.increment_count(username, getattr(player, 'bomb_deployed', 0), 'bomb')
                                         db.increment_count(username, getattr(player, 'shields_deployed', 0), 'shield')
                                     
                                     # Update win/loss counts
