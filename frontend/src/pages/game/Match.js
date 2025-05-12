@@ -571,12 +571,12 @@ export default class Match extends Phaser.Scene {
 				const latestCannon =
 					state.roundWinner.cannons[state.roundWinner.cannons.length - 1];
 				oppCannon.cannonId = latestCannon.id;
-				oppCannon.power = latestCannon.pow;
+				oppCannon.pow = latestCannon.pow;
 				console.log(
 					"Client: Cannon added with ID",
 					oppCannon.cannonId,
 					"and power",
-					oppCannon.power
+					oppCannon.pow
 				);
 			}
 
@@ -597,7 +597,7 @@ export default class Match extends Phaser.Scene {
 					const latestCannon =
 						state.roundWinner.cannons[state.roundWinner.cannons.length - 1];
 					cannon.cannonId = latestCannon.id;
-					cannon.power = latestCannon.pow;
+					cannon.pow = latestCannon.pow;
 				}
 
 				this.cannonAdded = true;
@@ -714,9 +714,18 @@ export default class Match extends Phaser.Scene {
 	}
 
 	onTowerResultAttackCannon(info, state) {
+		/*TowerActionTypes.ATTACK_CANNON, {
+			// 
+			attackerCannonId: attackerCannonId,
+			targetCannonId: targetCannonId,
+
+			// Fallback to indices for backward compatibility
+			attackerIndex: p1Index,
+			target: p2Index,
+		}*/
 		// Client function that receives updates from the server and updates the visuals
 		console.log("Client: Updating cannon attack visuals based on server state");
-		console.log("Attack info:", info);
+		console.log("Client: Attack info:", info);
 
 		// Highlight the attacking cannon (tint it blue)
 		const attackerIndex =
@@ -807,68 +816,63 @@ export default class Match extends Phaser.Scene {
 		console.log(
 			"Client: Updating cannon upgrade visuals based on server state"
 		);
-		console.log("Upgrade info:", info);
+		console.log("Upgrade info:", info); //id: cannon id
 
-		// Find the cannon that was upgraded
-		let cannonIndex = info.cannonId;
-		let upgradedCannon = null;
+		console.warn(state.roundWinner.cannons);
+		// Find the cannon data that was upgraded
+		let upgradedCannon = state.roundWinner.cannons.find(
+			(cannon) => cannon.id === info.id
+		);
 
+		//upgrade the sprites too
+		let upgradedCannonSprite = this.p2Cannons.list.find(
+			(cannon) => cannon.cannonId === info.id
+		);
+
+		console.warn("uwuwuwuwuwu", upgradedCannon, upgradedCannonSprite.pow);
+
+		upgradedCannonSprite.pow = upgradedCannon.pow;
 		// Find the cannon in the state data
-		if (
-			state.roundWinner &&
-			state.roundWinner.cannons &&
-			cannonIndex !== undefined
-		) {
-			if (cannonIndex < state.roundWinner.cannons.length) {
-				upgradedCannon = state.roundWinner.cannons[cannonIndex];
-				console.log(
-					"Client: Found cannon to upgrade with power",
-					upgradedCannon.pow
-				);
-			}
+		if (state.roundWinner && state.roundWinner.cannons) {
+			console.log(
+				"Client: Found cannon to upgrade with power",
+				upgradedCannon.pow
+			);
 		}
 
 		if (upgradedCannon) {
-			// Get the new power level
-			const pow = upgradedCannon.pow;
+			const pow = upgradedCannonSprite.pow;
 
 			// Update the visual appearance based on power (max frame is 7)
 			if (pow <= 7) {
-				// Update the appropriate cannon sprite based on which player it belongs to
-				if (state.roundWinner.name === "discovry") {
+				if (state.roundWinner.name != this.povName) {
 					// Player 2's cannon
-					if (this.p2Cannons.list[cannonIndex]) {
-						console.log("Client: Upgrading player 2 cannon to power", pow);
 
-						// Highlight the cannon being upgraded
-						this.p2Cannons.list[cannonIndex].setTint(0x00ff00);
-						this.p2Cannons.list[cannonIndex].setFrame(
-							"match_p2Cannon000" + (pow - 1)
-						);
+					console.log("Client: Upgrading player 2 cannon to power", pow);
 
-						// Clear the tint after a short delay
-						this.time.delayedCall(1000, () => {
-							this.p2Cannons.list[cannonIndex]?.clearTint();
-						});
-					}
-				} else if (state.roundWinner.name === this.povName) {
+					// Highlight the cannon being upgraded
+					upgradedCannonSprite.setTint(0x00ff00);
+					upgradedCannonSprite.setFrame("match_p2Cannon000" + (pow - 1));
+
+					// Clear the tint after a short delay
+					this.time.delayedCall(1000, () => {
+						upgradedCannonSprite?.clearTint();
+					});
+				} else {
 					// Player 1's cannon
-					if (this.p1Cannons.list[cannonIndex]) {
-						console.log("Client: Upgrading player 1 cannon to power", pow);
 
-						// Highlight the cannon being upgraded
-						this.p1Cannons.list[cannonIndex].setTint(0x00ff00); // Green tint
+					console.log("Client: Upgrading player 1 cannon to power", pow);
 
-						// Update the frame to show the new power level
-						this.p1Cannons.list[cannonIndex].setFrame(
-							"match_p1Cannon000" + (pow - 1)
-						);
+					// Highlight the cannon being upgraded
+					upgradedCannonSprite.setTint(0x00ff00);
 
-						// Clear the tint after a short delay
-						this.time.delayedCall(1000, () => {
-							this.p1Cannons.list[cannonIndex]?.clearTint();
-						});
-					}
+					// Update the frame to show the new power level
+					upgradedCannonSprite.setFrame("match_p1Cannon000" + (pow - 1));
+
+					// Clear the tint after a short delay
+					this.time.delayedCall(1000, () => {
+						upgradedCannonSprite?.clearTint();
+					});
 				}
 			} else {
 				console.log(
@@ -982,34 +986,44 @@ export default class Match extends Phaser.Scene {
 
 									cannonTarget.on("pointerdown", () => {
 										this.targets.removeAll(true);
-										console.log(
-											"Attacking opponent's cannon",
-											p2Index,
-											"with my cannon",
-											p1Index
-										);
 
-										// Get cannon IDs if available
+										// Get cannon IDs
 										let attackerCannonId = null;
 										let targetCannonId = null;
 
-										// Get attacker cannon ID if available
-										if (cannon.cannonId) {
-											attackerCannonId = cannon.cannonId;
+										// Get the cannon ID from the cannon object
+										if (cannon.id) {
+											attackerCannonId = cannon.id;
+										} else if (this.state.roundWinner.cannons[p1Index]) {
+											// Fallback to getting ID from state if available
+											attackerCannonId =
+												this.state.roundWinner.cannons[p1Index].id;
 										}
 
-										// Get target cannon ID if available
-										if (c.cannonId) {
-											targetCannonId = c.cannonId;
+										// Get the target cannon ID
+										if (c.id) {
+											targetCannonId = c.id;
+										} else if (this.state.roundLoser.cannons[p2Index]) {
+											// Fallback to getting ID from state if available
+											targetCannonId =
+												this.state.roundLoser.cannons[p2Index].id;
 										}
+
+										console.log(
+											"Attacking opponent's cannon with ID",
+											targetCannonId,
+											"using my cannon with ID",
+											attackerCannonId
+										);
 
 										this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
-											// Target information
-											target: p2Index,
-											targetCannonId: targetCannonId,
-											// Attacker information
-											attackerIndex: p1Index,
+											// Primary identification using IDs
 											attackerCannonId: attackerCannonId,
+											targetCannonId: targetCannonId,
+
+											// Fallback to indices for backward compatibility
+											attackerIndex: p1Index,
+											target: p2Index,
 										});
 									});
 
@@ -1362,21 +1376,31 @@ export default class Match extends Phaser.Scene {
 					break;
 				case "5": // Attack cannon
 					// Only try to attack a cannon if there are any
+					/*
+					TowerActionTypes.ATTACK_CANNON, {
+											// Primary identification using IDs
+											attackerCannonId: attackerCannonId,
+											targetCannonId: targetCannonId,
+
+											// Fallback to indices for backward compatibility
+											attackerIndex: p1Index,
+											target: p2Index,
+										}*/
 					if (
 						this.state.roundLoser &&
 						this.state.roundLoser.cannons.length > 0
 					) {
 						// Get the first cannon's ID if available, otherwise use index
-						const firstCannon = this.state.roundLoser.cannons[0];
-						if (firstCannon.id) {
-							this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
-								cannonId: firstCannon.id, // Attack by ID
-							});
-						} else {
-							this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
-								target: 0, // Fallback to index
-							});
-						}
+						const firstOppCannon = this.state.roundLoser.cannons[0];
+						const firstSelfCannon = this.state.roundWinner.cannons[0];
+						this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
+							attackerCannonId: firstSelfCannon.id,
+							targetCannonId: firstOppCannon,
+
+							// Fallback to indices for backward compatibility
+							attackerIndex: 0,
+							target: 0,
+						});
 					}
 					break;
 				case "6": // Upgrade cannon
@@ -1385,15 +1409,11 @@ export default class Match extends Phaser.Scene {
 						this.state.roundWinner &&
 						this.state.roundWinner.cannons.length > 0
 					) {
-						// Get the first cannon's ID if available, otherwise use index
 						const firstCannon = this.state.roundWinner.cannons[0];
+						console.warn(firstCannon);
 						if (firstCannon.id) {
 							this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
 								id: firstCannon.id, // Upgrade by ID
-							});
-						} else {
-							this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
-								cannonId: 0, // Fallback to index
 							});
 						}
 					}
@@ -1501,6 +1521,7 @@ export default class Match extends Phaser.Scene {
 				break;
 
 			case TowerActionTypes.ATTACK_TOWER:
+				console.warn("CANON POWIEJR:", info);
 				console.log("Server: Attacking tower with cannon ID:", info.cannonId);
 
 				// Check if there are any shields to absorb the attack
@@ -1515,10 +1536,11 @@ export default class Match extends Phaser.Scene {
 
 					// Remove the outermost shield
 					this.state.roundLoser.shields.splice(largestShieldIndex, 1);
+					this.state.roundLoser.hp -= 1;
 					console.log("Server: Shield absorbed the attack");
 				} else {
 					// No shields, reduce HP directly
-					this.state.roundLoser.hp -= 1;
+					this.state.roundLoser.hp -= info.pow;
 					console.log(
 						"Server: Tower took damage, new HP:",
 						this.state.roundLoser.hp
@@ -1543,43 +1565,51 @@ export default class Match extends Phaser.Scene {
 			case TowerActionTypes.ATTACK_CANNON:
 				console.log("Server: Attacking cannon", info);
 
-				// Find the attacking cannon object for logging
+				// Find the attacking cannon object - prioritize using ID over index
 				let attackingCannonObj = null;
-				if (info.attackerIndex !== undefined && this.state.roundWinner.cannons[info.attackerIndex]) {
-					attackingCannonObj = this.state.roundWinner.cannons[info.attackerIndex];
-					console.log("Server: Attacking cannon object (by index):", attackingCannonObj);
-				} else if (info.attackerCannonId) {
+				if (info.attackerCannonId) {
+					// Find by cannon ID (preferred method)
 					attackingCannonObj = this.state.roundWinner.cannons.find(
 						(cannon) => cannon.id === info.attackerCannonId
 					);
-					console.log("Server: Attacking cannon object (by ID):", attackingCannonObj);
+					console.log(
+						"Server: Attacking cannon object (by ID):",
+						attackingCannonObj
+					);
+				} else if (
+					info.attackerIndex !== undefined &&
+					this.state.roundWinner.cannons[info.attackerIndex]
+				) {
+					// Fallback to index if ID not available
+					attackingCannonObj =
+						this.state.roundWinner.cannons[info.attackerIndex];
+					console.log(
+						"Server: Attacking cannon object (by index):",
+						attackingCannonObj
+					);
 				}
 
-				// Enhanced info object to track both the attacking cannon and the target cannon
-				let enhancedInfo = {
-					// The attacking cannon index or ID
-					attackerIndex: info.attackerIndex || 0,
-					attackerCannonId: info.attackerCannonId,
-					// The target cannon index or ID
-					target: info.target,
-					targetCannonId: info.targetCannonId,
-				};
-
-				// Find the target cannon by ID or index
+				// onKeyDown(
+				// Find the target cannon - prioritize using ID over index
 				let targetIndex = -1;
+				let targetCannonObj = null;
+
 				if (info.targetCannonId) {
-					// Find by cannon ID
+					// Find by cannon ID (preferred method)
+					this.state.roundLoser.cannons.forEach((cannon) => {
+						console.log(
+							"Server: Round loser cannon ID:",
+							cannon.id,
+							info.targetCannonId
+						);
+					});
+
 					targetIndex = this.state.roundLoser.cannons.findIndex(
 						(cannon) => cannon.id === info.targetCannonId
 					);
-					enhancedInfo.target = targetIndex; // Store the index for the client
-				} else if (info.target !== undefined) {
-					// Use target index directly
-					targetIndex = info.target;
-					// Try to get the cannon ID if available
-					if (this.state.roundLoser.cannons[targetIndex]) {
-						enhancedInfo.targetCannonId =
-							this.state.roundLoser.cannons[targetIndex].id;
+					if (targetIndex !== -1) {
+						targetCannonObj = this.state.roundLoser.cannons[targetIndex];
+						console.log("Server: Target cannon found by ID:", targetCannonObj);
 					}
 				}
 
@@ -1596,7 +1626,7 @@ export default class Match extends Phaser.Scene {
 
 				// Emit event with updated state and enhanced info for clients to update visuals
 				this.events.emit("towerResultAttackCannon", {
-					info: enhancedInfo,
+					info,
 					state: this.state,
 				});
 				break;
