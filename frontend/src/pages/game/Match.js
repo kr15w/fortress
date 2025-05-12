@@ -533,7 +533,7 @@ export default class Match extends Phaser.Scene {
 				info.scaleY
 			);
 
-			// If the shield wasn't already added during user interaction, add it now
+			/*// If the shield wasn't already added during user interaction, add it now
 			if (!this.shieldAdded) {
 				const p1Shield = this.add
 					.sprite(1280, 1438, "match_p1Shield")
@@ -542,7 +542,7 @@ export default class Match extends Phaser.Scene {
 					.setScale(info.scaleX, info.scaleY);
 				this.p1Shields.push(p1Shield);
 				this.shieldAdded = true;
-			}
+			}*/
 		}
 
 		// Start the next round
@@ -671,7 +671,8 @@ export default class Match extends Phaser.Scene {
 			// Player 1 lost a shield
 			if (this.p1Shields.length > 0) {
 				const outerShield = this.p1Shields.shift();
-				console.log("Client: Removing player 1 shield");
+				console.warn(outerShield.destroy, ":(");
+				console.log("Client: Removing player 1 shield??!");
 				outerShield.destroy();
 			}
 		}
@@ -689,10 +690,7 @@ export default class Match extends Phaser.Scene {
 			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
 		}
 
-		// Clear targets
 		this.targets.removeAll(true);
-
-		// Start the next round
 		this.events.emit("roundStart");
 	}
 
@@ -1125,7 +1123,9 @@ export default class Match extends Phaser.Scene {
 					//disable later to avoid double clickin
 					const handleAddShield = () => {
 						this.cannonBtn.removeInteractive();
-						let shield = new Shield(this, this.input.mousePointer);
+						let shield = new Shield(this, this.input.mousePointer).setName(
+							"p1 shield"
+						);
 
 						const handleResize = (pointer) => {
 							console.info("handleResize() called");
@@ -1636,7 +1636,9 @@ class Shield extends Phaser.GameObjects.Sprite {
 		this.setDisplayOrigin(633, 454)
 			.setDepth(10)
 			.setInteractive()
-			.setVisible(true);
+			.setVisible(true)
+			.setName("uwuwuwuwuwuwuwuwuwuwu");
+		console.warn("new shie");
 		scene.add.existing(this);
 	}
 
