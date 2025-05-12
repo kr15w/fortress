@@ -80,6 +80,12 @@ export default class Match extends Phaser.Scene {
 		this.load.image("match_chooseCannon", "assets/match_chooseCannon.png");
 
 		this.load.atlas(
+			"match_bomb",
+			"assets/match_bomb.png",
+			"assets/match_bomb.json"
+		);
+
+		this.load.atlas(
 			"match_targetCannon",
 			"assets/match_targetCannon.png",
 			"assets/match_targetCannon.json"
@@ -626,17 +632,76 @@ export default class Match extends Phaser.Scene {
 		// Highlight the attacking cannon (tint it blue)
 		if (state.roundWinner.name === this.povName) {
 			// Player 1's cannon is attacking
-			if (this.p1Cannons.list[attackerIndex]) {
+			const atkCannon = this.p1Cannons.list[attackerIndex];
+			if (atkCannon) {
 				console.log(
 					"Client: Highlighting player 1 attacking cannon at index",
 					attackerIndex
 				);
-				this.p1Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
+				atkCannon.setTint(0x0000ff); // Blue tint
+
+				//i love this curve
+				const controlX = (atkCannon.x + this.p2Base.x) / 2;
+				const controlY = atkCannon.y - 100; // Adjust this value to control the curve
+				const sourceX = atkCannon.x + 79; //offset from flash
+				const sourceY = atkCannon.y - 193;
+				const destX = this.p2Base.x + this.p2Base.width / 2;
+				const destY = this.p2Base.y + this.p2Base.height / 2;
+
+				const curve = new Phaser.Curves.QuadraticBezier(
+					new Phaser.Math.Vector2(sourceX, sourceY),
+					new Phaser.Math.Vector2(0, 0),
+					new Phaser.Math.Vector2(destX, destY)
+				);
+				const path = { t: 0, vec: new Phaser.Math.Vector2(sourceX, sourceY) };
+
+				const bomb = this.add
+					.sprite(sourceX, sourceY, "match_bomb")
+					.setName("le bomb lolol")
+					.setDepth(99999)
+					.play("match_bomb_sparkle");
+
+				console.warn(bomb.setPosition);
+				// Tween bomb to move along the curve in 1 second
+				this.tweens.add({
+					targets: path,
+					t: 1,
+					duration: 1000,
+					ease: "Linear",
+					onUpdate: () => {
+						/*console.warn(
+							path.vec.x,
+							path.vec.y
+							//curve.getPoint(path.t, path.vec)
+						);*/
+						graphics.fillStyle(0xff0000, 1);
+						graphics.fillCircle(path.vec.x, path.vec.y, 5);
+						graphics.fillStyle(0xffffff, 1);
+						graphics.fillCircle(
+							curve.getPoint(path.t, path.vec).x,
+							curve.getPoint(path.t, path.vec).y,
+							5
+						);
+
+						//bomb.setPosition(curve.getPoint(path.t, path.vec));
+					},
+					onComplete: () => {
+						console.log("bye");
+						//bomb.destroy(); // Destroy bomb after reaching destination
+					},
+				});
+				//make sure the naimtaoin is playing?
+
+				//debug visualize
+				const graphics = this.add.graphics().setDepth(99999);
+				graphics.lineStyle(2, 0xff0000, 1);
+				curve.draw(graphics);
 
 				// Clear the tint after 1 second
 				this.time.delayedCall(1000, () => {
-					if (this.p1Cannons.list[attackerIndex]) {
-						this.p1Cannons.list[attackerIndex].clearTint();
+					if (atkCannon) {
+						atkCannon.clearTint();
+						graphics.clear();
 					}
 				});
 			}
@@ -1689,30 +1754,7 @@ export default class Match extends Phaser.Scene {
 class Player {
 	constructor(name) {
 		this.name = name;
-		/***
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 * @todo change this hp
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 */
-		this.hp = 0;
+		this.hp = 4;
 		this.shields = [];
 		this.cannons = [];
 	}
