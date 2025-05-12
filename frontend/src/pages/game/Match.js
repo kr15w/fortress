@@ -641,8 +641,9 @@ export default class Match extends Phaser.Scene {
 				atkCannon.setTint(0x0000ff); // Blue tint
 
 				//i love this curve
-				const controlX = (atkCannon.x + this.p2Base.x) / 2;
-				const controlY = atkCannon.y - 100; // Adjust this value to control the curve
+				const controlX = atkCannon.x + 0.6 * (this.p2Base.x - atkCannon.x);
+				const controlY =
+					atkCannon.y + 0.7 * (this.p2Base.y - atkCannon.y) - 300;
 				const sourceX = atkCannon.x + 79; //offset from flash
 				const sourceY = atkCannon.y - 193;
 				const destX = this.p2Base.x + this.p2Base.width / 2;
@@ -650,7 +651,7 @@ export default class Match extends Phaser.Scene {
 
 				const curve = new Phaser.Curves.QuadraticBezier(
 					new Phaser.Math.Vector2(sourceX, sourceY),
-					new Phaser.Math.Vector2(0, 0),
+					new Phaser.Math.Vector2(controlX, controlY),
 					new Phaser.Math.Vector2(destX, destY)
 				);
 				const path = { t: 0, vec: new Phaser.Math.Vector2(sourceX, sourceY) };
@@ -666,14 +667,10 @@ export default class Match extends Phaser.Scene {
 				this.tweens.add({
 					targets: path,
 					t: 1,
-					duration: 1000,
+					duration: 300,
 					ease: "Linear",
 					onUpdate: () => {
-						/*console.warn(
-							path.vec.x,
-							path.vec.y
-							//curve.getPoint(path.t, path.vec)
-						);*/
+						/*
 						graphics.fillStyle(0xff0000, 1);
 						graphics.fillCircle(path.vec.x, path.vec.y, 5);
 						graphics.fillStyle(0xffffff, 1);
@@ -682,15 +679,18 @@ export default class Match extends Phaser.Scene {
 							curve.getPoint(path.t, path.vec).y,
 							5
 						);
+						graphics.fillCircle(controlX, controlY, 5);*/
 
-						//bomb.setPosition(curve.getPoint(path.t, path.vec));
+						bomb.setPosition(
+							curve.getPoint(path.t, path.vec).x,
+							curve.getPoint(path.t, path.vec).y
+						);
 					},
 					onComplete: () => {
 						console.log("bye");
-						//bomb.destroy(); // Destroy bomb after reaching destination
+						bomb.destroy();
 					},
 				});
-				//make sure the naimtaoin is playing?
 
 				//debug visualize
 				const graphics = this.add.graphics().setDepth(99999);
