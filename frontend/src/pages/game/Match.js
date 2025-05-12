@@ -638,12 +638,12 @@ export default class Match extends Phaser.Scene {
 					"Client: Highlighting player 1 attacking cannon at index",
 					attackerIndex
 				);
-				atkCannon.setTint(0x0000ff); // Blue tint
+				//atkCannon.setTint(0x0000ff); // Blue tint
 
 				//i love this curve
 				const controlX = atkCannon.x + 0.6 * (this.p2Base.x - atkCannon.x);
 				const controlY =
-					atkCannon.y + 0.7 * (this.p2Base.y - atkCannon.y) - 300;
+					atkCannon.y + 0.7 * (this.p2Base.y - atkCannon.y) - 600;
 				const sourceX = atkCannon.x + 79; //offset from flash
 				const sourceY = atkCannon.y - 193;
 				const destX = this.p2Base.x + this.p2Base.width / 2;
@@ -691,7 +691,7 @@ export default class Match extends Phaser.Scene {
 						bomb.destroy();
 					},
 				});
-
+				/*
 				//debug visualize
 				const graphics = this.add.graphics().setDepth(99999);
 				graphics.lineStyle(2, 0xff0000, 1);
@@ -703,7 +703,7 @@ export default class Match extends Phaser.Scene {
 						atkCannon.clearTint();
 						graphics.clear();
 					}
-				});
+				});*/
 			}
 		} else {
 			// Player 2's cannon is attacking
