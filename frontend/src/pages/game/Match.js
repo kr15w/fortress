@@ -588,14 +588,14 @@ export default class Match extends Phaser.Scene {
 			// Note: The actual cannon sprite is usually created during user interaction
 			console.log("Client: Player 1 cannon registered at position", info.x);
 			// After the server processes the request, update the cannon with its ID
-			console.warn(
+			/*console.warn(
 				this.p1Cannons,
 				this.p1Cannons.list[this.p1Cannons.list.length - 1]
-			);
+			);*/
 			const latestCannon = this.p1Cannons.list[this.p1Cannons.list.length - 1];
 			latestCannon.id = state.cannonCount++;
 			latestCannon.pow = latestCannon.pow;
-			console.warn(
+			console.log(
 				"Client: Player 1 cannon assigned ID",
 				latestCannon.id,
 				"and power",
@@ -820,7 +820,8 @@ export default class Match extends Phaser.Scene {
 		);
 		let upgradedCannonSprite;
 		//upgrade the sprites too
-		if (state.roundWinner != this.povName) {
+		console.warn(":(", state.roundWinner);
+		if (state.roundWinner.name != this.povName) {
 			upgradedCannonSprite = this.p2Cannons.list.find(
 				(cannon) => cannon.id === info.id
 			);
@@ -1260,7 +1261,6 @@ export default class Match extends Phaser.Scene {
 
 			//how to reuse this?
 			this.p1Cannons.list.forEach((cannon, index) => {
-				console.warn(cannon);
 				//scale the shape of the sprite?
 
 				const selector = new Button(
@@ -1276,7 +1276,7 @@ export default class Match extends Phaser.Scene {
 						//console.warn(`Upgrade my ${index}th cannon`);
 
 						this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
-							cannonId: cannon.id,
+							id: cannon.id,
 						});
 
 						this.cannonSelectors.removeAll(true);
@@ -1495,7 +1495,7 @@ export default class Match extends Phaser.Scene {
 
 				// Create a new cannon with position and power
 				const newCannon = {
-					id: this.state.cannonCount++,
+					id: this.state.cannonCount++, //why is this zero......
 					x: info.x, // xPos for client rendering
 					pow: 1, // Initial power value
 				};
@@ -1765,7 +1765,6 @@ class Shield extends Phaser.GameObjects.Sprite {
 			.setDepth(10)
 			.setInteractive()
 			.setVisible(true);
-		console.warn("new shie");
 		scene.add.existing(this);
 	}
 
