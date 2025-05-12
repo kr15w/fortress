@@ -1712,7 +1712,7 @@ class Player {
 		 *
 		 *
 		 */
-		this.hp = 4;
+		this.hp = 0;
 		this.shields = [];
 		this.cannons = [];
 	}

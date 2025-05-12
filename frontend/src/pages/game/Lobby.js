@@ -84,7 +84,7 @@ export default class Lobby extends Phaser.Scene {
 	}
 
 	create() {
-		const RMCODE = "AAUD".toUpperCase(); //all uppcase alphanumeric, get from server
+		const RMCODE = "NOPE".toUpperCase(); //all uppcase alphanumeric, get from server
 		const SCENE_W = this.sys.game.canvas.width;
 		const SCENE_H = this.sys.game.canvas.height;
 

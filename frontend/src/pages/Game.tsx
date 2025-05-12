@@ -32,10 +32,7 @@ class Game extends Component {
 				mode: Phaser.Scale.FIT,
 				autoCenter: Phaser.Scale.CENTER_BOTH,
 			},
-			scene: [
-				//Lobby,
-				Match,
-			],
+			scene: [Lobby, Match],
 		};
 
 		this.game = new Phaser.Game(config);
