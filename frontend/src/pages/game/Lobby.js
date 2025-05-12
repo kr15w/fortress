@@ -65,14 +65,25 @@ export default class Lobby extends Phaser.Scene {
                     this.RMCODE = msg.substring('Room Created: '.length);
                     console.log('New Room ID:', this.RMCODE);
                 	alert('Room ID: ' + this.RMCODE);
-					this.updateRoomCode(this.RMCODE);
+					if (this.rmCodeDigits) {
+                        this.updateRoomCode(this.RMCODE);
+                    }
 				}
-				else if (msg === 'Error: Room does not exist.') {
-					alert('Invalid room code. Please try again.');
-					// Redirect back to menu
-					window.location.href = '/menu';
-				}
-            }
+			}
+			else if (msg === 'Error: Room does not exist.') {
+				alert('Invalid room code. Please try again.');
+				// Redirect back to menu
+				window.location.href = '/menu';
+			}
+			else if (msg.startsWith('Joined room: ')) {
+				this.RMCODE = msg.substring('Joined room: '.length);
+				console.log('Joined Room ID:', this.RMCODE);
+				if (this.rmCodeDigits) {
+                    this.updateRoomCode(this.RMCODE);
+                }
+			}
+			else if (msg.startsWith())
+				
         });
 
         // Then fetch the token and emit
@@ -81,10 +92,14 @@ export default class Lobby extends Phaser.Scene {
             .then(data => {
                 this.playerName = data.token;
                 console.log('Got player name:', this.playerName);
+
+				// Get room code from sessionStorage if it exists
+                const roomCode = sessionStorage.getItem("roomCode");
                 
                 // Now emit the message with the player name
                 const message = JSON.stringify({
-                    player_name: this.playerName
+                    player_name: this.playerName,
+					room_id: roomCode || '' // If no room code, send empty string to create new room
                 });
                 console.log('Sending message:', message);
                 socket.emit('message_from_client', message);
@@ -92,22 +107,29 @@ export default class Lobby extends Phaser.Scene {
             .catch(error => console.error('Error fetching token:', error));
 	}
 
-	updateRoomCode(code) {
-		code.toUpperCase()
+    updateRoomCode(code) {
         if (!this.rmCodeDigits) return; // Guard against calling before create()
         
-        for (let i in code) {
-            if (code[i] >= "A" && code[i] <= "Z") {
-                let frameNum = code.charCodeAt(i) - "A".charCodeAt(0);
-                this.rmCodeDigits.list[i].setFrame(
-                    "lobby_rmCodeText" + String(frameNum).padStart(4, "0")
-                );
+        // Convert code to uppercase and ensure it's 4 characters
+        code = code.toUpperCase().padEnd(4, 'A');
+        console.log('Updating room code display:', code);
+        
+        for (let i = 0; i < 4; i++) {
+            const char = code[i];
+            let frameNum;
+            
+            if (char >= "A" && char <= "Z") {
+                frameNum = char.charCodeAt(0) - "A".charCodeAt(0);
+            } else if (char >= "0" && char <= "9") {
+                frameNum = parseInt(char) + 26;
             } else {
-                let frameNum = code.charCodeAt(i) - "0".charCodeAt(0);
-                this.rmCodeDigits.list[i].setFrame(
-                    "lobby_rmCodeText" + String(frameNum + 26).padStart(4, "0")
-                );
+                frameNum = 0; // Default to 'A' for invalid characters
             }
+            /*
+            this.rmCodeDigits.list[i].setFrame(
+                "lobby_rmCodeText" + String(frameNum).padStart(4, "0")
+            );
+			*/
         }
     }
 
@@ -295,37 +317,6 @@ export default class Lobby extends Phaser.Scene {
 								});
 								socket.emit('message_from_client', message);
 							});
-						/*
-						//aaaaaaaaaaaaaaaaarrrrrgghh wip
-						this.p1.input.hitArea = new Phaser.Geom.Rectangle(
-							-81,
-							-603,
-							163,
-							628
-						);
-						console.warn(this.p1.input.hitArea);
-
-						//hmm
-						const graphics = this.add.graphics();
-
-						graphics.lineStyle(1, 0xff0000, 1);
-						graphics.fillStyle(0x00ff00, 1);
-						//graphics.strokeRect(0, 0, 100, 100);
-
-						graphics.fillRect(
-							this.p1.input.hitArea.x + 1000,
-							this.p1.input.hitArea.y + 1000,
-							this.p1.input.hitArea.width,
-							this.p1.input.hitArea.height
-						);
-
-						graphics.strokeRect(
-							this.p1.input.hitArea.x + this.p1.x,
-							this.p1.input.hitArea.y + this.p1.y,
-							this.p1.input.hitArea.width,
-							this.p1.input.hitArea.height
-						);
-						graphics.strokeCircle(this.p1.x, this.p1.y, 10);*/
 					},
 				});
 			},

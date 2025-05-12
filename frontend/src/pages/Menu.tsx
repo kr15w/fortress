@@ -55,9 +55,14 @@ const Menu: React.FC = () => {
             window.location.href = "/game";
         }
     };
-	const handleRoomCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setRoomCode(e.target.value);
+	const handleStartGame = () => {
+        // Clear any existing room code when starting a new game
+        sessionStorage.removeItem("roomCode");
+        window.location.href = "/game";
     };
+	const handleRoomCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setRoomCode(e.target.value);
+	};
 	////// above new
 
 	useEffect(() => {
@@ -120,18 +125,12 @@ const Menu: React.FC = () => {
 								variant="default"
 								size="lg"
 								className="h-20 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-								asChild
+								onClick={handleStartGame}
 							>
-								<Link
-									//target="_blank"
-									to="/game"
-									className="flex items-center justify-center gap-3"
-								>
-									<PlayCircle className="h-6 w-6" />
-									<span className="text-lg font-semibold text-white">
-										Start a Game
-									</span>
-								</Link>
+								<PlayCircle className="h-6 w-6" />
+								<span className="text-lg font-semibold text-white">
+									Start a Game
+								</span>
 							</Button>
 
                             <Button
