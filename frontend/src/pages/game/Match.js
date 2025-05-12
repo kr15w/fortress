@@ -42,6 +42,7 @@ export default class Match extends Phaser.Scene {
 			p1RpsChoice: null,
 			p2RpsChoice: null,
 			roundWinnerChoice: null,
+			cannonCount: 0,
 		};
 	}
 	addPlayer(p) {
@@ -570,11 +571,11 @@ export default class Match extends Phaser.Scene {
 			if (state.roundWinner.cannons.length > 0) {
 				const latestCannon =
 					state.roundWinner.cannons[state.roundWinner.cannons.length - 1];
-				oppCannon.cannonId = latestCannon.id;
+				oppCannon.id = latestCannon.id;
 				oppCannon.pow = latestCannon.pow;
 				console.log(
 					"Client: Cannon added with ID",
-					oppCannon.cannonId,
+					oppCannon.id,
 					"and power",
 					oppCannon.pow
 				);
@@ -586,22 +587,20 @@ export default class Match extends Phaser.Scene {
 			// Player 1 is the winner, update cannon in p1Cannons if needed
 			// Note: The actual cannon sprite is usually created during user interaction
 			console.log("Client: Player 1 cannon registered at position", info.x);
-			/*
-			// If the cannon wasn't already added during user interaction, add it now
-			if (!this.cannonAdded) {
-				const cannon = new Cannon(this, { x: info.x }, info.x);
-				this.p1Cannons.add(cannon);
-
-				// Store the cannon's ID for later reference
-				if (state.roundWinner.cannons.length > 0) {
-					const latestCannon =
-						state.roundWinner.cannons[state.roundWinner.cannons.length - 1];
-					cannon.cannonId = latestCannon.id;
-					cannon.pow = latestCannon.pow;
-				}
-
-				this.cannonAdded = true;
-			}*/
+			// After the server processes the request, update the cannon with its ID
+			console.warn(
+				this.p1Cannons,
+				this.p1Cannons.list[this.p1Cannons.list.length - 1]
+			);
+			const latestCannon = this.p1Cannons.list[this.p1Cannons.list.length - 1];
+			latestCannon.id = state.cannonCount++;
+			latestCannon.pow = latestCannon.pow;
+			console.warn(
+				"Client: Player 1 cannon assigned ID",
+				latestCannon.id,
+				"and power",
+				latestCannon.pow
+			);
 		}
 
 		// Start the next round
@@ -622,9 +621,7 @@ export default class Match extends Phaser.Scene {
 
 		// Get the attacker index, preferring attackerIndex if available, falling back to cannonId for backward compatibility
 		const attackerIndex =
-			info.attackerIndex !== undefined
-				? info.attackerIndex
-				: info.cannonId || 0;
+			info.attackerIndex !== undefined ? info.attackerIndex : info.id || 0;
 
 		// Highlight the attacking cannon (tint it blue)
 		if (state.roundWinner.name === this.povName) {
@@ -662,7 +659,7 @@ export default class Match extends Phaser.Scene {
 		}
 
 		// Update shield visuals - remove the outermost shield if any exist
-		if (state.roundLoser.name === "discovry") {
+		if (state.roundLoser.name != this.povName) {
 			// Player 2 lost a shield
 			if (this.p2Shields.length > 0) {
 				const outerShield = this.p2Shields.shift();
@@ -678,7 +675,7 @@ export default class Match extends Phaser.Scene {
 					);
 				}
 			}
-		} else if (state.roundLoser.name === this.povName) {
+		} else {
 			// Player 1 lost a shield
 			if (this.p1Shields.length > 0) {
 				const outerShield = this.p1Shields.shift();
@@ -817,17 +814,21 @@ export default class Match extends Phaser.Scene {
 			"Client: Updating cannon upgrade visuals based on server state"
 		);
 		console.log("Upgrade info:", info); //id: cannon id
-
-		console.warn(state.roundWinner.cannons);
 		// Find the cannon data that was upgraded
 		let upgradedCannon = state.roundWinner.cannons.find(
 			(cannon) => cannon.id === info.id
 		);
-
+		let upgradedCannonSprite;
 		//upgrade the sprites too
-		let upgradedCannonSprite = this.p2Cannons.list.find(
-			(cannon) => cannon.cannonId === info.id
-		);
+		if (state.roundWinner != this.povName) {
+			upgradedCannonSprite = this.p2Cannons.list.find(
+				(cannon) => cannon.id === info.id
+			);
+		} else {
+			upgradedCannonSprite = this.p1Cannons.list.find(
+				(cannon) => cannon.id === info.id
+			);
+		}
 
 		console.warn("uwuwuwuwuwu", upgradedCannon, upgradedCannonSprite.pow);
 
@@ -994,10 +995,6 @@ export default class Match extends Phaser.Scene {
 										// Get the cannon ID from the cannon object
 										if (cannon.id) {
 											attackerCannonId = cannon.id;
-										} else if (this.state.roundWinner.cannons[p1Index]) {
-											// Fallback to getting ID from state if available
-											attackerCannonId =
-												this.state.roundWinner.cannons[p1Index].id;
 										}
 
 										// Get the target cannon ID
@@ -1036,8 +1033,8 @@ export default class Match extends Phaser.Scene {
 
 									// Get attacker cannon ID if available
 									let attackerCannonId = null;
-									if (cannon.cannonId) {
-										attackerCannonId = cannon.cannonId;
+									if (cannon.id) {
+										attackerCannonId = cannon.id;
 									}
 
 									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
@@ -1176,6 +1173,7 @@ export default class Match extends Phaser.Scene {
 										this.input.off("pointerdown", handleConfirm);
 										this.p1Cannons.add(cannon);
 										cannon.placed = true; //any use?
+
 										console.log("cannons: ", this.p1Cannons);
 										this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
 											x: cannon.x,
@@ -1262,6 +1260,7 @@ export default class Match extends Phaser.Scene {
 
 			//how to reuse this?
 			this.p1Cannons.list.forEach((cannon, index) => {
+				console.warn(cannon);
 				//scale the shape of the sprite?
 
 				const selector = new Button(
@@ -1277,9 +1276,8 @@ export default class Match extends Phaser.Scene {
 						//console.warn(`Upgrade my ${index}th cannon`);
 
 						this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
-							cannonId: index,
+							cannonId: cannon.id,
 						});
-						console.warn("call handle tower intpu");
 
 						this.cannonSelectors.removeAll(true);
 					});
@@ -1410,7 +1408,6 @@ export default class Match extends Phaser.Scene {
 						this.state.roundWinner.cannons.length > 0
 					) {
 						const firstCannon = this.state.roundWinner.cannons[0];
-						console.warn(firstCannon);
 						if (firstCannon.id) {
 							this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
 								id: firstCannon.id, // Upgrade by ID
@@ -1495,12 +1492,10 @@ export default class Match extends Phaser.Scene {
 
 			case TowerActionTypes.BUILD_CANNON:
 				console.log("Server: Building cannon at position:", info.x);
-				// Initialize the cannon counter if it doesn't exist
-				if (!this.cannonCounter) this.cannonCounter = 1;
 
 				// Create a new cannon with position and power
 				const newCannon = {
-					id: this.cannonCounter++,
+					id: this.state.cannonCount++,
 					x: info.x, // xPos for client rendering
 					pow: 1, // Initial power value
 				};
@@ -1522,7 +1517,7 @@ export default class Match extends Phaser.Scene {
 
 			case TowerActionTypes.ATTACK_TOWER:
 				console.warn("CANON POWIEJR:", info);
-				console.log("Server: Attacking tower with cannon ID:", info.cannonId);
+				console.log("Server: Attacking tower with cannon ID:", info.id);
 
 				// Check if there are any shields to absorb the attack
 				if (this.state.roundLoser.shields.length > 0) {
@@ -1552,7 +1547,7 @@ export default class Match extends Phaser.Scene {
 				// Emit event with updated state for clients to update visuals
 				this.events.emit("towerResultAttackTower", {
 					info: {
-						cannonId: info.cannonId,
+						cannonId: info.id,
 						attackerIndex: info.attackerIndex,
 						attackerCannonId: info.attackerCannonId,
 						fatal: isFatal,
@@ -1640,10 +1635,10 @@ export default class Match extends Phaser.Scene {
 					targetCannon = this.state.roundWinner.cannons.find(
 						(cannon) => cannon.id === info.id
 					);
-				} else if (info.cannonId !== undefined) {
+				} else if (info.id !== undefined) {
 					// Use cannonId index
-					if (info.cannonId < this.state.roundWinner.cannons.length) {
-						targetCannon = this.state.roundWinner.cannons[info.cannonId];
+					if (info.id < this.state.roundWinner.cannons.length) {
+						targetCannon = this.state.roundWinner.cannons[info.id];
 					}
 				}
 
@@ -1769,8 +1764,7 @@ class Shield extends Phaser.GameObjects.Sprite {
 		this.setDisplayOrigin(633, 454)
 			.setDepth(10)
 			.setInteractive()
-			.setVisible(true)
-			.setName("uwuwuwuwuwuwuwuwuwuwu");
+			.setVisible(true);
 		console.warn("new shie");
 		scene.add.existing(this);
 	}
