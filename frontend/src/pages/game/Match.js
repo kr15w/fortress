@@ -205,6 +205,24 @@ export default class Match extends Phaser.Scene {
 		this.events.on("towerStart", () => {
 			this.onTowerStart();
 		});
+		this.events.on("towerResultBuildTower", (data) => {
+			this.onTowerResultBuildTower(data.info, data.state);
+		});
+		this.events.on("towerResultBuildCannon", (data) => {
+			this.onTowerResultBuildCannon(data.info, data.state);
+		});
+		this.events.on("towerResultBuildShield", (data) => {
+			this.onTowerResultBuildShield(data.info, data.state);
+		});
+		this.events.on("towerResultAttackTower", (data) => {
+			this.onTowerResultAttackTower(data.info, data.state);
+		});
+		this.events.on("towerResultAttackCannon", (data) => {
+			this.onTowerResultAttackCannon(data.info, data.state);
+		});
+		this.events.on("towerResultUpgradeCannon", (data) => {
+			this.onTowerResultUpgradeCannon(data.info, data.state);
+		});
 		this.events.on("gameOver", () => {
 			this.onGameOver();
 		});
@@ -363,6 +381,7 @@ export default class Match extends Phaser.Scene {
 		this.p2Body.play("match_p2Body_wait");
 		this.p2Hand.play("match_p2Hand_wait");
 		this.targets.removeAll(true);
+		//this.cannonSelectors.removeAll(true)
 		this.rpsButtons.removeAll(true);
 
 		this._createRpsBtns();
@@ -466,6 +485,112 @@ export default class Match extends Phaser.Scene {
 		}
 	}
 
+	onTowerResultBuildTower(info, state) {
+		// Update visuals for building a tower
+		if (state.players[0].hp <= 4) {
+			this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
+		}
+		if (state.players[1].hp <= 4) {
+			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
+		}
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultBuildShield(info, state) {
+		// Update visuals for building a shield
+
+		//if you lose, the opponent adds
+		const p2Shield = this.add
+			.sprite(1280, 526, "match_p2Shield")
+			.setDisplayOrigin(283, 203)
+			.setName("p2shieldagain")
+			.setScale(info.scaleX, info.scaleY)
+			.setDepth(10);
+		this.p2Shields.push(p2Shield);
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultBuildCannon(info, state) {
+		// Update visuals for building a cannon
+		// Server sends the x pos of pov, calculate opponent x pos
+		let oppX = mapRange(info.x, 30, SCENE_W - 30, 910, SCENE_W - 910);
+
+		oppX += 2 * (1280 - oppX);
+
+		// Don't draw into the base
+		if (oppX > 1010 && oppX < 1561) {
+			if (oppX > 1280) {
+				oppX = 1561;
+			} else {
+				oppX = 1010;
+			}
+		}
+
+		// Player visuals
+		const oppCannon = this.add
+			.sprite(oppX, 558, "match_p2Cannon")
+			.setDisplayOrigin(107, 154)
+			.setDepth(10)
+			.setVisible(true);
+		this.p2Cannons.add(oppCannon);
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultAttackTower(info, state) {
+		// Update visuals for attacking a tower
+		// Check if game is over
+		if (state.roundLoser.hp < 0) {
+			this.events.emit("gameOver");
+			return;
+		}
+
+		// Attack shield instead if there are any
+		// Sort the shields by scaleY in descending order (largest first)
+		this.p2Shields.sort((a, b) => {
+			return b.scaleY - a.scaleY;
+		});
+
+		// Remove the outermost shield (the one with the largest scaleY) if any exist
+		if (this.p2Shields.length > 0) {
+			const outerShield = this.p2Shields.shift();
+			outerShield.destroy(); // sprite
+		}
+
+		// Update base visuals
+		if (state.players[0].hp <= 4) {
+			this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
+		}
+		if (state.players[1].hp <= 4) {
+			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
+		}
+
+		// Clear targets
+		this.targets.removeAll(true);
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultAttackCannon(info, state) {
+		this.p2Cannons.list[info.target].destroy();
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultUpgradeCannon(info, state) {
+		//doesnt upaedtew
+		console.warn(this.p2Cannons.list[info.cannonId].setFrame);
+		// Update visuals for upgrading a cannon
+		const pow = state.roundWinner.cannons[info.cannonId].pow;
+
+		// No update beyond 7+power
+		if (pow <= 7) {
+			
+			this.p2Cannons.list[info.cannonId].setFrame("match_p2Cannon000" + pow);
+			this.p1Cannons.list[info.cannonId].setFrame(
+				"match_p1Cannon000" + (pow )
+			);
+		}
+		this.events.emit("roundStart");
+	}
+
 	onGameOver() {
 		alert("gggggg rematch or quit?");
 		this.time.addEvent({
@@ -532,7 +657,7 @@ export default class Match extends Phaser.Scene {
 							.setName("selfCannonSelector")
 							.setInteractive({ cursor: "pointer" })
 							.on("pointerdown", () => {
-								console.warn(`With my ${p1Index}th cannon`);
+								//console.warn(`With my ${p1Index}th cannon`);
 
 								//add targets, each trigger the call and then hide everyone
 								this.targets.removeAll(true);
@@ -706,7 +831,7 @@ export default class Match extends Phaser.Scene {
 							callback: () => {
 								const handleConfirm = () => {
 									if (!this.cantAddCannon) {
-										console.warn("add le caon", cannon);
+										//console.warn("add le caon", cannon);
 										this.input.off("pointermove", handleMove);
 										this.input.off("pointerdown", handleConfirm);
 										this.p1Cannons.add(cannon);
@@ -807,22 +932,16 @@ export default class Match extends Phaser.Scene {
 					.setInteractive({ cursor: "pointer" })
 					.on("pointerdown", () => {
 						this.targets.removeAll(true);
-						console.warn(`Upgrade my ${index}th cannon`);
+						//console.warn(`Upgrade my ${index}th cannon`);
 
 						this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
 							cannonId: index,
 						});
+						console.warn("call handle tower intpu");
 
 						this.cannonSelectors.removeAll(true);
 					});
 				selector.setDisplayOrigin(131, 245);
-
-				console.warn(
-					"set shit to",
-					selector.displayOriginX,
-					selector.displayOriginY
-				);
-				this.cannonSelectors.add(selector);
 			});
 		};
 		this.upgBtn
@@ -922,171 +1041,80 @@ export default class Match extends Phaser.Scene {
 		}
 	}
 	handleTowerInput(towerAction, info) {
-		console.info("handle tower inptu");
-		console.debug("state: ", this.state);
-		if (!this.state.roundWinner) {
-			console.error("what the hell");
-			return;
-		}
-		/**called only during towerStart event.
-		 * Sends message to quasi server.
-		 */
-		if (!Object.values(TowerActionTypes).includes(towerAction)) {
-			console.warn("invalid towerAction");
-			return;
-		}
-
-		// saves input to server.
-		//both atker and victim should know this actoin
-		console.info("tower input: " + towerAction);
-		//this.events.emit("towerResult", towerAction);
-
-		/**Quasi server logic.
-		 * Called everytime an rps input is received. */
-		switch (towerAction) {
-			case TowerActionTypes.BUILD_TOWER:
-				console.log("build tower of", this.state.roundWinner.name);
-				this.state.roundWinner.hp += 1;
-
-				//where to update visuals
-				if (this.state.players[0].hp <= 4) {
-					this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-				}
-				if (this.state.players[1].hp <= 4) {
-					this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
-				}
-				// //update visuasl
-				// if (this.state.roundWinner.name == this.povName) {
-				// 	this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
-				// } else {
-				// 	this.p2Base.setFrame("match_p2Base000" + this.state.roundWinner.hp);
-				// }
-				break;
-			case TowerActionTypes.BUILD_SHIELD:
-				console.log("build shield, scale: " + info);
-				this.state.roundWinner.hp += 1;
-
-				//player visuals
-				const p2Shield = this.add
-					.sprite(1280, 526, "match_p2Shield")
-					.setDisplayOrigin(283, 203)
-					.setName("p2shieldagain")
-					.setScale(info.scaleX, info.scaleY)
-					.setDepth(10);
-				this.p2Shields.push(p2Shield);
-
-				// shield upgrades are SCRAPPED!!!
-
-				break;
-			case TowerActionTypes.BUILD_CANNON:
-				console.log("info: ", info);
-
-				// server sends the x pos of pov, calculte opponent x pos
-				let oppX = mapRange(info.x, 30, SCENE_W - 30, 910, SCENE_W - 910);
-
-				oppX += 2 * (1280 - oppX);
-				console.log("oppX: ", oppX);
-				//dont draw into the base
-				if (oppX > 1010 && oppX < 1561) {
-					if (oppX > 1280) {
-						oppX = 1561;
-					} else {
-						oppX = 1010;
-					}
-				}
-
-				// player visuals again
-				const oppCannon = this.add
-					.sprite(oppX, 558, "match_p2Cannon")
-					.setDisplayOrigin(107, 154)
-					.setDepth(10)
-					.setVisible(true);
-				this.p2Cannons.add(oppCannon);
-				this.state.roundWinner.cannons.push({
-					x: info.x,
-					pow: 1,
-				});
-				break;
-			case TowerActionTypes.ATTACK_TOWER:
-				console.log("info: ", info);
-				this.state.roundLoser.hp -= 1;
-
-				if (this.state.roundLoser.hp < 0) {
-					alert("gg gamoe over");
-					this.events.emit("gameOver");
-				}
-
-				//attack shield instead
-
-				//sort the shields by scaleY in descending order (largest first)
-				this.p2Shields.sort((a, b) => {
-					return b.scaleY - a.scaleY; // Return the comparison result for proper sorting
-				});
-
-				this.p2Shields.forEach((s) => {
-					console.warn(s.scaleX + " uwwu " + s.scaleY);
-				});
-
-				// Remove the outermost shield (the one with the largest scaleY) if any exist
-				if (this.p2Shields.length > 0) {
-					const outerShield = this.p2Shields.shift(); // Remove and get the first shield (largest scaleY)
-					console.log(
-						"Removing outermost shield with scaleY:",
-						outerShield.scaleY
-					);
-					outerShield.destroy(); // Remove the shield sprite from the scene
-				}
-
-				//where to update visuals
-				if (this.state.players[0].hp <= 4) {
-					this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-				}
-				if (this.state.players[1].hp <= 4) {
-					this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
-				}
-
-				//temp
-				this.targets.removeAll(true);
-				break;
-			case TowerActionTypes.ATTACK_CANNON:
-				console.log("info: ", info);
-				console.log(this.p2Cannons.list);
-				console.log("remove opp's", info.target, "th cannon");
-				this.state.roundLoser.cannons.splice(info.target, 1);
-				this.p2Cannons.list[info.target].destroy();
-				break;
-			/*case TowerActionTypes.UPGRADE_SHIELD:
-        console.log("info: ", info);
-        break;*/
-			case TowerActionTypes.UPGRADE_CANNON:
-				console.log("info: ", info);
-				this.state.roundWinner.cannons[info.cannonId].pow += 1;
-
-				const pow = this.state.roundWinner.cannons[info.cannonId].pow;
-				console.warn(this.state.roundWinner.cannons[info.cannonId]);
-
-				//player visuals, no update beyond 7+power
-				if (pow <= 7) {
-					this.p2Cannons.list[info.cannonId].setFrame(
-						"match_p2Cannon000" + (pow - 1)
-					);
-					this.p1Cannons.list[info.cannonId].setFrame(
-						"match_p1Cannon000" + (pow - 1)
-					);
-				}
-
-				break;
-			default:
-				alert("Invalid action");
-				break;
-		}
-		this.events.emit("roundStart");
+	console.info("handle tower inptu");
+	console.debug("state: ", this.state);
+	if (!this.state.roundWinner) {
+		console.error("what the hell");
+		return;
 	}
-	_showRpsButtons() {
-		console.warn("(do not use this, just create)show rps butons");
-		// Update to show container instead of individual elements
-		this.rpsButtons.removeAll(true);
+	/**called only during towerStart event.
+	 * Sends message to quasi server.
+	 */
+	if (!Object.values(TowerActionTypes).includes(towerAction)) {
+		console.warn("invalid towerAction");
+		return;
 	}
+
+	// saves input to server.
+	//both atker and victim should know this actoin
+	console.info("tower input: " + towerAction);
+
+	/**Quasi server logic.
+	 * Called everytime an rps input is received. */
+	// Create a copy of the state to pass to the result handlers
+	const stateCopy = JSON.parse(JSON.stringify(this.state));
+
+	switch (towerAction) {
+		case TowerActionTypes.BUILD_TOWER:
+			console.log("build tower of", this.state.roundWinner.name);
+			this.state.roundWinner.hp += 1;
+			this.events.emit("towerResultBuildTower", { info, state: stateCopy });
+			break;
+		case TowerActionTypes.BUILD_SHIELD:
+			console.log("build shield, scale: " + info);
+			this.state.roundWinner.hp += 1;
+
+			//temp
+			this.state.players[1].hp += 1;
+			this.events.emit("towerResultBuildShield", { info, state: stateCopy });
+			break;
+		case TowerActionTypes.BUILD_CANNON:
+			console.log("info: ", info);
+			this.state.roundWinner.cannons.push({
+				x: info.x,
+				pow: 1,
+			});
+			this.events.emit("towerResultBuildCannon", { info, state: stateCopy });
+			break;
+		case TowerActionTypes.ATTACK_TOWER:
+			console.log("info: ", info);
+			this.state.roundLoser.hp -= 1;
+
+			if (this.state.roundLoser.hp < 0) {
+				alert("gg gamoe over");
+			}
+			this.events.emit("towerResultAttackTower", { info, state: stateCopy });
+			break;
+		case TowerActionTypes.ATTACK_CANNON:
+			console.log("info: ", info);
+			console.log(this.p2Cannons.list);
+			console.log("remove opp's", info.target, "th cannon");
+			this.state.roundLoser.cannons.splice(info.target, 1);
+			this.events.emit("towerResultAttackCannon", { info, state: stateCopy });
+			break;
+		/*case TowerActionTypes.UPGRADE_SHIELD:
+			console.log("info: ", info);
+			break;*/
+		case TowerActionTypes.UPGRADE_CANNON:
+			console.log("info: ", info);
+			this.state.roundWinner.cannons[info.cannonId].pow += 1;
+			this.events.emit("towerResultUpgradeCannon", { info, state: stateCopy });
+			break;
+		default:
+			alert("Invalid action");
+			break;
+	}
+}
 
 	_hideRpsButtons() {
 		console.log("hide rpss butons");
