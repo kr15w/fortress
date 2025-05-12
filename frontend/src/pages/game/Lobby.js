@@ -14,37 +14,37 @@ const ANIMS = {
 			key: "enter",
 
 			start: 0,
-			end: 3,
+			end: 15,
 			frameRate: 24,
 			repeat: -1,
 		},
 		{
 			key: "idle",
 
-			start: 4,
-			end: 7,
+			start: 16,
+			end: 19,
 
 			frameRate: 8,
 			repeat: -1,
 		},
 		{
 			key: "ready",
-			start: 8,
-			end: 10,
+			start: 20,
+			end: 27,
 			frameRate: 24,
 			repeat: 0,
 		},
 		{
 			key: "notice",
-			start: 11,
-			end: 15,
+			start: 28,
+			end: 32,
 			frameRate: 24,
 			repeat: 0,
 		},
 		{
 			key: "annoyed",
-			start: 16,
-			end: 16,
+			start: 33,
+			end: 33,
 		},
 	],
 };
@@ -247,37 +247,6 @@ export default class Lobby extends Phaser.Scene {
 									this.p1.play("lobby_player_idle");
 								}
 							});
-						/*
-						//aaaaaaaaaaaaaaaaarrrrrgghh wip
-						this.p1.input.hitArea = new Phaser.Geom.Rectangle(
-							-81,
-							-603,
-							163,
-							628
-						);
-						console.warn(this.p1.input.hitArea);
-
-						//hmm
-						const graphics = this.add.graphics();
-
-						graphics.lineStyle(1, 0xff0000, 1);
-						graphics.fillStyle(0x00ff00, 1);
-						//graphics.strokeRect(0, 0, 100, 100);
-
-						graphics.fillRect(
-							this.p1.input.hitArea.x + 1000,
-							this.p1.input.hitArea.y + 1000,
-							this.p1.input.hitArea.width,
-							this.p1.input.hitArea.height
-						);
-
-						graphics.strokeRect(
-							this.p1.input.hitArea.x + this.p1.x,
-							this.p1.input.hitArea.y + this.p1.y,
-							this.p1.input.hitArea.width,
-							this.p1.input.hitArea.height
-						);
-						graphics.strokeCircle(this.p1.x, this.p1.y, 10);*/
 					},
 				});
 			},
