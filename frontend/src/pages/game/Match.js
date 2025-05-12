@@ -1536,7 +1536,6 @@ export default class Match extends Phaser.Scene {
 
 					// Remove the outermost shield
 					this.state.roundLoser.shields.splice(largestShieldIndex, 1);
-					this.state.roundLoser.hp -= 1;
 					console.log("Server: Shield absorbed the attack");
 				} else {
 					// No shields, reduce HP directly
