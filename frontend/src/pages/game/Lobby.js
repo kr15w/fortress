@@ -125,11 +125,9 @@ export default class Lobby extends Phaser.Scene {
             } else {
                 frameNum = 0; // Default to 'A' for invalid characters
             }
-            /*
             this.rmCodeDigits.list[i].setFrame(
                 "lobby_rmCodeText" + String(frameNum).padStart(4, "0")
             );
-			*/
         }
     }
 
