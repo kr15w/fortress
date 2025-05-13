@@ -60,6 +60,8 @@ export default class Match extends Phaser.Scene {
 		this.addPlayer(new Player(this.povName));
 		this.addPlayer(new Player("discovry"));
 
+		this.state.players[0].hp = 4; //bruh lol
+
 		/*
     this.input.on("pointerdown", (pointer) => {
       console.log("lmb 1 or rmb 2:", pointer.buttons);
@@ -78,6 +80,18 @@ export default class Match extends Phaser.Scene {
 		this.load.image("match_cannonBtn", "assets/match_cannonBtn.png");
 		this.load.image("match_shieldBtn", "assets/match_shieldBtn.png");
 		this.load.image("match_chooseCannon", "assets/match_chooseCannon.png");
+
+		this.load.image("match_gameOverWinBox", "assets/match_gameOverWinBox.png");
+		this.load.image(
+			"match_gameOverLoseBox",
+			"assets/match_gameOverLoseBox.png"
+		);
+
+		this.load.atlas(
+			"match_gameOverDigit",
+			"assets/match_gameOverDigit.png",
+			"assets/match_gameOverDigit.json"
+		);
 
 		this.load.atlas(
 			"match_bomb",
@@ -231,8 +245,8 @@ export default class Match extends Phaser.Scene {
 		this.events.on("towerResultUpgradeCannon", (data) => {
 			this.onTowerResultUpgradeCannon(data.info, data.state);
 		});
-		this.events.on("gameOver", () => {
-			this.onGameOver();
+		this.events.on("gameOver", (data) => {
+			this.onGameOver(data.winner, data.state);
 		});
 
 		this.events.emit("roundStart");
@@ -622,7 +636,12 @@ export default class Match extends Phaser.Scene {
 		// Check if game is over
 		if (state.roundLoser.hp < 0) {
 			console.log("Client: Game over detected");
-			this.events.emit("gameOver");
+			// Determine the winner (the player who is not the loser)
+			const winner = state.players.find(
+				(player) => player.name !== state.roundLoser.name
+			);
+			console.log("Winner is:", winner ? winner.name : "unknown");
+			this.events.emit("gameOver", { winner: winner, state: state });
 			return;
 		}
 
@@ -959,11 +978,74 @@ export default class Match extends Phaser.Scene {
 		});
 	}
 
-	onGameOver() {
-		alert("gggggg rematch or quit?");
+	onGameOver(winner, state) {
+		//data has winner and state
+		// Extract winner information from the event data
+		const winnerName = winner ? winner.name : "Unknown";
+
+		if (winnerName == this.povName) {
+			//i win
+			this.winBox = this.add
+				.container(356, 1194)
+				.setName("win box")
+				.setDepth(9999);
+			this.winBox.add(
+				this.add.sprite(0, 0, "match_gameOverWinBox").setName("win box bg")
+			);
+
+			const digitPos = [
+				[462, -174],
+				[540, -178],
+				[498, -4],
+				[575, -7],
+				[462, 149],
+				[546, 145],
+			];
+			for (let i = 0; i < 6; i++) {
+				console.warn(digitPos[i], digitPos[i][0], digitPos[i][1]);
+				this.winBox.add(
+					this.add
+						.sprite(digitPos[i][0], digitPos[i][1], "match_gameOverDigit")
+						.setDisplayOrigin(0)
+						.setTintFill(0x67d49b)
+						.setName("win digit" + i)
+				);
+			}
+
+			this.winBox.setAngle(-15);
+			//this.winBox.rotate(-20)
+		} else {
+			this.loseBox = this.add
+				.container(2103, 1092)
+				.setName("lose box")
+				.setDepth(9999);
+			this.loseBox.add(
+				this.add.sprite(0, 0, "match_gameOverLoseBox").setName("lose box bg")
+			);
+			const digitPos = [
+				[-151, -101],
+				[-64, -118],
+				[-53, 64],
+				[29, 65],
+				[-271, 239],
+				[-185, 235],
+			];
+			for (let i = 0; i < 6; i++) {
+				const digit = this.add
+					.sprite(digitPos[i][0], digitPos[i][1], "match_gameOverDigit")
+					.setDisplayOrigin(0)
+					.setName("lose digit" + i);
+				this.loseBox.add(digit);
+			}
+
+			this.loseBox.setAngle(20);
+			//this.loseBox.rotate(20 degrees)
+		}
 		this.time.addEvent({
-			delay: 1000,
+			delay: 8000,
 			callback: () => {
+				if (this.winBox) this.winBox.removeAll(true);
+				if (this.loseBox) this.loseBox.removeAll(true);
 				this.scene.sleep();
 				this.scene.stop();
 				this.scene.start("Lobby");
@@ -1753,7 +1835,7 @@ export default class Match extends Phaser.Scene {
 class Player {
 	constructor(name) {
 		this.name = name;
-		this.hp = 4;
+		this.hp = 0;
 		this.shields = [];
 		this.cannons = [];
 	}
