@@ -640,56 +640,73 @@ export default class Match extends Phaser.Scene {
 				);
 				//atkCannon.setTint(0x0000ff); // Blue tint
 
-				// //i love this curve
-				// const controlX = atkCannon.x + 0.6 * (this.p2Base.x - atkCannon.x);
-				// const controlY =
-				// 	atkCannon.y + 0.7 * (this.p2Base.y - atkCannon.y) - 600;
-				// const sourceX = atkCannon.x + 79; //offset from flash
-				// const sourceY = atkCannon.y - 193;
-				// const destX = this.p2Base.x + this.p2Base.width / 2;
-				// const destY = this.p2Base.y + this.p2Base.height / 2;
+				//i love this curve
+				const controlX = atkCannon.x + 0.6 * (this.p2Base.x - atkCannon.x);
+				const controlY =
+					atkCannon.y + 0.7 * (this.p2Base.y - atkCannon.y) - 600;
+				const sourceX = atkCannon.x + 79; //offset from flash
+				const sourceY = atkCannon.y - 193;
+				const destX = this.p2Base.x + this.p2Base.width / 2;
+				const destY = this.p2Base.y + this.p2Base.height / 2;
 
-				// const curve = new Phaser.Curves.QuadraticBezier(
-				// 	new Phaser.Math.Vector2(sourceX, sourceY),
-				// 	new Phaser.Math.Vector2(controlX, controlY),
-				// 	new Phaser.Math.Vector2(destX, destY)
-				// );
-				// const path = { t: 0, vec: new Phaser.Math.Vector2(sourceX, sourceY) };
+				const curve = new Phaser.Curves.QuadraticBezier(
+					new Phaser.Math.Vector2(sourceX, sourceY),
+					new Phaser.Math.Vector2(controlX, controlY),
+					new Phaser.Math.Vector2(destX, destY)
+				);
+				const path = { t: 0, vec: new Phaser.Math.Vector2(sourceX, sourceY) };
 
-				// const bomb = this.add
-				// 	.sprite(sourceX, sourceY, "match_bomb")
-				// 	.setName("le bomb lolol")
-				// 	.setDepth(99999)
-				// 	.play("match_bomb_sparkle");
+				const bomb = this.add
+					.sprite(sourceX, sourceY, "match_bomb")
+					.setName("le bomb lolol")
+					.setDepth(99999)
+					.play("match_bomb_sparkle");
 
-				// console.warn(bomb.setPosition);
-				// // FIRE IN THE HOLE
-				// this.tweens.add({
-				// 	targets: path,
-				// 	t: 1,
-				// 	duration: 1000,
-				// 	ease: "Quart.easeOut",
-				// 	onUpdate: () => {
-				// 		/*
-				// 		graphics.fillStyle(0xff0000, 1);
-				// 		graphics.fillCircle(path.vec.x, path.vec.y, 5);
-				// 		graphics.fillStyle(0xffffff, 1);
-				// 		graphics.fillCircle(
-				// 			curve.getPoint(path.t, path.vec).x,
-				// 			curve.getPoint(path.t, path.vec).y,
-				// 			5
-				// 		);
-				// 		graphics.fillCircle(controlX, controlY, 5);*/
+				console.warn(bomb.setPosition);
+				// FIRE IN THE HOLE
+				this.tweens.add({
+					targets: path,
+					t: 1,
+					duration: 600,
+					ease: "Quart.easeOut",
+					onUpdate: () => {
+						/*
+						graphics.fillStyle(0xff0000, 1);
+						graphics.fillCircle(path.vec.x, path.vec.y, 5);
+						graphics.fillStyle(0xffffff, 1);
+						graphics.fillCircle(
+							curve.getPoint(path.t, path.vec).x,
+							curve.getPoint(path.t, path.vec).y,
+							5
+						);
+						graphics.fillCircle(controlX, controlY, 5);*/
 
-				// 		bomb.setPosition(
-				// 			curve.getPoint(path.t, path.vec).x,
-				// 			curve.getPoint(path.t, path.vec).y
-				// 		);
-				// 	},
-				// 	onComplete: () => {
-				// 		bomb.destroy();
-				// 	},
-				// });
+						bomb.setPosition(
+							curve.getPoint(path.t, path.vec).x,
+							curve.getPoint(path.t, path.vec).y
+						);
+					},
+					onComplete: () => {
+						bomb.destroy();
+
+						//any shields?
+						if (this.p2Shields.length > 0) {
+							const outerShield = this.p2Shields.shift();
+							console.log("Client: Removing player 2 shield", outerShield);
+
+							// Make sure the shield is a valid Phaser game object before destroying
+							if (outerShield && typeof outerShield.destroy === "function") {
+								outerShield.destroy();
+							} else {
+								console.error(
+									"Invalid shield object in p2Shields array",
+									outerShield
+								);
+							}
+						}
+						updateBaseHps();
+					},
+				});
 				/*
 				//debug visualize
 				const graphics = this.add.graphics().setDepth(99999);
@@ -719,59 +736,43 @@ export default class Match extends Phaser.Scene {
 						this.p2Cannons.list[attackerIndex].clearTint();
 					}
 				});
-			}
-		}
 
-		// Update shield visuals - remove the outermost shield if any exist
-		if (state.roundLoser.name != this.povName) {
-			// Player 2 lost a shield
-			if (this.p2Shields.length > 0) {
-				const outerShield = this.p2Shields.shift();
-				console.log("Client: Removing player 2 shield", outerShield);
+				// Player 1 lost a shield
+				if (this.p1Shields.length > 0) {
+					const outerShield = this.p1Shields.shift();
+					console.log("Client: Removing player 1 shield", outerShield);
 
-				// Make sure the shield is a valid Phaser game object before destroying
-				if (outerShield && typeof outerShield.destroy === "function") {
-					outerShield.destroy();
-				} else {
-					console.error(
-						"Invalid shield object in p2Shields array",
-						outerShield
-					);
+					// Make sure the shield is a valid Phaser game object before destroying
+					if (outerShield && typeof outerShield.destroy === "function") {
+						outerShield.destroy();
+					} else {
+						console.error(
+							"Invalid shield object in p1Shields array",
+							outerShield
+						);
+					}
 				}
-			}
-		} else {
-			// Player 1 lost a shield
-			if (this.p1Shields.length > 0) {
-				const outerShield = this.p1Shields.shift();
-				console.log("Client: Removing player 1 shield", outerShield);
 
-				// Make sure the shield is a valid Phaser game object before destroying
-				if (outerShield && typeof outerShield.destroy === "function") {
-					outerShield.destroy();
-				} else {
-					console.error(
-						"Invalid shield object in p1Shields array",
-						outerShield
-					);
-				}
+				updateBaseHps();
 			}
 		}
 
-		// Update base visuals with current HP
-		console.log(
-			"Client: Updating base HP visuals",
-			state.players[0].hp,
-			state.players[1].hp
-		);
-		if (state.players[0].hp <= 4) {
-			this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
-		}
-		if (state.players[1].hp <= 4) {
-			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
-		}
+		const updateBaseHps = () => {
+			// Update base visuals with current HP finally
+			console.log(
+				"Client: Updating base HP visuals",
+				state.players[0].hp,
+				state.players[1].hp
+			);
+			if (state.players[0].hp <= 4) {
+				this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
+			}
+			if (state.players[1].hp <= 4) {
+				this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
+			}
 
-		this.targets.removeAll(true);
-		this.events.emit("roundStart");
+			this.events.emit("roundStart");
+		};
 	}
 
 	onTowerResultAttackCannon(info, state) {
@@ -1024,6 +1025,7 @@ export default class Match extends Phaser.Scene {
 							.on("pointerdown", () => {
 								//add targets, each trigger the call and then hide everyone
 								this.targets.removeAll(true);
+								this.cannonSelectors.removeAll(true);
 
 								//base target
 								const baseTarget = new Button(
@@ -1092,6 +1094,8 @@ export default class Match extends Phaser.Scene {
 
 								//base target
 								const chooseAtkTower = () => {
+									this.targets.removeAll(true);
+									this.cannonSelectors.removeAll(true);
 									console.info("chooseAtkTower() called", cannon);
 
 									// Get attacker cannon ID if available
