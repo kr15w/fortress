@@ -12,15 +12,15 @@ def dump_users():
 def id_to_name(usr_id):
     if type(usr_id) == str:
         try:
-            usr_id = int(usr_id)
+            # Split the ID at underscore and take the first part (the numeric ID)
+            numeric_id = int(usr_id.split('_')[0])
+            usr_id = numeric_id
         except:
             return 'USER ID CAN NOT BE CONVERTED TO INT'
         
     db = DatabaseService('sqlite:///users.db')
     with db.Session() as session:
         users = session.query(User).all()
-        #print("ID\tUsername\tEmail\t\t\tPassword Hash")
-        #print("--------------------------------------------------")
         for user in users:
             if user.id == usr_id:
                 return user.username

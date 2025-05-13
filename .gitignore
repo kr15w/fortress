@@ -31,7 +31,9 @@ dist-ssr
 
 
 # back end stuff
+backend/.env
 backend/venv
 backend/__pycache__
 backend/users.db
 backend/tmp_keys.txt
+backend/__pycache__/app.cpython-313.pyc

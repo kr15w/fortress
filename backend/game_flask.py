@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 import json
 import uuid
 from game import Game
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 from decimal import Decimal
 db = DatabaseService('sqlite:///users.db')
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 
 if __name__ == '__main__':
@@ -55,7 +57,8 @@ def index():
     return render_template('match_demo.html')
 
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
 @socketio.on('connect')
 def handle_connect(auth):
     print(f'Client connected: {request.sid}')
@@ -68,7 +71,7 @@ def handle_disconnect():
     clients.pop(sid, None)
 
 
-def refresh(room_id, player_name, sid,result='Maunal refresh'):
+def refresh(room_id, player_name, sid, result='Manual refresh'):
     if 'game' in game_rooms[room_id]:
         game = game_rooms[room_id]['game']
         player1 = game.player1
@@ -89,24 +92,37 @@ def refresh(room_id, player_name, sid,result='Maunal refresh'):
             emit('message_from_server', f'Error: Player not found in room.', room=sid)
             return
         
+        # Preserve health and cannon states even during ties
         game_state = {
-            'reason for refresh' : result,
-            'winner': ( current_player == player1 and winner == 1 ) or ( current_player == player2 and winner == 2 )  ,
+            'reason_for_refresh': result,
+            'winner': (current_player == player1 and winner == 1) or (current_player == player2 and winner == 2),
             'state': state,
             'current_player_health': current_player.health,
-            'current_player_weaponry': current_player.weaponry,
+            'current_player_cannon': current_player.cannon,
             'opponent_health': opponent.health,
-            'opponent_weaponry': opponent.weaponry,
-            'opponent_id' : opponent_name,
-            'opponent_name' : dump_users.id_to_name(opponent_name),
+            'opponent_cannon': opponent.cannon,
+            'opponent_id': opponent_name,
+            'opponent_name': dump_users.id_to_name(opponent_name),
+            'current_player_id': player_name,
+            'current_player_name': dump_users.id_to_name(player_name),
             'current_player_ready': game_rooms[room_id]['ready'].get(player_name, False),
             'opponent_ready': game_rooms[room_id]['ready'].get(opponent_name, False),
             'current_player_rematch': game_rooms[room_id]['rematch'].get(player_name, False),
             'opponent_rematch': game_rooms[room_id]['rematch'].get(opponent_name, False),
-            'game_started': game_rooms[room_id].get('game_started', False)
-         }
+            'game_started': game_rooms[room_id].get('game_started', False),
+            'state_diff': game_rooms[room_id]['game'].reason_for_update,
+            'room_id': room_id
+        }
         
-        emit('game_state_refresh', game_state, room=sid)
+        print(f"Game state for room {room_id}:", game_state)
+        print(f"game_started = {game_state['game_started']}")
+        
+        if game_state['game_started']:
+            print(f"Emitting match_state_refresh to {sid}")
+            emit('match_state_refresh', game_state, room=sid)
+        else:
+            print(f"Emitting game_state_refresh to {sid}")
+            emit('game_state_refresh', game_state, room=sid)
     else:
         print(f'Game instance not found for room {room_id}')
         emit('message_from_server', f'Error: Game instance not found.', room=sid)
@@ -118,12 +134,13 @@ def handle_message(data):
     try:
         message = json.loads(data)
         if 'player_name' in message:
-            if not message['player_name'] in user_tokens.values():
+            '''
+            print(f"****message['player_name'] = {message['player_name']}")
+            print(f"user_tokens = {user_tokens}, user_tokens.values() = {user_tokens.values()}")
+            if not message['player_name'] in int(user_tokens.values().split('_'[0])):
                 emit('message_from_server', f'Invalid_token', room=request.sid)
                 return
-
-            message['player_name'] = message['player_name'].split('_')[0]
-
+            '''
             player_names[message['player_name']] = request.sid
             print(f'Player {message["player_name"]} connected with SID: {request.sid}')
             
@@ -131,7 +148,12 @@ def handle_message(data):
             if not room_id:
                 room_id = str(uuid.uuid4())[:4]
                 print(f'Generated room ID: {room_id}')
-                game_rooms[room_id] = {'player1': message['player_name']}
+                game_rooms[room_id] = {
+                    'player1': message['player_name'],
+                    'ready': {},
+                    'rematch': {},
+                    'game_started': False
+                }
                 print(f'Added room {room_id} with player1: {message["player_name"]}')
                 emit('message_from_server', f'Room Created: {room_id}', room=request.sid)
             else:
@@ -139,27 +161,35 @@ def handle_message(data):
                     if message['player_name'] in game_rooms[room_id].values():
                         print(f'Player {message["player_name"]} is already in room {room_id}')
                         
-                        # Extract action and value from the message
                         action = message.get('action')
                         value = message.get('value')
                         
-
                         if action == 'ready':
-                            if 'ready' in game_rooms[room_id]:
-                                game_rooms[room_id]['ready'][message['player_name']] = value
-                                if all(game_rooms[room_id]['ready'].values()) and not game_rooms[room_id].get('game_started', False):
-                                    game_rooms[room_id]['game_started'] = True
-                                    game_rooms[room_id]['game'] = Game()
-                                    result = "Both players are ready, game started"
-                                    for p in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
-                                        refresh(room_id, p, player_names[p], result)
-                                else:
-                                    result = f"Player {message['player_name']} set ready to {value}"
-                                    for p in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
-                                        refresh(room_id, p, player_names[p], result)
+                            print(f"Player {message['player_name']} setting ready to {value}")
+                            game_rooms[room_id]['ready'][message['player_name']] = value
+                            
+                            # Check if both players are ready
+                            both_ready = all(game_rooms[room_id]['ready'].values())
+                            print(f"Both players ready: {both_ready}")
+                            
+                            if both_ready and not game_rooms[room_id].get('game_started', False):
+                                print("Starting game for both players")
+                                game_rooms[room_id]['game_started'] = True
+                                game_rooms[room_id]['game'] = Game()
+                                result = "Both players are ready, game started"
+                                
+                                # Send game start to both players
+                                for player in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
+                                    if player in player_names:
+                                        print(f"Sending game start to player {player}")
+                                        refresh(room_id, player, player_names[player], result)
                             else:
-                                emit('message_from_server', "Error: Ready status not initialized", room=request.sid)
-
+                                result = f"Player {message['player_name']} set ready to {value}"
+                                # Send ready status to both players
+                                for player in [game_rooms[room_id]['player1'], game_rooms[room_id]['player2']]:
+                                    if player in player_names:
+                                        print(f"Sending ready status to player {player}")
+                                        refresh(room_id, player, player_names[player], result)
                         elif action == 'rematch':
                             if 'game' in game_rooms[room_id] and game_rooms[room_id]['game'].state == 2:
                                 if 'rematch' in game_rooms[room_id]:
@@ -229,7 +259,7 @@ def handle_message(data):
                                         winner_player = game.player2
                                         loser_player = game.player1
                                     for username, player in [(winner_username, winner_player), (loser_username, loser_player)]:
-                                        db.increment_count(username, getattr(player, 'weapond_deployed', 0), 'bomb')
+                                        db.increment_count(username, getattr(player, 'bomb_deployed', 0), 'bomb')
                                         db.increment_count(username, getattr(player, 'shields_deployed', 0), 'shield')
                                     
                                     # Update win/loss counts
@@ -279,4 +309,4 @@ def handle_message(data):
         emit('message_from_server', f'Invalid JSON received: {data}', room=request.sid)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)

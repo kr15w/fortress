@@ -33,7 +33,7 @@ class Game extends Component {
 				autoCenter: Phaser.Scale.CENTER_BOTH,
 			},
 			scene: [
-				//Lobby,
+				Lobby,
 				Match,
 			],
 		};

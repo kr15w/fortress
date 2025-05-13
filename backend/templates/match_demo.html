@@ -13,7 +13,7 @@
             display: inline-block;
             margin: 2px;
         }
-        .weapon {
+        .cannon {
             width: 20px;
             height: 20px;
             background-color: red;
@@ -21,7 +21,7 @@
             margin: 2px;
             cursor: pointer;
         }
-        .opponent-weapon {
+        .opponent-cannon {
             background-color: darkred;
         }
         .hp-slot {
@@ -90,12 +90,12 @@
             document.getElementById('upgradeButton').addEventListener('click', function() {
                 var playerName = document.getElementById('playerName').value;
                 var roomId = document.getElementById('roomId').value;
-                var weaponIndex = document.getElementById('weaponIndex').value;
+                var cannonIndex = document.getElementById('cannonIndex').value;
                 var message = JSON.stringify({
                     player_name: playerName,
                     room_id: roomId,
                     action: 'upgrade',
-                    value: parseInt(weaponIndex)
+                    value: parseInt(cannonIndex)
                 });
                 socket.emit('message_from_client', message);
                 document.getElementById('sentJson').value = message;
@@ -104,7 +104,7 @@
             document.getElementById('attackButton').addEventListener('click', function() {
                 var playerName = document.getElementById('playerName').value;
                 var roomId = document.getElementById('roomId').value;
-                var weaponIndex = document.getElementById('weaponIndex').value;
+                var cannonIndex = document.getElementById('cannonIndex').value;
                 var targetList = document.getElementById('targetList').value.split(',').map(item => {
                     var trimmedItem = item.trim();
                     return !isNaN(trimmedItem) ? parseInt(trimmedItem) : trimmedItem;
@@ -113,7 +113,7 @@
                     player_name: playerName,
                     room_id: roomId,
                     action: 'attack',
-                    value: [parseInt(weaponIndex), targetList]
+                    value: [parseInt(cannonIndex), targetList]
                 });
                 socket.emit('message_from_client', message);
                 document.getElementById('sentJson').value = message;
@@ -171,14 +171,14 @@
                 document.getElementById('sentJson').value = message;
             });
 
-            document.getElementById('buildWeaponButton').addEventListener('click', function() {
+            document.getElementById('buildCannonButton').addEventListener('click', function() {
                 var playerName = document.getElementById('playerName').value;
                 var roomId = document.getElementById('roomId').value;
                 var message = JSON.stringify({
                     player_name: playerName,
                     room_id: roomId,
                     action: 'build',
-                    value: 'wepond'
+                    value: 'cannon'
                 });
                 socket.emit('message_from_client', message);
                 document.getElementById('sentJson').value = message;
@@ -270,17 +270,17 @@
                     currentShieldsDiv.appendChild(shield);
                 }
 
-                var currentWeaponsDiv = document.getElementById('currentPlayerWeapons');
-                currentWeaponsDiv.innerHTML = '';
-                gameState.current_player_weaponry.forEach(function(weapon, index) {
-                    var weaponDiv = document.createElement('div');
-                    weaponDiv.className = 'weapon';
-                    weaponDiv.textContent = weapon;
-                    weaponDiv.dataset.index = index;
-                    weaponDiv.addEventListener('click', function() {
-                        document.getElementById('weaponIndex').value = index;
+                var currentCannonsDiv = document.getElementById('currentPlayerCannons');
+                currentCannonsDiv.innerHTML = '';
+                gameState.current_player_cannon.forEach(function(cannon, index) {
+                    var cannonDiv = document.createElement('div');
+                    cannonDiv.className = 'cannon';
+                    cannonDiv.textContent = cannon;
+                    cannonDiv.dataset.index = index;
+                    cannonDiv.addEventListener('click', function() {
+                        document.getElementById('cannonIndex').value = index;
                     });
-                    currentWeaponsDiv.appendChild(weaponDiv);
+                    currentCannonsDiv.appendChild(cannonDiv);
                 });
 
                 var opponentBaseHP = Math.min(gameState.opponent_health, 4);
@@ -301,17 +301,17 @@
                     opponentShieldsDiv.appendChild(shield);
                 }
 
-                var opponentWeaponsDiv = document.getElementById('opponentWeapons');
-                opponentWeaponsDiv.innerHTML = '';
-                gameState.opponent_weaponry.forEach(function(weapon, index) {
-                    var weaponDiv = document.createElement('div');
-                    weaponDiv.className = 'weapon opponent-weapon';
-                    weaponDiv.textContent = weapon;
-                    weaponDiv.dataset.index = index;
-                    weaponDiv.addEventListener('click', function() {
+                var opponentCannonsDiv = document.getElementById('opponentCannons');
+                opponentCannonsDiv.innerHTML = '';
+                gameState.opponent_cannon.forEach(function(cannon, index) {
+                    var cannonDiv = document.createElement('div');
+                    cannonDiv.className = 'cannon opponent-cannon';
+                    cannonDiv.textContent = cannon;
+                    cannonDiv.dataset.index = index;
+                    cannonDiv.addEventListener('click', function() {
                         document.getElementById('targetList').value = index;
                     });
-                    opponentWeaponsDiv.appendChild(weaponDiv);
+                    opponentCannonsDiv.appendChild(cannonDiv);
                 });
             }
 
@@ -346,9 +346,9 @@
         <button id="paperButton">Paper</button>
         <button id="scissorsButton">Scissors</button><br><br>
         <button id="buildHealthButton">Build Health</button>
-        <button id="buildWeaponButton">Build Weapon</button><br><br>
-        <label for="weaponIndex">Weapon Index:</label>
-        <input type="number" id="weaponIndex" name="weaponIndex"><br><br>
+        <button id="buildCannonButton">Build Cannon</button><br><br>
+        <label for="cannonIndex">Cannon Index:</label>
+        <input type="number" id="cannonIndex" name="cannonIndex"><br><br>
         <label for="targetList">Target List (comma separated):</label>
         <input type="text" id="targetList" name="targetList"><br><br>
         <button id="upgradeButton">Upgrade</button><br><br>
@@ -372,7 +372,7 @@
                 </div>
                 <div id="currentPlayerShields"></div>
             </div>
-            <div id="currentPlayerWeapons"></div>
+            <div id="currentPlayerCannons"></div>
         </div>
         <div id="opponentZone">
             <h4>Opponent</h4>
@@ -385,7 +385,7 @@
                 </div>
                 <div id="opponentShields"></div>
             </div>
-            <div id="opponentWeapons"></div>
+            <div id="opponentCannons"></div>
         </div>
     </div>
     <div id="gameEndOptions" style="display: none;">

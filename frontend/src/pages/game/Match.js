@@ -1,14 +1,16 @@
 import Phaser from "phaser";
 import { loadAnims } from "./loadAnims";
 import ANIMS from "./match_anims.json";
+import { socket } from "./Lobby"
 
 /**
  * done add tie anim
+ * @todo p2 shielld!!!!!!!!!
  * @todo add rmb to cansel
- * @todo how to calculate p2 shield?
- * @todo show more clearly what rps is chosen
+ * @todo how to calculate p2 shield??????????????????????????????????????
+ * done show more clearly what rps is chosen
  * @todo make everything prettier
- * @todo put buttons in a container
+ * done put buttons in a container
  * done buttons glow on hover
  */
 const SCENE_H = 1440;
@@ -41,6 +43,7 @@ export default class Match extends Phaser.Scene {
 			p1RpsChoice: null,
 			p2RpsChoice: null,
 			roundWinnerChoice: null,
+			cannonCount: 0,
 		};
 	}
 	addPlayer(p) {
@@ -48,21 +51,139 @@ export default class Match extends Phaser.Scene {
 	}
 	constructor() {
 		super("Match");
-		this.initGame();
-		// I am noogai
-		this.povName = "noogai67";
+		console.log("Match scene constructor called");
+		
+		// Listen for match state updates
+		socket.on("match_state_refresh", (msg) => {
+			console.log("Received match_state_refresh event:", msg);
+			
+			if (msg.reason_for_refresh === "Both players are ready, game started") {
+				console.log("Game starting with message:", msg);
+				
+				// Initialize game state
+				this.initGame();
+				this.povName = msg.current_player_name;
+				this.opponentName = msg.opponent_name;
+				this.roomId = msg.room_id;
+				this.povIsWin = null;
+				this.povHP = 0;
+				this.opponentHP = 0;
+				// Store the game token
+				this.gameToken = msg.current_player_id;
+				console.log("Game started with players:", this.povName, this.opponentName, "in room:", this.roomId);
+				
+				// Add players to the game state with initial HP of 4
+				this.addPlayer(new Player(this.povName, 0));
+				this.addPlayer(new Player(this.opponentName, 0));
+				
+				// Ensure scene is started
+				if (!this.scene.isActive()) {
+					console.log("Starting Match scene");
+					this.scene.start();
+				}
+				
+				// Start the first round
+				this.events.emit("roundStart");
+			}
+			else if (typeof msg === 'object') {
+				console.log("Processing game state update:", msg);
+				if (msg.reason_for_refresh === "RPS round end") {
+					// Update player states with values from server
+					/*
+					this.state.players[0].hp = msg.current_player_health;
+					this.state.players[1].hp = msg.opponent_health;
+					this.state.players[0].cannons = msg.current_player_cannon;
+					this.state.players[1].cannons = msg.opponent_cannon;
+					*/
+					
+					// Update base visuals to match server state
+					console.log("msg.winner: ", msg.winner)
+					if (msg.current_player_health >= 0 && msg.current_player_health <= 4) {
+						this.p1Base.setFrame("match_p1Base000" + msg.current_player_health);
+					}
+					if (msg.opponent_health >= 0 && msg.opponent_health <= 4) {
+						this.p2Base.setFrame("match_p2Base000" + msg.opponent_health);
+					}
+					
+					if(msg.reason_for_refresh === "RPS tie - new round starting") {
+						this.state.roundWinner = null;
+						this.state.roundLoser = null;
+						this.povIsWin = null;
+						this.state.p2RpsChoice = this.state.p1RpsChoice;
+					}
+					else if (msg.winner) {
+						// If winner is true, current player won
+						this.povIsWin = true;
+						this.state.roundWinner = this.state.players[0];
+						this.state.roundLoser = this.state.players[1];
+						// Set opponent's choice based on the winner's choice
+						if(this.state.p1RpsChoice === 'r') {
+							this.state.p2RpsChoice = 's';
+						}
+						else if(this.state.p1RpsChoice === 'p') {
+							this.state.p2RpsChoice = 'r';
+						}
+						else if(this.state.p1RpsChoice === 's') {
+							this.state.p2RpsChoice = 'p';
+						}
+					} else {
+						// If winner is false, opponent won
+						this.povIsWin = false;
+						this.state.roundWinner = this.state.players[1];
+						this.state.roundLoser = this.state.players[0];
+						// Set opponent's choice based on the winner's choice
+						if(this.state.p1RpsChoice === 's') {
+							this.state.p2RpsChoice = 'r';
+						}
+						else if(this.state.p1RpsChoice === 'r') {
+							this.state.p2RpsChoice = 'p';
+						}
+						else if(this.state.p1RpsChoice === 'p') {
+							this.state.p2RpsChoice = 's';
+						}
+					}
+					console.log("POV is win:", this.povIsWin);
+					this.events.emit("rpsResult");
+				}
+				else if (msg.state === 1) {
+					// Update frontend state with backend state
+					/*
+					this.state.players[0].hp = msg.current_player_health;
+					this.state.players[1].hp = msg.opponent_health;
+					this.state.players[0].cannons = msg.current_player_cannon;
+					this.state.players[1].cannons = msg.opponent_cannon;*/
+					this.events.emit("towerStart");
+				}
+				else if (msg.state === 2) {
+					this.events.emit("gameOver");
+				}
+			}
+		});
+		
+		// Add error handler
+		socket.on("error", (error) => {
+			console.error("Socket error:", error);
+		});
+		
+		// Add connect handler
+		socket.on("connect", () => {
+			console.log("Socket connected");
+		});
+		
+		// Add disconnect handler
+		socket.on("disconnect", () => {
+			console.log("Socket disconnected");
+		});
 	}
-
+	
 	init(data) {
 		this.initGame();
-		this.addPlayer(new Player(this.povName));
-		this.addPlayer(new Player("discovry"));
-
-		/*
+	
+	}
+	/*
     this.input.on("pointerdown", (pointer) => {
       console.log("lmb 1 or rmb 2:", pointer.buttons);
     });*/
-	}
 
 	preload() {
 		this.load.image("match_bg", "assets/match_bg.png");
@@ -151,8 +272,20 @@ export default class Match extends Phaser.Scene {
 		const SCENE_W = this.sys.game.canvas.width;
 		const SCENE_H = this.sys.game.canvas.height;
 
+		// Initialize game state if not already initialized
+		if (!this.state) {
+			console.log("State not initialized in create(), initializing now");
+			this.initGame();
+		}
+
+		// Add temporary players if none exist
+		if (this.state.players.length === 0) {
+			console.log("No players in state, adding temporary players");
+			this.addPlayer(new Player(this.povName, 0));
+			this.addPlayer(new Player(this.opponentName, 0));
+		}
+
 		this._createBackground();
-		//this.createTable(); // optimize later
 		this._createBases();
 		this._createPlayers();
 		this._createTowerBtns();
@@ -167,7 +300,6 @@ export default class Match extends Phaser.Scene {
 			.setDepth(10)
 			.setName("p2CannonsContainer");
 
-		// selct use which cannon to atk
 		this.cannonSelectors = this.add
 			.container(0, 0)
 			.setName("cannonSelectorsContainer")
@@ -189,12 +321,15 @@ export default class Match extends Phaser.Scene {
 		this.p1Right.play("match_p1Right_wait");
 		this.p2Body.play("match_p2Body_wait");
 
-		//todo centralize visuals
-		this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-		this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+		// Set initial base frames
+		if (this.state.players[0] && this.state.players[1]) {
+			this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+			this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+		}
 
 		this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
 
+		// Set up event listeners
 		this.events.on("roundStart", () => {
 			this.onRoundStart();
 		});
@@ -204,10 +339,29 @@ export default class Match extends Phaser.Scene {
 		this.events.on("towerStart", () => {
 			this.onTowerStart();
 		});
+		this.events.on("towerResultBuildTower", (data) => {
+			this.onTowerResultBuildTower(data.info, data.state);
+		});
+		this.events.on("towerResultBuildCannon", (data) => {
+			this.onTowerResultBuildCannon(data.info, data.state);
+		});
+		this.events.on("towerResultBuildShield", (data) => {
+			this.onTowerResultBuildShield(data.info, data.state);
+		});
+		this.events.on("towerResultAttackTower", (data) => {
+			this.onTowerResultAttackTower(data.info, data.state);
+		});
+		this.events.on("towerResultAttackCannon", (data) => {
+			this.onTowerResultAttackCannon(data.info, data.state);
+		});
+		this.events.on("towerResultUpgradeCannon", (data) => {
+			this.onTowerResultUpgradeCannon(data.info, data.state);
+		});
 		this.events.on("gameOver", () => {
 			this.onGameOver();
 		});
 
+		// Emit roundStart after everything is initialized
 		this.events.emit("roundStart");
 	}
 
@@ -352,6 +506,7 @@ export default class Match extends Phaser.Scene {
 		this.state.p1RpsChoice = null;
 		this.state.p2RpsChoice = null;
 		this.state.roundWinner = null;
+		this.state.roundLoser = null;
 
 		console.log("round start", this.state);
 
@@ -362,6 +517,7 @@ export default class Match extends Phaser.Scene {
 		this.p2Body.play("match_p2Body_wait");
 		this.p2Hand.play("match_p2Hand_wait");
 		this.targets.removeAll(true);
+		this.cannonSelectors.removeAll(true);
 		this.rpsButtons.removeAll(true);
 
 		this._createRpsBtns();
@@ -375,7 +531,8 @@ export default class Match extends Phaser.Scene {
 		this._hideRpsButtons();
 
 		console.info(this.state.players);
-		this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
+		console.log("this.state.p1RpsChoice: ", this.state.p1RpsChoice, " this.state.p2RpsChoice: ", this.state.p2RpsChoice);
+		//this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
 		// player visuals
 		this.p1Right.play("match_p1Right_" + this.state.p1RpsChoice);
 		this.p2Hand.play("match_p2Hand_" + this.state.p2RpsChoice);
@@ -386,20 +543,20 @@ export default class Match extends Phaser.Scene {
 			delay: 800,
 			callback: () => {
 				console.log("decide winner", this.state.roundWinner);
-				if (this.state.roundWinner == null) {
+				if (this.povIsWin == null) {
 					//console.log("tie");
 					//this.p1Left.play("match_p1Left_lose");
 					//this.p1Right.play("match_p1Right_tie");
 					this.p1Right.visible = false;
 					this.p2Body.play("match_p2Body_tie");
 					this.p2Hand.play("match_p2Hand_tie");
-				} else if (this.state.roundWinner.name == this.povName) {
+				} else if (this.povIsWin) {
 					//console.log("i win");
 					//this.p1Left.play("match_p1Left_win");
 					this.p1Right.play("match_p1Right_win");
 					this.p2Body.play("match_p2Body_lose");
 					this.p2Hand.play("match_p2Hand_lose");
-				} else if (this.state.roundWinner.name == "discovry") {
+				} else if (!this.povIsWin) {
 					//console.log("i lose");
 					//this.p1Left.play("match_p1Left_lose");
 					this.p1Right.play("match_p1Right_lose");
@@ -409,7 +566,7 @@ export default class Match extends Phaser.Scene {
 				this.time.addEvent({
 					delay: 500,
 					callback: () => {
-						if (this.state.roundWinner == null) {
+						if (this.povIsWin == null) {
 							this.events.emit("roundStart");
 						} else {
 							this.events.emit("towerStart");
@@ -429,7 +586,18 @@ export default class Match extends Phaser.Scene {
 		this.state.stage = "towerStart";
 		console.log("tower start");
 
-		if (this.state.roundWinner.name != this.povName) {
+		// Add null check for roundWinner
+		
+		if (this.povIsWin === null) {
+			console.warn("No round winner determined, returning to round start");
+			this.events.emit("roundStart");
+			return;
+		}
+		//console.log("%%% roundWinner.name = ", this.state.roundWinner.name, ", povName: ", this.povName);
+		else if (!this.povIsWin) {
+			console.log("I lose, play below animation");
+			this.state.roundWinner = this.state.players[1]
+			this.state.roundLoser = this.state.players[0]
 			//i lose, watch opponent think
 			this.p1Left.play("match_p1Left_wait");
 			this.p1Right.play("match_p1Right_waitTower");
@@ -445,8 +613,11 @@ export default class Match extends Phaser.Scene {
 				);
 				return;
 			}
-		} else {
+		} else if(this.povIsWin) {
+			this.state.roundWinner = this.state.players[0]
+			this.state.roundLoser = this.state.players[1]
 			// i win
+			console.log("I win, play below animation");
 			this.p1Left.play("match_p1Left_think");
 			this.p1Right.visible = false;
 			this.p2Body.play("match_p2Body_wait");
@@ -461,12 +632,434 @@ export default class Match extends Phaser.Scene {
 				);
 				return;
 			}
-			this._showTowerButtons();
+			else {
+				console.log("showing tower buttons")
+				this._showTowerButtons();
+			}
+		}
+		else {
+
 		}
 	}
 
+	onTowerResultBuildTower(info, state) {
+		// Client function that receives updates from the server and updates the visuals
+		console.log("Client: Updating tower visuals based on server state");
+
+		// Update the HP display for both players
+		console.log("Client: Updating base HP visuals", state.players[0].hp, state.players[1].hp);
+		
+		// Update player 1 base
+		if (state.players[0].hp >= 0 && state.players[0].hp <= 4) {
+			console.log("Client: Updating player 1 base to HP", state.players[0].hp);
+			this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
+		}
+		
+		// Update player 2 base
+		if (state.players[1].hp >= 0 && state.players[1].hp <= 4) {
+			console.log("Client: Updating player 2 base to HP", state.players[1].hp);
+			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
+		}
+
+		// Start the next round
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultBuildShield(info, state) {
+		// Client function that receives updates from the server and updates the visuals
+		console.log("Client: Updating shield visuals based on server state");
+
+		// Check which player is the round winner and update their shield visuals
+		if (state.roundWinner && state.roundWinner.name === "discovry") {
+			// Player 2 is the winner, add shield to p2Shields container
+			console.log(
+				"Client: Adding shield for player 2 with scale",
+				info.scaleX,
+				info.scaleY
+			);
+			const p2Shield = this.add
+				.sprite(1280, 526, "match_p2Shield")
+				.setDisplayOrigin(283, 203)
+				.setName("p2shield_" + this.p2Shields.length)
+				.setScale(info.scaleX, info.scaleY)
+				.setDepth(10);
+			this.p2Shields.push(p2Shield);
+		} else if (state.roundWinner && state.roundWinner.name === this.povName) {
+			// Player 1 is the winner, add shield to p1Shields
+			// Note: The actual shield sprite is created during user interaction
+			console.log(
+				"Client: Player 1 shield registered with scale",
+				info.scaleX,
+				info.scaleY
+			);
+		}
+
+		// Start the next round
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultBuildCannon(info, state) {
+		// Client function that receives updates from the server and updates the visuals
+		console.log("Client: Updating cannon visuals based on server state");
+
+		// Check which player is the round winner and update their cannon visuals
+		if (state.roundWinner && state.roundWinner.name != this.povName) {
+			// Player 2 is the winner, add cannon to p2Cannons container
+			console.log("Client: Adding cannon for player 2 at position", info.x);
+
+			// Server sends the x pos of pov, calculate opponent x pos
+			let oppX = mapRange(info.x, 30, SCENE_W - 30, 910, SCENE_W - 910);
+			oppX += 2 * (1280 - oppX);
+
+			// Don't draw into the base
+			if (oppX > 1010 && oppX < 1561) {
+				if (oppX > 1280) {
+					oppX = 1561;
+				} else {
+					oppX = 1010;
+				}
+			}
+
+			// Create the cannon sprite and add it to the container
+			const oppCannon = this.add
+				.sprite(oppX, 558, "match_p2Cannon")
+				.setDisplayOrigin(107, 154)
+				.setDepth(10)
+				.setVisible(true);
+
+			// Store the cannon's ID for later reference
+			if (state.roundWinner.cannons.length > 0) {
+				const latestCannon =
+					state.roundWinner.cannons[state.roundWinner.cannons.length - 1];
+				oppCannon.id = latestCannon.id;
+				oppCannon.pow = latestCannon.pow;
+				console.log(
+					"Client: p2 Cannon added with ID",
+					oppCannon.id,
+					"and power",
+					oppCannon.pow
+				);
+			}
+
+			// Add the cannon to the container
+			this.p2Cannons.add(oppCannon);
+		} else {
+			// Player 1 is the winner, update cannon in p1Cannons if needed
+			// Note: The actual cannon sprite is usually created during user interaction
+			console.log("Client: Player 1 cannon registered at position", info.x);
+			// After the server processes the request, update the cannon with its ID
+			/*console.warn(
+				this.p1Cannons,
+				this.p1Cannons.list[this.p1Cannons.list.length - 1]
+			);*/
+			const latestCannon = this.p1Cannons.list[this.p1Cannons.list.length - 1];
+			latestCannon.id = info.newId;
+			latestCannon.pow = 1;
+			console.log(
+				"Client: Player 1 cannon assigned ID",
+				latestCannon.id,
+				"and power",
+				latestCannon.pow
+			);
+		}
+
+		// Start the next round
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultAttackTower(info, state) {
+		// Client function that receives updates from the server and updates the visuals
+		console.log("Client: Updating tower attack visuals based on server state");
+		console.log("Attack info:", info);
+
+		// Check if game is over
+		if (state.roundLoser.hp < 0) {
+			console.log("Client: Game over detected");
+			this.events.emit("gameOver");
+			return;
+		}
+
+		// Get the attacker index, preferring attackerIndex if available, falling back to cannonId for backward compatibility
+		const attackerIndex =
+			info.attackerIndex !== undefined ? info.attackerIndex : info.id || 0;
+
+		// Highlight the attacking cannon (tint it blue)
+		if (state.roundWinner.name === this.povName) {
+			// Player 1's cannon is attacking
+			if (this.p1Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 1 attacking cannon at index",
+					attackerIndex
+				);
+				this.p1Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
+
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p1Cannons.list[attackerIndex]) {
+						this.p1Cannons.list[attackerIndex].clearTint();
+					}
+				});
+			}
+		} else {
+			// Player 2's cannon is attacking
+			if (this.p2Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 2 attacking cannon at index",
+					attackerIndex
+				);
+				this.p2Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
+
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p2Cannons.list[attackerIndex]) {
+						this.p2Cannons.list[attackerIndex].clearTint();
+					}
+				});
+			}
+		}
+
+		// Update shield visuals - remove the outermost shield if any exist
+		if (state.roundLoser.name != this.povName) {
+			// Player 2 lost a shield
+			if (this.p2Shields.length > 0) {
+				const outerShield = this.p2Shields.shift();
+				console.log("Client: Removing player 2 shield", outerShield);
+
+				// Make sure the shield is a valid Phaser game object before destroying
+				if (outerShield && typeof outerShield.destroy === "function") {
+					outerShield.destroy();
+				} else {
+					console.error(
+						"Invalid shield object in p2Shields array",
+						outerShield
+					);
+				}
+			}
+		} else {
+			// Player 1 lost a shield
+			if (this.p1Shields.length > 0) {
+				const outerShield = this.p1Shields.shift();
+				console.log("Client: Removing player 1 shield", outerShield);
+
+				// Make sure the shield is a valid Phaser game object before destroying
+				if (outerShield && typeof outerShield.destroy === "function") {
+					outerShield.destroy();
+				} else {
+					console.error(
+						"Invalid shield object in p1Shields array",
+						outerShield
+					);
+				}
+			}
+		}
+
+		// Update base visuals with current HP
+		console.log(
+			"Client: Updating base HP visuals",
+			state.players[0].hp,
+			state.players[1].hp
+		);
+		
+		// Update player 1 base
+		if (state.players[0].hp >= 0 && state.players[0].hp <= 4) {
+			console.log("Client: Updating player 1 base to HP", state.players[0].hp);
+			this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
+		}
+		
+		// Update player 2 base
+		if (state.players[1].hp >= 0 && state.players[1].hp <= 4) {
+			console.log("Client: Updating player 2 base to HP", state.players[1].hp);
+			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
+		}
+
+		this.targets.removeAll(true);
+		this.events.emit("roundStart");
+	}
+
+	onTowerResultAttackCannon(info, state) {
+		/*TowerActionTypes.ATTACK_CANNON, {
+			// 
+			attackerCannonId: attackerCannonId,
+			targetCannonId: targetCannonId,
+
+			// Fallback to indices for backward compatibility
+			attackerIndex: p1Index,
+			target: p2Index,
+		}*/
+		// Client function that receives updates from the server and updates the visuals
+		console.log("Client: Updating cannon attack visuals based on server state");
+		console.log("Client: Attack info:", info);
+
+		// Highlight the attacking cannon (tint it blue)
+		const attackerIndex =
+			info.attackerIndex !== undefined ? info.attackerIndex : 0;
+		const attackerCannonId = info.attackerCannonId;
+
+		// Determine which player is attacking
+		if (state.roundWinner.name === this.povName) {
+			// Player 1 is attacking
+			if (this.p1Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 1 attacking cannon at index",
+					attackerIndex
+				);
+				this.p1Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
+
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p1Cannons.list[attackerIndex]) {
+						this.p1Cannons.list[attackerIndex].clearTint();
+					}
+				});
+			}
+		} else {
+			// Player 2 is attacking
+			if (this.p2Cannons.list[attackerIndex]) {
+				console.log(
+					"Client: Highlighting player 2 attacking cannon at index",
+					attackerIndex
+				);
+				this.p2Cannons.list[attackerIndex].setTint(0x0000ff); // Blue tint
+
+				// Clear the tint after 1 second
+				this.time.delayedCall(1000, () => {
+					if (this.p2Cannons.list[attackerIndex]) {
+						this.p2Cannons.list[attackerIndex].clearTint();
+					}
+				});
+			}
+		}
+
+		// Highlight and remove the target cannon
+		const targetIndex = info.target !== undefined ? info.target : -1;
+
+		if (targetIndex >= 0) {
+			// Determine which player's cannon is being targeted
+			if (state.roundLoser.name === "discovry") {
+				// Player 2's cannon is being destroyed
+				if (this.p2Cannons.list[targetIndex]) {
+					console.log("Client: Removing player 2 cannon at index", targetIndex);
+
+					// Highlight the target cannon (tint it red) before destroying
+					this.p2Cannons.list[targetIndex].setTint(0xff0000); // Red tint
+
+					// Destroy after a short delay for visual effect
+					this.time.delayedCall(500, () => {
+						if (this.p2Cannons.list[targetIndex]) {
+							this.p2Cannons.list[targetIndex].destroy();
+						}
+					});
+				}
+			} else if (state.roundLoser.name === this.povName) {
+				// Player 1's cannon is being destroyed
+				if (this.p1Cannons.list[targetIndex]) {
+					console.log("Client: Removing player 1 cannon at index", targetIndex);
+
+					// Highlight the target cannon (tint it red) before destroying
+					this.p1Cannons.list[targetIndex].setTint(0xff0000); // Red tint
+
+					// Destroy after a short delay for visual effect
+					this.time.delayedCall(500, () => {
+						if (this.p1Cannons.list[targetIndex]) {
+							this.p1Cannons.list[targetIndex].destroy();
+						}
+					});
+				}
+			}
+		}
+
+		// Start the next round after a short delay to allow for visual effects
+		this.time.delayedCall(1000, () => {
+			this.events.emit("roundStart");
+		});
+	}
+
+	onTowerResultUpgradeCannon(info, state) {
+		// Client function that receives updates from the server and updates the visuals
+		console.log(
+			"Client: Updating cannon upgrade visuals based on server state"
+		);
+		console.log("Upgrade info:", info); //id: cannon id
+		// Find the cannon data that was upgraded
+		let upgradedCannon = state.roundWinner.cannons.find(
+			(cannon) => cannon.id === info.id
+		);
+		let upgradedCannonSprite;
+		//upgrade the sprites too
+		console.warn(":(", state.roundWinner);
+		if (state.roundWinner.name != this.povName) {
+			upgradedCannonSprite = this.p2Cannons.list.find(
+				(cannon) => cannon.id === info.id
+			);
+		} else {
+			upgradedCannonSprite = this.p1Cannons.list.find(
+				(cannon) => cannon.id === info.id
+			);
+		}
+
+		console.warn("uwuwuwuwuwu", upgradedCannon, upgradedCannonSprite.pow);
+
+		upgradedCannonSprite.pow = upgradedCannon.pow;
+		// Find the cannon in the state data
+		if (state.roundWinner && state.roundWinner.cannons) {
+			console.log(
+				"Client: Found cannon to upgrade with power",
+				upgradedCannon.pow
+			);
+		}
+
+		if (upgradedCannon) {
+			const pow = upgradedCannonSprite.pow;
+
+			// Update the visual appearance based on power (max frame is 7)
+			if (pow <= 7) {
+				if (state.roundWinner.name != this.povName) {
+					// Player 2's cannon
+
+					console.log("Client: Upgrading player 2 cannon to power", pow);
+
+					// Highlight the cannon being upgraded
+					upgradedCannonSprite.setTint(0x00ff00);
+					upgradedCannonSprite.setFrame("match_p2Cannon000" + (pow - 1));
+
+					// Clear the tint after a short delay
+					this.time.delayedCall(1000, () => {
+						upgradedCannonSprite?.clearTint();
+					});
+				} else {
+					// Player 1's cannon
+
+					console.log("Client: Upgrading player 1 cannon to power", pow);
+
+					// Highlight the cannon being upgraded
+					upgradedCannonSprite.setTint(0x00ff00);
+
+					// Update the frame to show the new power level
+					upgradedCannonSprite.setFrame("match_p1Cannon000" + (pow - 1));
+
+					// Clear the tint after a short delay
+					this.time.delayedCall(1000, () => {
+						upgradedCannonSprite?.clearTint();
+					});
+				}
+			} else {
+				console.log(
+					"Client: Cannon power exceeds maximum visual representation"
+				);
+			}
+		} else {
+			console.warn("Client: Could not find cannon to upgrade");
+		}
+
+		// Start the next round after a short delay to allow for visual effects
+		this.time.delayedCall(1000, () => {
+			this.cannonSelectors.removeAll(true);
+			this.events.emit("roundStart");
+		});
+	}
+
 	onGameOver() {
-		alert("gggggggg on Game over");
+		alert("gggggg rematch or quit?");
 		this.time.addEvent({
 			delay: 1000,
 			callback: () => {
@@ -531,8 +1124,6 @@ export default class Match extends Phaser.Scene {
 							.setName("selfCannonSelector")
 							.setInteractive({ cursor: "pointer" })
 							.on("pointerdown", () => {
-								console.warn(`With my ${p1Index}th cannon`);
-
 								//add targets, each trigger the call and then hide everyone
 								this.targets.removeAll(true);
 
@@ -547,7 +1138,7 @@ export default class Match extends Phaser.Scene {
 									.setName("p2Base");
 								this.targets.add(baseTarget);
 								// cannon target
-								this.p2Cannons.list.forEach((c) => {
+								this.p2Cannons.list.forEach((c, p2Index) => {
 									console.log("add target at", c.x, c.y);
 
 									const cannonTarget = new Button(
@@ -560,38 +1151,69 @@ export default class Match extends Phaser.Scene {
 										.setDepth(15)
 										.setVisible(true)
 										.setName("p2Cannon_" + c.name);
+
+									cannonTarget.on("pointerdown", () => {
+										this.targets.removeAll(true);
+
+										// Get cannon IDs
+										let attackerCannonId = null;
+										let targetCannonId = null;
+
+										// Get the cannon ID from the cannon object
+										if (cannon.id) {
+											attackerCannonId = cannon.id;
+										}
+
+										// Get the target cannon ID
+										if (c.id) {
+											targetCannonId = c.id;
+										} else if (this.state.roundLoser.cannons[p2Index]) {
+											// Fallback to getting ID from state if available
+											targetCannonId =
+												this.state.roundLoser.cannons[p2Index].id;
+										}
+
+										console.log(
+											"Attacking opponent's cannon with ID",
+											targetCannonId,
+											"using my cannon with ID",
+											attackerCannonId
+										);
+
+										this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
+											// Primary identification using IDs
+											attackerCannonId: attackerCannonId,
+											targetCannonId: targetCannonId,
+
+											// Fallback to indices for backward compatibility
+											attackerIndex: p1Index,
+											target: p2Index,
+										});
+									});
+
 									this.targets.add(cannonTarget);
 								});
 								this.targets.setVisible(true);
 
 								const chooseAtkTower = () => {
 									console.info("chooseAtkTower() called");
+
+									// Get attacker cannon ID if available
+									let attackerCannonId = null;
+									if (cannon.id) {
+										attackerCannonId = cannon.id;
+									}
+
 									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-										target: -1, //-1 for tower, 0+ for opponent cannon
-										cannonId: p1Index,
+										target: -1, // -1 indicates tower target
+										// Attacker information
+										attackerIndex: p1Index,
+										attackerCannonId: attackerCannonId,
+										cannonId: p1Index, // Keep for backward compatibility
 									});
-									//console.warn("owo");
 								};
 
 								baseTarget.once("pointerdown", chooseAtkTower);
-
-								const chooseAtkCannon = (c, p2Index) => {
-									this.targets.removeAll(true);
-									console.log("Attacking opopnent's cannon", p2Index);
-									this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
-										target: p2Index, //-1 for tower, 0+ for opponent cannon
-										cannonId: p1Index,
-									});
-								};
-								this.p2Cannons.list.forEach((c, p2Index) => {
-									c.setInteractive({ cursor: "pointer" }).on(
-										"pointerdown",
-										(pointer) => {
-											console.warn("each cannon's index:", p2Index);
-											chooseAtkCannon(c, p2Index);
-										}
-									);
-								});
 							});
 
 						this.cannonSelectors.add(selector);
@@ -624,17 +1246,23 @@ export default class Match extends Phaser.Scene {
 						"match_cannonBtn"
 					).setName("cannonBtn");
 
-					this.shieldBtn = new Button(
-						this,
-						906,
-						579,
-						"match_shieldBtn"
-					).setName("shieldBtn");
+					// Only show shield button if HP is 4 or more
+					if (this.state.roundWinner.hp >= 4) {
+						this.shieldBtn = new Button(
+							this,
+							906,
+							579,
+							"match_shieldBtn"
+						).setName("shieldBtn");
+					}
+
 					// this.bldBtn.off("pointerdown", chooseBld);
 					// this.bldBtn.removeInteractive();
 					const handleAddCannon = () => {
 						console.info("handleAddCannon() called");
-						this.shieldBtn.removeInteractive();
+						if (this.shieldBtn) {
+							this.shieldBtn.removeInteractive();
+						}
 						let cannon = new Cannon(this, this.input.mousePointer);
 
 						const handleMove = (pointer) => {
@@ -713,11 +1341,12 @@ export default class Match extends Phaser.Scene {
 							callback: () => {
 								const handleConfirm = () => {
 									if (!this.cantAddCannon) {
-										console.warn("add le caon", cannon);
+										//console.warn("add le caon", cannon);
 										this.input.off("pointermove", handleMove);
 										this.input.off("pointerdown", handleConfirm);
 										this.p1Cannons.add(cannon);
 										cannon.placed = true; //any use?
+
 										console.log("cannons: ", this.p1Cannons);
 										this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
 											x: cannon.x,
@@ -737,51 +1366,57 @@ export default class Match extends Phaser.Scene {
 						})
 						.once("pointerdown", handleAddCannon, this);
 
-					//disable later to avoid double clickin
-					const handleAddShield = () => {
-						let shield = new Shield(this, this.input.mousePointer);
-
-						const handleResize = (pointer) => {
-							console.info("handleResize() called");
-							shield.handleResize(pointer);
-							this.cantAddShield = this.p1Shields.some(
-								(scale) => Math.abs(scale - shield.scale) <= 0.001
+					// Only add shield button handler if shield button exists
+					if (this.shieldBtn) {
+						const handleAddShield = () => {
+							this.cannonBtn.removeInteractive();
+							let shield = new Shield(this, this.input.mousePointer).setName(
+								"p1 shield"
 							);
 
-							if (this.cantAddShield) {
-								shield.setTint(0xff0000);
-							} else {
-								shield.clearTint();
-							}
+							const handleResize = (pointer) => {
+								console.info("handleResize() called");
+								shield.handleResize(pointer);
+								this.cantAddShield = this.p1Shields.some(
+									(builtS) => Math.abs(builtS.scale - shield.scale) <= 0.001
+								);
+
+								if (this.cantAddShield) {
+									shield.setTint(0xff0000);
+								} else {
+									shield.clearTint();
+								}
+							};
+
+							this.input.on("pointermove", handleResize, this);
+
+							// confirm add shields
+							this.time.addEvent({
+								delay: 50,
+								callback: () => {
+									const handleConfirm = () => {
+										if (!this.cantAddShield) {
+											this.input.off("pointermove", handleAddShield);
+											this.input.off("pointermove", handleResize);
+											this.p1Shields.push(shield);
+											console.log(this.p1Shields);
+											this.handleTowerInput(TowerActionTypes.BUILD_SHIELD, {
+												scaleX: shield.scaleX,
+												scaleY: shield.scaleY,
+											});
+										}
+									};
+									this.input.once("pointerdown", handleConfirm);
+								},
+								loop: false,
+							});
 						};
-
-						this.input.on("pointermove", handleResize, this);
-
-						this.time.addEvent({
-							delay: 50,
-							callback: () => {
-								const handleConfirm = () => {
-									if (!this.cantAddShield) {
-										this.input.off("pointermove", handleAddShield);
-										this.input.off("pointermove", handleResize);
-										this.p1Shields.push(shield);
-										console.log(this.p1Shields);
-										this.handleTowerInput(
-											TowerActionTypes.BUILD_SHIELD,
-											shield.scale
-										);
-									}
-								};
-								this.input.once("pointerdown", handleConfirm);
-							},
-							loop: false,
-						});
-					};
-					this.shieldBtn
-						.setInteractive({
-							cursor: "pointer",
-						})
-						.once("pointerdown", handleAddShield);
+						this.shieldBtn
+							.setInteractive({
+								cursor: "pointer",
+							})
+							.once("pointerdown", handleAddShield);
+					}
 				},
 			});
 		};
@@ -800,6 +1435,7 @@ export default class Match extends Phaser.Scene {
 
 			//how to reuse this?
 			this.p1Cannons.list.forEach((cannon, index) => {
+				console.warn("1264, cannon id:", cannon.id);
 				//scale the shape of the sprite?
 
 				const selector = new Button(
@@ -812,21 +1448,15 @@ export default class Match extends Phaser.Scene {
 					.setInteractive({ cursor: "pointer" })
 					.on("pointerdown", () => {
 						this.targets.removeAll(true);
-						console.warn(`Upgrade my ${index}th cannon`);
+						//console.warn(`Upgrade my ${index}th cannon`);
 
 						this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
-							cannonId: index,
+							id: cannon.id,
 						});
 
 						this.cannonSelectors.removeAll(true);
 					});
 				selector.setDisplayOrigin(131, 245);
-
-				console.warn(
-					"set shit to",
-					selector.displayOriginX,
-					selector.displayOriginY
-				);
 				this.cannonSelectors.add(selector);
 			});
 		};
@@ -864,7 +1494,7 @@ export default class Match extends Phaser.Scene {
 		this.cannonSelectors.removeAll(true);
 		this.targets.removeAll(true);
 	}
-
+	/*
 	_decideWinner(p1RpsChoice, p2RpsChoice) {
 		console.log("decide winner");
 		console.info(this.state.players);
@@ -886,182 +1516,286 @@ export default class Match extends Phaser.Scene {
 			this.state.roundLoser = this.state.players[0];
 			return 1;
 		}
-	}
+	}*/
 
 	onKeyDown(e) {
-		//Thesea re all temporareeie
+		//These are all temporary
 		if (this.state.stage == "rpsStart") {
 			if (["r", "p", "s"].includes(e.key)) {
-				this.handleRpsInput(e.key, "discovry");
+				// Only handle keyboard input for the current player
+				this.handleRpsInput(e.key, this.povName);
 			}
 		} else if (this.state.stage == "towerStart") {
-			if (["b", "a", "u"].includes(e.key)) {
-				this.handleTowerInput(e.key, "discovry");
-			}
+			// Rest of the tower action handling...
 		}
 	}
 
 	handleRpsInput(choice, playerName) {
-		console.info("handleRpsInput() called");
+		console.info("handleRpsInput() called with choice:", choice, "playerName:", playerName);
 		/**called only during roundStart event.
-		 * Sends message to quasi server.
+		 * Sends message to server.
 		 */
 		if (choice != "r" && choice != "p" && choice != "s") {
 			console.warn("invalid choice");
 			return;
 		}
 
-		// saves input to server.
-		if (this.povName == playerName) {
+		// Only handle input for the current player
+		if (this.povName === playerName) {
+			// Send RPS choice to server
+			const message = {
+				player_name: this.gameToken, // Use the game token instead of povName
+				action: 'RPS',
+				value: choice,
+				room_id: this.roomId
+			};
+			console.log("Current game state:", {
+				povName: this.povName,
+				gameToken: this.gameToken,
+				roomId: this.roomId,
+				state: this.state
+			});
+			console.log("Sending RPS choice to server:", message);
+			socket.emit('message_from_client', JSON.stringify(message));
+
+			// Update local state
 			this.state.p1RpsChoice = choice;
 		} else {
-			this.state.p2RpsChoice = choice;
-		}
-		console.log(this.state.p1RpsChoice, this.state.p2RpsChoice);
-
-		/**Quasi server logic.
-		 * Called everytime an rps input is received. */
-		if (this.state.p1RpsChoice && this.state.p2RpsChoice) {
-			this.state.stage = "rpsResult";
-			this.events.emit("rpsResult");
+			console.warn("Ignoring RPS input for non-current player:", playerName);
 		}
 	}
 	handleTowerInput(towerAction, info) {
-		console.info("handle tower inptu");
+		console.info("handle tower input - server logic");
 		console.debug("state: ", this.state);
 		if (!this.state.roundWinner) {
-			console.error("what the hell");
+			console.error("No round winner defined");
 			return;
 		}
-		/**called only during towerStart event.
-		 * Sends message to quasi server.
+		/**
+		 * This function acts as the server that alters the game state
+		 * It processes the tower action and updates the game state accordingly
 		 */
 		if (!Object.values(TowerActionTypes).includes(towerAction)) {
 			console.warn("invalid towerAction");
 			return;
 		}
 
-		// saves input to server.
-		//both atker and victim should know this actoin
-		console.info("tower input: " + towerAction);
-		//this.events.emit("towerResult", towerAction);
+		console.info("Server processing tower action: " + towerAction);
 
 		/**Quasi server logic.
 		 * Called everytime an rps input is received. */
+
 		switch (towerAction) {
 			case TowerActionTypes.BUILD_TOWER:
-				console.log("build tower of", this.state.roundWinner.name);
-				this.state.roundWinner.hp += 1;
-
-				//where to update visuals
-				if (this.state.players[0].hp <= 4) {
-					this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+				console.log("Server: Building tower for", this.state.roundWinner.name);
+				// Increment HP but cap at 4 for this action
+				if (this.state.roundWinner.hp < 4) {
+					this.state.roundWinner.hp += 1;
+					this.events.emit("towerResultBuildTower", {
+						info,
+						state: this.state,
+					});
 				}
-				if (this.state.players[1].hp <= 4) {
-					this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
-				}
-				// //update visuasl
-				// if (this.state.roundWinner.name == this.povName) {
-				// 	this.p1Base.setFrame("match_p1Base000" + this.state.roundWinner.hp);
-				// } else {
-				// 	this.p2Base.setFrame("match_p2Base000" + this.state.roundWinner.hp);
-				// }
 				break;
+
 			case TowerActionTypes.BUILD_SHIELD:
-				console.log("build shield, scale: " + info);
-				this.state.roundWinner.hp += 1;
+				console.log(
+					"Server: Building shield with scale:",
+					info.scaleX,
+					info.scaleY
+				);
+				// Register shield sizes as a tuple for client rendering
+				this.state.roundWinner.shields.push([info.scaleX, info.scaleY]);
 
-				//player visuals
-				const oppSize = info.scale;
-				this.add
-					.sprite(1280, 523, "match_p2Shield")
-					.setDisplayOrigin(283, 203)
-					.setScale(info.scale);
-
-				// shield upgrades are SCRAPPED!!!
-
+				this.events.emit("towerResultBuildShield", { info, state: this.state });
 				break;
+
 			case TowerActionTypes.BUILD_CANNON:
-				console.log("info: ", info);
+				console.log("Server: Building cannon at position:", info.x);
 
-				// server sends the x pos of pov, calculte opponent x pos
-				let oppX = mapRange(info.x, 30, SCENE_W - 30, 910, SCENE_W - 910);
+				// Create a new cannon with position and power
 
-				oppX += 2 * (1280 - oppX);
-				console.log("oppX: ", oppX);
-				//dont draw into the base
-				if (oppX > 1010 && oppX < 1561) {
-					if (oppX > 1280) {
-						oppX = 1561;
-					} else {
-						oppX = 1010;
+				const newCannon = {
+					id: this.state.cannonCount,
+					x: info.x, // xPos for client rendering
+					pow: 1, // Initial power value
+				};
+				this.state.cannonCount++;
+
+				// Add the cannon to the player's cannons array
+				this.state.roundWinner.cannons.push(newCannon);
+
+				// Print the cannon object to the server console
+				console.log("Server: Added new cannon object:", newCannon);
+				console.log(
+					"Server: Player now has",
+					this.state.roundWinner.cannons.length,
+					"cannons:",
+					this.state.roundWinner.cannons
+				);
+
+				this.events.emit("towerResultBuildCannon", {
+					info: {
+						x: info.x,
+						newId: newCannon.id,
+						pow: 1,
+					},
+					state: this.state,
+				});
+				break;
+
+			case TowerActionTypes.ATTACK_TOWER:
+				console.warn("CANON POWIEJR:", info);
+				console.log("Server: Attacking tower with cannon ID:", info.id);
+
+				// Check if there are any shields to absorb the attack
+				if (this.state.roundLoser.shields.length > 0) {
+					// Find the largest shield (the one with the largest scaleY)
+					const largestShieldIndex = this.state.roundLoser.shields.reduce(
+						(maxIndex, shield, index, arr) => {
+							return shield[1] > arr[maxIndex][1] ? index : maxIndex;
+						},
+						0
+					);
+
+					// Remove the outermost shield
+					this.state.roundLoser.shields.splice(largestShieldIndex, 1);
+					console.log("Server: Shield absorbed the attack");
+				} else {
+					// No shields, reduce HP directly
+					this.state.roundLoser.hp -= info.pow;
+					console.log(
+						"Server: Tower took damage, new HP:",
+						this.state.roundLoser.hp
+					);
+				}
+
+				// Check if the attack was fatal
+				const isFatal = this.state.roundLoser.hp <= 0;
+
+				// Emit event with updated state for clients to update visuals
+				this.events.emit("towerResultAttackTower", {
+					info: {
+						cannonId: info.id,
+						attackerIndex: info.attackerIndex,
+						attackerCannonId: info.attackerCannonId,
+						fatal: isFatal,
+					},
+					state: this.state,
+				});
+				break;
+
+			case TowerActionTypes.ATTACK_CANNON:
+				console.log("Server: Attacking cannon", info);
+
+				// Find the attacking cannon object - prioritize using ID over index
+				let attackingCannonObj = null;
+				if (info.attackerCannonId) {
+					// Find by cannon ID (preferred method)
+					attackingCannonObj = this.state.roundWinner.cannons.find(
+						(cannon) => cannon.id === info.attackerCannonId
+					);
+					console.log(
+						"Server: Attacking cannon object (by ID):",
+						attackingCannonObj
+					);
+				} else if (
+					info.attackerIndex !== undefined &&
+					this.state.roundWinner.cannons[info.attackerIndex]
+				) {
+					// Fallback to index if ID not available
+					attackingCannonObj =
+						this.state.roundWinner.cannons[info.attackerIndex];
+					console.log(
+						"Server: Attacking cannon object (by index):",
+						attackingCannonObj
+					);
+				}
+
+				// onKeyDown(
+				// Find the target cannon - prioritize using ID over index
+				let targetIndex = -1;
+				let targetCannonObj = null;
+
+				if (info.targetCannonId) {
+					// Find by cannon ID (preferred method)
+					this.state.roundLoser.cannons.forEach((cannon) => {
+						console.log(
+							"Server: Round loser cannon ID:",
+							cannon.id,
+							info.targetCannonId
+						);
+					});
+
+					targetIndex = this.state.roundLoser.cannons.findIndex(
+						(cannon) => cannon.id === info.targetCannonId
+					);
+					if (targetIndex !== -1) {
+						targetCannonObj = this.state.roundLoser.cannons[targetIndex];
+						console.log("Server: Target cannon found by ID:", targetCannonObj);
 					}
 				}
 
-				// player visuals again
-				const oppCannon = this.add
-					.sprite(oppX, 558, "match_p2Cannon")
-					.setDisplayOrigin(107, 154)
-					.setDepth(10)
-					.setVisible(true);
-				this.p2Cannons.add(oppCannon);
-				this.state.roundWinner.cannons.push({
-					x: info.x,
-					pow: 1,
+				// Remove the target cannon if found
+				if (
+					targetIndex !== -1 &&
+					targetIndex < this.state.roundLoser.cannons.length
+				) {
+					console.log("Server: Removing cannon at index:", targetIndex);
+					this.state.roundLoser.cannons.splice(targetIndex, 1);
+				} else {
+					console.warn("Server: Target cannon not found");
+				}
+
+				// Emit event with updated state and enhanced info for clients to update visuals
+				this.events.emit("towerResultAttackCannon", {
+					info,
+					state: this.state,
 				});
 				break;
-			case TowerActionTypes.ATTACK_TOWER:
-				console.log("info: ", info);
-				this.state.roundLoser.hp -= 1;
 
-				if (this.state.roundLoser.hp < 0) {
-					alert("gg gamoe over");
-					this.events.emit("gameOver");
-				}
-				this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-				this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
-
-				//temp
-				this.targets.removeAll(true);
-				break;
-			case TowerActionTypes.ATTACK_CANNON:
-				console.log("info: ", info);
-				console.log(this.p2Cannons.list);
-				console.log("remove opp's", info.target, "th cannon");
-				this.state.roundLoser.cannons.splice(info.target, 1);
-				this.p2Cannons.list[info.target].destroy();
-				break;
-			/*case TowerActionTypes.UPGRADE_SHIELD:
-        console.log("info: ", info);
-        break;*/
 			case TowerActionTypes.UPGRADE_CANNON:
-				console.log("info: ", info);
-				this.state.roundWinner.cannons[info.cannonId].pow += 1;
+				console.log("Server: Upgrading cannon", info);
 
-				const pow = this.state.roundWinner.cannons[info.cannonId].pow;
-				console.warn(this.state.roundWinner.cannons[info.cannonId]);
-
-				//player visuals, no update beyond 7+power
-				if (pow <= 7) {
-					this.p2Cannons.list[info.cannonId].setFrame(
-						"match_p2Cannon000" + (pow - 1)
+				// Find the target cannon to upgrade
+				let targetCannon = null;
+				if (info.id) {
+					// Find by cannon ID
+					targetCannon = this.state.roundWinner.cannons.find(
+						(cannon) => cannon.id === info.id
 					);
-					this.p1Cannons.list[info.cannonId].setFrame(
-						"match_p1Cannon000" + (pow - 1)
-					);
+				} else if (info.id !== undefined) {
+					// Use cannonId index
+					if (info.id < this.state.roundWinner.cannons.length) {
+						targetCannon = this.state.roundWinner.cannons[info.id];
+					}
 				}
 
+				// Upgrade the cannon if found
+				if (targetCannon) {
+					console.log(
+						"Server: Upgrading cannon power from",
+						targetCannon.pow,
+						"to",
+						targetCannon.pow + 1
+					);
+					targetCannon.pow += 1;
+				} else {
+					console.warn("Server: Target cannon not found for upgrade");
+				}
+
+				// Emit event with updated state for clients to update visuals
+				this.events.emit("towerResultUpgradeCannon", {
+					info,
+					state: this.state,
+				});
 				break;
+
 			default:
+				console.error("Invalid tower action:", towerAction);
 				alert("Invalid action");
 				break;
 		}
-		this.events.emit("roundStart");
-	}
-	_showRpsButtons() {
-		console.warn("(do not use this, just create)show rps butons");
-		// Update to show container instead of individual elements
-		this.rpsButtons.removeAll(true);
 	}
 
 	_hideRpsButtons() {
@@ -1072,42 +1806,15 @@ export default class Match extends Phaser.Scene {
 }
 
 class Player {
-	constructor(name) {
+	constructor(name, initialHp = 0) {
 		this.name = name;
-		/***
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 * @todo change this hp
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 */
-		this.hp = 0;
-		//this.shields = [];
+		this.hp = initialHp;
+		this.shields = [];
 		this.cannons = [];
 	}
 
 	toString() {
 		return `Player(name=${this.name}, hp=${this.hp}, cannons=${this.cannons})`;
-	}
-
-	onNotify(move) {
-		console.log(`${this.name} received notification: ${move}`);
 	}
 }
 class Button extends Phaser.GameObjects.Sprite {
@@ -1142,7 +1849,6 @@ class Cannon extends Phaser.GameObjects.Sprite {
 			.setVisible(true)
 			.setName("p1Cannon");
 
-		console.log("set hitarea?");
 		this.input.hitArea.setTo(-88, -150, 167, 144);
 		//console.warn(this.input.hitArea, this.getBounds());
 		scene.add.existing(this);
@@ -1158,35 +1864,10 @@ class Cannon extends Phaser.GameObjects.Sprite {
 	}
 }
 
-//unused
-/*
-class P2Cannon extends Phaser.GameObjects.Sprite {
-	constructor(scene, pointer, forceX = null) {
-		super(scene, pointer.x ? !forceX : forceX, 1430, "match_p2Cannon");
-		this.pow = 1;
-		this.placed = false;
-
-		this.setDisplayOrigin(129, 281)
-			.setDepth(10)
-			.setInteractive()
-			.setVisible(true)
-			.setScale(0.7, 0.7);
-		scene.add.existing(this);
-	}
-
-	handleMove(pointer) {
-		this.setX(pointer.x);
-	}
-
-	handlePlacement() {
-		this.placed = true;
-		// Additional placement logic can go here
-	}
-}*/
 class Shield extends Phaser.GameObjects.Sprite {
 	constructor(scene, pointer) {
 		super(scene, 1280, 1438, "match_p1Shield");
-		this.setDisplayOrigin(817, 519)
+		this.setDisplayOrigin(633, 454)
 			.setDepth(10)
 			.setInteractive()
 			.setVisible(true);
@@ -1201,12 +1882,11 @@ class Shield extends Phaser.GameObjects.Sprite {
 			pointer.y
 		);
 
-		const newScale = roundToNearest(
-			Phaser.Math.Clamp(distance / 500, 0.85, 1.5),
-			0.04
+		//max 1.85, 1.47
+		this.setScale(
+			roundToNearest(Phaser.Math.Clamp(distance / 500, 1, 1.85), 0.04),
+			roundToNearest(Phaser.Math.Clamp(distance / 500, 1, 1.47), 0.04)
 		);
-
-		this.setScale(newScale);
 	}
 }
 
