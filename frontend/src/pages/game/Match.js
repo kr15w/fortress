@@ -60,7 +60,7 @@ export default class Match extends Phaser.Scene {
 		this.addPlayer(new Player(this.povName));
 		this.addPlayer(new Player("discovry"));
 
-		this.state.players[0].hp = 4; //bruh lol
+		//this.state.players[0].hp = 4; //bruh lol
 
 		/*
     this.input.on("pointerdown", (pointer) => {
