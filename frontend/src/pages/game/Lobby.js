@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { loadAnims } from "./loadAnims";
+import ANIMS from "./lobby_anims.json";
 /**
  * @todo handle animations
  * nah automate origin setting (use the relative position of the largest sprite)
@@ -8,46 +9,6 @@ import { loadAnims } from "./loadAnims";
  * @todo show usernaem
  * @todo add prelobby in case user reloads screen (how to handle?)
  */
-const ANIMS = {
-	lobby_player: [
-		{
-			key: "enter",
-
-			start: 0,
-			end: 15,
-			frameRate: 24,
-			repeat: -1,
-		},
-		{
-			key: "idle",
-
-			start: 16,
-			end: 19,
-
-			frameRate: 8,
-			repeat: -1,
-		},
-		{
-			key: "ready",
-			start: 20,
-			end: 27,
-			frameRate: 24,
-			repeat: 0,
-		},
-		{
-			key: "notice",
-			start: 28,
-			end: 32,
-			frameRate: 24,
-			repeat: 0,
-		},
-		{
-			key: "annoyed",
-			start: 33,
-			end: 33,
-		},
-	],
-};
 
 export default class Lobby extends Phaser.Scene {
 	constructor() {
@@ -60,7 +21,11 @@ export default class Lobby extends Phaser.Scene {
 			"assets/lobby_rmCodeText.png",
 			"assets/lobby_rmCodeText.json"
 		);
-		this.load.image("lobby_rmCodeSign", "assets/lobby_rmCodeSign.png");
+		this.load.atlas(
+			"lobby_rmCodeSign",
+			"assets/lobby_rmCodeSign.png",
+			"assets/lobby_rmCodeSign.json"
+		);
 
 		this.load.image("lobby_exitBtn", "assets/lobby_exitBtn.png");
 		this.load.atlas(
@@ -116,10 +81,11 @@ export default class Lobby extends Phaser.Scene {
 
 		/*sign text*/
 		this.rmCodeSign = this.add
-			.sprite(1166, 569, "lobby_rmCodeSign")
+			.sprite(1280, 937, "lobby_rmCodeSign")
 			.setName("rmCodeSign")
-			.setOrigin(0)
-			.setDepth(998);
+			.setDisplayOrigin(187, 374)
+			.setDepth(998)
+			.play("lobby_rmCodeSign_stand");
 		this.rmCodeDigits = this.add.container(0, 0).setDepth(999);
 		for (let i = 0; i < 4; i++) {
 			this.rmCodeDigits.add(
@@ -158,15 +124,15 @@ export default class Lobby extends Phaser.Scene {
 
 		// PIVOTS
 		// AUTOMATE THIS use the largest anim for the stuff
-		this.p1.setOrigin(291 / this.p1.width, 800 / this.p1.height);
-		this.p2.setOrigin(291 / this.p2.width, 800 / this.p2.height);
+		this.p1.setDisplayOrigin(361, 808);
+		this.p2.setDisplayOrigin(361, 808);
 
 		loadAnims(ANIMS, this);
 
 		this.p1.play("lobby_player_enter", true);
 		this.p2.play("lobby_player_enter", true);
 
-		this.p1.setPosition(-this.p1.width, 1184);
+		this.p1.setPosition(-243, 1184);
 
 		if (this.p2Enter) {
 			this.p2.setPosition(1922, 1184);
@@ -184,7 +150,7 @@ export default class Lobby extends Phaser.Scene {
 			targets: this.p1,
 			x: 627,
 			ease: "Linear",
-			duration: 1500,
+			duration: 2500,
 			repeat: 0,
 			yoyo: false,
 			onComplete: () => {
