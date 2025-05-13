@@ -157,7 +157,7 @@ export default class Lobby extends Phaser.Scene {
 			targets: this.p1,
 			x: 627,
 			ease: "Linear",
-			duration: 2500,
+			duration: 1500,
 			repeat: 0,
 			yoyo: false,
 			onComplete: () => {
@@ -277,28 +277,41 @@ export default class Lobby extends Phaser.Scene {
 						.play("lobby_rmCodeSign_fall")
 						.on("animationcomplete", () => {
 							this.rmCodeSign.destroy();
-						});
+							this.time.delayedCall(1000, () => {
+								const black = this.add
+									.rectangle(0, 0, SCENE_W, SCENE_H, 0x333333, 0.2)
+									.setDepth(101)
+									.setOrigin(0, 0);
 
-					const black = this.add
-						.rectangle(0, 0, SCENE_W, SCENE_H, 0x000000, 0)
-						.setOrigin(0, 0);
-					this.tweens.add({
-						targets: black,
-						alpha: 1,
-						duration: 800,
-						onComplete: () => {
-							const trans = this.add
-								.sprite(0, 0, "lobby_transition")
-								.setDisplayOrigin(563, -593)
-								.play("lobby_transition_trans")
-								.on("animationcomplete", () => {
-									this.time.delayedCall(2000, () => {
-										this.scene.stop("Lobby");
-										this.scene.start("Match");
-									});
+								const trans = this.add
+									.sprite(0, 0, "lobby_transition")
+									.setDepth(9999)
+									.setDisplayOrigin(563, -593)
+									.setFrame("lobby_transition_trans0000");
+
+								this.tweens.add({
+									targets: trans,
+									alpha: 1,
+									duration: 1000,
 								});
-						},
-					});
+								this.tweens.add({
+									targets: black,
+									fillAlpha: 1,
+									duration: 1000,
+									onComplete: () => {
+										trans
+											.play("lobby_transition_trans")
+											.on("animationcomplete", () => {
+												this.time.delayedCall(2000, () => {
+													this.cameras.main.fadeOut(1000);
+													this.scene.stop("Lobby");
+													this.scene.start("Match");
+												});
+											});
+									},
+								});
+							});
+						});
 				});
 			}
 		}
