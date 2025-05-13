@@ -9,12 +9,19 @@ import ANIMS from "./lobby_anims.json";
  * @todo show usernaem
  * @todo add prelobby in case user reloads screen (how to handle?)
  */
-
+const SCENE_H = 1440;
+const SCENE_W = 2560;
 export default class Lobby extends Phaser.Scene {
 	constructor() {
 		super("Lobby");
 	}
 	preload() {
+		this.load.atlas(
+			"lobby_transition",
+			"assets/lobby_transition.png",
+			"assets/lobby_transition.json"
+		);
+
 		this.load.image("lobby_table", "assets/lobby_table.png");
 		this.load.atlas(
 			"lobby_rmCodeText",
@@ -264,9 +271,34 @@ export default class Lobby extends Phaser.Scene {
 			if (!this.startingGame) {
 				this.startingGame = true;
 				console.log("both ready, start in 2 sec");
-				this.time.delayedCall(2000, () => {
-					this.scene.stop("Lobby");
-					this.scene.start("Match");
+				this.time.delayedCall(1500, () => {
+					this.rmCodeDigits.removeAll(true);
+					this.rmCodeSign
+						.play("lobby_rmCodeSign_fall")
+						.on("animationcomplete", () => {
+							this.rmCodeSign.destroy();
+						});
+
+					const black = this.add
+						.rectangle(0, 0, SCENE_W, SCENE_H, 0x000000, 0)
+						.setOrigin(0, 0);
+					this.tweens.add({
+						targets: black,
+						alpha: 1,
+						duration: 800,
+						onComplete: () => {
+							const trans = this.add
+								.sprite(0, 0, "lobby_transition")
+								.setDisplayOrigin(563, -593)
+								.play("lobby_transition_trans")
+								.on("animationcomplete", () => {
+									this.time.delayedCall(2000, () => {
+										this.scene.stop("Lobby");
+										this.scene.start("Match");
+									});
+								});
+						},
+					});
 				});
 			}
 		}
