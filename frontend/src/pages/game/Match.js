@@ -640,57 +640,56 @@ export default class Match extends Phaser.Scene {
 				);
 				//atkCannon.setTint(0x0000ff); // Blue tint
 
-				//i love this curve
-				const controlX = atkCannon.x + 0.6 * (this.p2Base.x - atkCannon.x);
-				const controlY =
-					atkCannon.y + 0.7 * (this.p2Base.y - atkCannon.y) - 600;
-				const sourceX = atkCannon.x + 79; //offset from flash
-				const sourceY = atkCannon.y - 193;
-				const destX = this.p2Base.x + this.p2Base.width / 2;
-				const destY = this.p2Base.y + this.p2Base.height / 2;
+				// //i love this curve
+				// const controlX = atkCannon.x + 0.6 * (this.p2Base.x - atkCannon.x);
+				// const controlY =
+				// 	atkCannon.y + 0.7 * (this.p2Base.y - atkCannon.y) - 600;
+				// const sourceX = atkCannon.x + 79; //offset from flash
+				// const sourceY = atkCannon.y - 193;
+				// const destX = this.p2Base.x + this.p2Base.width / 2;
+				// const destY = this.p2Base.y + this.p2Base.height / 2;
 
-				const curve = new Phaser.Curves.QuadraticBezier(
-					new Phaser.Math.Vector2(sourceX, sourceY),
-					new Phaser.Math.Vector2(controlX, controlY),
-					new Phaser.Math.Vector2(destX, destY)
-				);
-				const path = { t: 0, vec: new Phaser.Math.Vector2(sourceX, sourceY) };
+				// const curve = new Phaser.Curves.QuadraticBezier(
+				// 	new Phaser.Math.Vector2(sourceX, sourceY),
+				// 	new Phaser.Math.Vector2(controlX, controlY),
+				// 	new Phaser.Math.Vector2(destX, destY)
+				// );
+				// const path = { t: 0, vec: new Phaser.Math.Vector2(sourceX, sourceY) };
 
-				const bomb = this.add
-					.sprite(sourceX, sourceY, "match_bomb")
-					.setName("le bomb lolol")
-					.setDepth(99999)
-					.play("match_bomb_sparkle");
+				// const bomb = this.add
+				// 	.sprite(sourceX, sourceY, "match_bomb")
+				// 	.setName("le bomb lolol")
+				// 	.setDepth(99999)
+				// 	.play("match_bomb_sparkle");
 
-				console.warn(bomb.setPosition);
-				// Tween bomb to move along the curve in 1 second
-				this.tweens.add({
-					targets: path,
-					t: 1,
-					duration: 300,
-					ease: "Linear",
-					onUpdate: () => {
-						/*
-						graphics.fillStyle(0xff0000, 1);
-						graphics.fillCircle(path.vec.x, path.vec.y, 5);
-						graphics.fillStyle(0xffffff, 1);
-						graphics.fillCircle(
-							curve.getPoint(path.t, path.vec).x,
-							curve.getPoint(path.t, path.vec).y,
-							5
-						);
-						graphics.fillCircle(controlX, controlY, 5);*/
+				// console.warn(bomb.setPosition);
+				// // FIRE IN THE HOLE
+				// this.tweens.add({
+				// 	targets: path,
+				// 	t: 1,
+				// 	duration: 1000,
+				// 	ease: "Quart.easeOut",
+				// 	onUpdate: () => {
+				// 		/*
+				// 		graphics.fillStyle(0xff0000, 1);
+				// 		graphics.fillCircle(path.vec.x, path.vec.y, 5);
+				// 		graphics.fillStyle(0xffffff, 1);
+				// 		graphics.fillCircle(
+				// 			curve.getPoint(path.t, path.vec).x,
+				// 			curve.getPoint(path.t, path.vec).y,
+				// 			5
+				// 		);
+				// 		graphics.fillCircle(controlX, controlY, 5);*/
 
-						bomb.setPosition(
-							curve.getPoint(path.t, path.vec).x,
-							curve.getPoint(path.t, path.vec).y
-						);
-					},
-					onComplete: () => {
-						console.log("bye");
-						bomb.destroy();
-					},
-				});
+				// 		bomb.setPosition(
+				// 			curve.getPoint(path.t, path.vec).x,
+				// 			curve.getPoint(path.t, path.vec).y
+				// 		);
+				// 	},
+				// 	onComplete: () => {
+				// 		bomb.destroy();
+				// 	},
+				// });
 				/*
 				//debug visualize
 				const graphics = this.add.graphics().setDepth(99999);
@@ -1012,7 +1011,7 @@ export default class Match extends Phaser.Scene {
 
 					// Choose your weapon
 					this.cannonSelectors.removeAll(true);
-					this.p1Cannons.list.forEach((cannon, p1Index) => {
+					this.p1Cannons.list.forEach((cannon) => {
 						const selector = new Button(
 							this,
 							cannon.x,
@@ -1036,6 +1035,7 @@ export default class Match extends Phaser.Scene {
 									.setDisplayOrigin(32, 38)
 									.setName("p2Base");
 								this.targets.add(baseTarget);
+
 								// cannon target
 								this.p2Cannons.list.forEach((c, p2Index) => {
 									console.log("add target at", c.x, c.y);
@@ -1083,10 +1083,6 @@ export default class Match extends Phaser.Scene {
 											// Primary identification using IDs
 											attackerCannonId: attackerCannonId,
 											targetCannonId: targetCannonId,
-
-											// Fallback to indices for backward compatibility
-											attackerIndex: p1Index,
-											target: p2Index,
 										});
 									});
 
@@ -1094,21 +1090,20 @@ export default class Match extends Phaser.Scene {
 								});
 								this.targets.setVisible(true);
 
+								//base target
 								const chooseAtkTower = () => {
-									console.info("chooseAtkTower() called");
+									console.info("chooseAtkTower() called", cannon);
 
 									// Get attacker cannon ID if available
-									let attackerCannonId = null;
-									if (cannon.id) {
-										attackerCannonId = cannon.id;
-									}
+									let attackerCannonId = cannon.id;
 
-									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-										target: -1, // -1 indicates tower target
+									console.warn({
 										// Attacker information
-										attackerIndex: p1Index,
 										attackerCannonId: attackerCannonId,
-										cannonId: p1Index, // Keep for backward compatibility
+									});
+									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
+										// Attacker information
+										attackerCannonId: attackerCannonId,
 									});
 								};
 
@@ -1434,8 +1429,7 @@ export default class Match extends Phaser.Scene {
 					break;
 				case "4": // Attack tower
 					this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-						target: -1,
-						cannonId: 0,
+						attackerCannonId: 0,
 					});
 					break;
 				case "5": // Attack cannon
@@ -1459,11 +1453,7 @@ export default class Match extends Phaser.Scene {
 						const firstSelfCannon = this.state.roundWinner.cannons[0];
 						this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
 							attackerCannonId: firstSelfCannon.id,
-							targetCannonId: firstOppCannon,
-
-							// Fallback to indices for backward compatibility
-							attackerIndex: 0,
-							target: 0,
+							targetCannonId: firstOppCannon.id,
 						});
 					}
 					break;
@@ -1592,7 +1582,10 @@ export default class Match extends Phaser.Scene {
 
 			case TowerActionTypes.ATTACK_TOWER:
 				console.warn("CANON POWIEJR:", info);
-				console.log("Server: Attacking tower with cannon ID:", info.id);
+				console.log(
+					"Server: Attacking tower with cannon ID:",
+					info.attackerCannonId
+				);
 
 				// Check if there are any shields to absorb the attack
 				if (this.state.roundLoser.shields.length > 0) {
