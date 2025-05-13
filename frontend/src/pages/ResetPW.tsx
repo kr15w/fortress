@@ -61,7 +61,7 @@ const ChangePassword: React.FC = () => {
       setMessage("Password changed successfully. Redirecting to login page...")
       setError("")
       setTimeout(() => {
-        window.location.href = "http://localhost:5173/login"
+        window.location.href = "http://localhost:5173/"
       }, 2000)
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to change password. Please check the code and try again.")

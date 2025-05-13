@@ -75,7 +75,10 @@ export const login = async (credentials: UserCredentials): Promise<AuthResponse>
 
     return response.data;
   } catch (error) {
-    throw new Error("Login failed");
+    if (axios.isAxiosError(error) && error.response?.status === 403) {
+      throw error.response?.status
+    }
+    else throw new Error("Invalid username or password");
   }
 };
 

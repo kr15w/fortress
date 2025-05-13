@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, Response, render_template, session, request, url_for, redirect
+from flask import Flask, jsonify, request, Response, render_template, session, request, url_for, redirect, abort
 import flask
 import requests
 from flask_cors import CORS
@@ -42,7 +42,7 @@ app.config['GOOGLE_DISCOVERY_URL'] = (
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = ''
+app.config['MAIL_USERNAME'] = 'fortressgameee@gmail.com'
 app.config['MAIL_PASSWORD'] = ''
 # Initialize OAuth
 oauth = OAuth(app)
@@ -96,7 +96,7 @@ def google_callback():
 
     if user:
         if user.banned:
-            return redirect('http://localhost:5173/account-banned')
+            abort(403)
 
         access_token = jwt.encode({
             'user': user_info['name'],
@@ -271,7 +271,7 @@ def login():
     if not user:
         return jsonify({'message': 'Invalid credentials'}), 401
     if user.banned == True:
-        return redirect('http://localhost:5173/account-banned')
+        return abort(403)
     # Create tokens
     access_token = jwt.encode({
         'user': auth['username'],

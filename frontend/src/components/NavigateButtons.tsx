@@ -1,13 +1,9 @@
 "use client"
-
-import type React from "react"
-
 import { useLocation, Link, useNavigate } from "react-router-dom"
-import { ThemeProvider } from "@/components/theme-provider"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { Trophy, User, LogOut, Home } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Navigation buttons component that shows conditionally based on authentication
@@ -16,27 +12,55 @@ const NavigationButtons = () => {
   const navigate = useNavigate()
   const [userId, setUserId] = useState<string | null>(null)
 
+  // Create a reusable function to check authentication status
+  const checkAuth = useCallback(() => {
+    try {
+      // Get userId from sessionStorage
+      const storedUserId = sessionStorage.getItem("userId")
+      if (storedUserId) {
+        setUserId(storedUserId)
+      } else {
+        setUserId(null)
+      }
+    } catch (error) {
+      console.error("Error fetching user ID:", error)
+      setUserId(null)
+    }
+  }, [])
+
+  // Check auth on component mount and when location changes
   useEffect(() => {
-    // Check if user is authenticated and get userId from sessionStorage
-    const checkAuth = async () => {
-      try {
-        // Get userId from sessionStorage
-        const storedUserId = sessionStorage.getItem("userId")
-        if (storedUserId) {
-          setUserId(storedUserId)
-        }
-      } catch (error) {
-        console.error("Error fetching user ID:", error)
+    checkAuth()
+  }, [location.pathname, checkAuth])
+
+  // Set up a listener for sessionStorage changes
+  useEffect(() => {
+    // Create a storage event listener to detect changes to sessionStorage
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.storageArea === sessionStorage && (event.key === "userId" || event.key === null)) {
+        checkAuth()
       }
     }
 
-    checkAuth()
-  }, [location.pathname])
+    // Add event listener for storage changes
+    window.addEventListener("storage", handleStorageChange)
+
+    // Set up an interval to periodically check for userId (as a fallback)
+    const interval = setInterval(checkAuth, 1000)
+
+    // Clean up event listener and interval on unmount
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [checkAuth])
 
   // Handle logout
   const handleLogout = () => {
     // Clear all sessionStorage
     sessionStorage.clear()
+    // Update local state
+    setUserId(null)
     // Redirect to gate
     navigate("/")
   }
@@ -52,10 +76,9 @@ const NavigationButtons = () => {
     <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
       <TooltipProvider>
         {/* Always show theme toggle on all routes */}
-            <div style={noBackgroundStyle}>
-              <ModeToggle />
-            </div>
-  
+        <div style={noBackgroundStyle}>
+          <ModeToggle />
+        </div>
 
         {/* Only show these buttons on protected routes */}
         {!isPublicRoute && (
