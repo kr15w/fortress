@@ -1,9 +1,9 @@
 import Phaser from "phaser";
 import { loadAnims } from "./loadAnims";
 import { io } from 'socket.io-client';
-let playerName;
+export let playerName;
 let RMCODE = sessionStorage.getItem("roomCode") || ""; // Get room code from sessionStorage
-let socket;
+export let socket;
 /**
  * @todo handle animations
  * nah automate origin setting (use the relative position of the largest sprite)
@@ -119,16 +119,16 @@ export default class Lobby extends Phaser.Scene {
         fetch('/api/token')
             .then(response => response.json())
             .then(data => {
-                this.playerName = data.token;
-                console.log('Got player name:', this.playerName);
+                this.gameToken = data.token; // Store the game token
+                console.log('Got game token:', this.gameToken);
 
-				// Get room code from sessionStorage if it exists
+                // Get room code from sessionStorage if it exists
                 const roomCode = sessionStorage.getItem("roomCode");
                 
-                // Now emit the message with the player name
+                // Now emit the message with the game token
                 const message = JSON.stringify({
-                    player_name: this.playerName,
-					room_id: roomCode || '' // If no room code, send empty string to create new room
+                    player_name: this.gameToken, // Use the game token
+                    room_id: roomCode || '' // If no room code, send empty string to create new room
                 });
                 console.log('Sending message:', message);
                 socket.emit('message_from_client', message);
@@ -338,7 +338,7 @@ export default class Lobby extends Phaser.Scene {
 								}
 								var isReady = this.p1Ready === true;
 								var message = JSON.stringify({
-									player_name: this.playerName,
+									player_name: this.gameToken,
 									room_id: this.RMCODE,
 									action: 'ready',
 									value: this.p1Ready

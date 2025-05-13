@@ -35,16 +35,16 @@ clients = {}
 user_tokens = {}  # user_id -> token mapping
 game_flask.user_tokens = user_tokens
 
-app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
-app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
+app.config['GOOGLE_CLIENT_ID'] = '964856212104-24jr2rk9rtklq1l36djeso8a7u3dondh.apps.googleusercontent.com'
+app.config['GOOGLE_CLIENT_SECRET'] = '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'
 app.config['GOOGLE_DISCOVERY_URL'] = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_USERNAME'] = 'fortressgameee@gmail.com'
+app.config['MAIL_PASSWORD'] = 'fqau jerq xsgb nbrn'
 # Initialize OAuth
 oauth = OAuth(app)
 

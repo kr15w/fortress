@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { loadAnims } from "./loadAnims";
 import ANIMS from "./match_anims.json";
+import { socket } from "./Lobby"
 
 /**
  * done add tie anim
@@ -50,21 +51,139 @@ export default class Match extends Phaser.Scene {
 	}
 	constructor() {
 		super("Match");
-		this.initGame();
-		// I am noogai
-		this.povName = "noogai67";
+		console.log("Match scene constructor called");
+		
+		// Listen for match state updates
+		socket.on("match_state_refresh", (msg) => {
+			console.log("Received match_state_refresh event:", msg);
+			
+			if (msg.reason_for_refresh === "Both players are ready, game started") {
+				console.log("Game starting with message:", msg);
+				
+				// Initialize game state
+				this.initGame();
+				this.povName = msg.current_player_name;
+				this.opponentName = msg.opponent_name;
+				this.roomId = msg.room_id;
+				this.povIsWin = null;
+				this.povHP = 0;
+				this.opponentHP = 0;
+				// Store the game token
+				this.gameToken = msg.current_player_id;
+				console.log("Game started with players:", this.povName, this.opponentName, "in room:", this.roomId);
+				
+				// Add players to the game state with initial HP of 4
+				this.addPlayer(new Player(this.povName, 0));
+				this.addPlayer(new Player(this.opponentName, 0));
+				
+				// Ensure scene is started
+				if (!this.scene.isActive()) {
+					console.log("Starting Match scene");
+					this.scene.start();
+				}
+				
+				// Start the first round
+				this.events.emit("roundStart");
+			}
+			else if (typeof msg === 'object') {
+				console.log("Processing game state update:", msg);
+				if (msg.reason_for_refresh === "RPS round end") {
+					// Update player states with values from server
+					/*
+					this.state.players[0].hp = msg.current_player_health;
+					this.state.players[1].hp = msg.opponent_health;
+					this.state.players[0].cannons = msg.current_player_cannon;
+					this.state.players[1].cannons = msg.opponent_cannon;
+					*/
+					
+					// Update base visuals to match server state
+					console.log("msg.winner: ", msg.winner)
+					if (msg.current_player_health >= 0 && msg.current_player_health <= 4) {
+						this.p1Base.setFrame("match_p1Base000" + msg.current_player_health);
+					}
+					if (msg.opponent_health >= 0 && msg.opponent_health <= 4) {
+						this.p2Base.setFrame("match_p2Base000" + msg.opponent_health);
+					}
+					
+					if(msg.reason_for_refresh === "RPS tie - new round starting") {
+						this.state.roundWinner = null;
+						this.state.roundLoser = null;
+						this.povIsWin = null;
+						this.state.p2RpsChoice = this.state.p1RpsChoice;
+					}
+					else if (msg.winner) {
+						// If winner is true, current player won
+						this.povIsWin = true;
+						this.state.roundWinner = this.state.players[0];
+						this.state.roundLoser = this.state.players[1];
+						// Set opponent's choice based on the winner's choice
+						if(this.state.p1RpsChoice === 'r') {
+							this.state.p2RpsChoice = 's';
+						}
+						else if(this.state.p1RpsChoice === 'p') {
+							this.state.p2RpsChoice = 'r';
+						}
+						else if(this.state.p1RpsChoice === 's') {
+							this.state.p2RpsChoice = 'p';
+						}
+					} else {
+						// If winner is false, opponent won
+						this.povIsWin = false;
+						this.state.roundWinner = this.state.players[1];
+						this.state.roundLoser = this.state.players[0];
+						// Set opponent's choice based on the winner's choice
+						if(this.state.p1RpsChoice === 's') {
+							this.state.p2RpsChoice = 'r';
+						}
+						else if(this.state.p1RpsChoice === 'r') {
+							this.state.p2RpsChoice = 'p';
+						}
+						else if(this.state.p1RpsChoice === 'p') {
+							this.state.p2RpsChoice = 's';
+						}
+					}
+					console.log("POV is win:", this.povIsWin);
+					this.events.emit("rpsResult");
+				}
+				else if (msg.state === 1) {
+					// Update frontend state with backend state
+					/*
+					this.state.players[0].hp = msg.current_player_health;
+					this.state.players[1].hp = msg.opponent_health;
+					this.state.players[0].cannons = msg.current_player_cannon;
+					this.state.players[1].cannons = msg.opponent_cannon;*/
+					this.events.emit("towerStart");
+				}
+				else if (msg.state === 2) {
+					this.events.emit("gameOver");
+				}
+			}
+		});
+		
+		// Add error handler
+		socket.on("error", (error) => {
+			console.error("Socket error:", error);
+		});
+		
+		// Add connect handler
+		socket.on("connect", () => {
+			console.log("Socket connected");
+		});
+		
+		// Add disconnect handler
+		socket.on("disconnect", () => {
+			console.log("Socket disconnected");
+		});
 	}
-
+	
 	init(data) {
 		this.initGame();
-		this.addPlayer(new Player(this.povName));
-		this.addPlayer(new Player("discovry"));
-
-		/*
+	
+	}
+	/*
     this.input.on("pointerdown", (pointer) => {
       console.log("lmb 1 or rmb 2:", pointer.buttons);
     });*/
-	}
 
 	preload() {
 		this.load.image("match_bg", "assets/match_bg.png");
@@ -153,8 +272,20 @@ export default class Match extends Phaser.Scene {
 		const SCENE_W = this.sys.game.canvas.width;
 		const SCENE_H = this.sys.game.canvas.height;
 
+		// Initialize game state if not already initialized
+		if (!this.state) {
+			console.log("State not initialized in create(), initializing now");
+			this.initGame();
+		}
+
+		// Add temporary players if none exist
+		if (this.state.players.length === 0) {
+			console.log("No players in state, adding temporary players");
+			this.addPlayer(new Player(this.povName, 0));
+			this.addPlayer(new Player(this.opponentName, 0));
+		}
+
 		this._createBackground();
-		//this.createTable(); // optimize later
 		this._createBases();
 		this._createPlayers();
 		this._createTowerBtns();
@@ -169,7 +300,6 @@ export default class Match extends Phaser.Scene {
 			.setDepth(10)
 			.setName("p2CannonsContainer");
 
-		// selct use which cannon to atk
 		this.cannonSelectors = this.add
 			.container(0, 0)
 			.setName("cannonSelectorsContainer")
@@ -191,12 +321,15 @@ export default class Match extends Phaser.Scene {
 		this.p1Right.play("match_p1Right_wait");
 		this.p2Body.play("match_p2Body_wait");
 
-		//todo centralize visuals
-		this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
-		this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+		// Set initial base frames
+		if (this.state.players[0] && this.state.players[1]) {
+			this.p1Base.setFrame("match_p1Base000" + this.state.players[0].hp);
+			this.p2Base.setFrame("match_p2Base000" + this.state.players[1].hp);
+		}
 
 		this.input.keyboard.on("keydown", (e) => this.onKeyDown(e));
 
+		// Set up event listeners
 		this.events.on("roundStart", () => {
 			this.onRoundStart();
 		});
@@ -228,6 +361,7 @@ export default class Match extends Phaser.Scene {
 			this.onGameOver();
 		});
 
+		// Emit roundStart after everything is initialized
 		this.events.emit("roundStart");
 	}
 
@@ -397,7 +531,8 @@ export default class Match extends Phaser.Scene {
 		this._hideRpsButtons();
 
 		console.info(this.state.players);
-		this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
+		console.log("this.state.p1RpsChoice: ", this.state.p1RpsChoice, " this.state.p2RpsChoice: ", this.state.p2RpsChoice);
+		//this._decideWinner(this.state.p1RpsChoice, this.state.p2RpsChoice);
 		// player visuals
 		this.p1Right.play("match_p1Right_" + this.state.p1RpsChoice);
 		this.p2Hand.play("match_p2Hand_" + this.state.p2RpsChoice);
@@ -408,20 +543,20 @@ export default class Match extends Phaser.Scene {
 			delay: 800,
 			callback: () => {
 				console.log("decide winner", this.state.roundWinner);
-				if (this.state.roundWinner == null) {
+				if (this.povIsWin == null) {
 					//console.log("tie");
 					//this.p1Left.play("match_p1Left_lose");
 					//this.p1Right.play("match_p1Right_tie");
 					this.p1Right.visible = false;
 					this.p2Body.play("match_p2Body_tie");
 					this.p2Hand.play("match_p2Hand_tie");
-				} else if (this.state.roundWinner.name == this.povName) {
+				} else if (this.povIsWin) {
 					//console.log("i win");
 					//this.p1Left.play("match_p1Left_win");
 					this.p1Right.play("match_p1Right_win");
 					this.p2Body.play("match_p2Body_lose");
 					this.p2Hand.play("match_p2Hand_lose");
-				} else if (this.state.roundWinner.name == "discovry") {
+				} else if (!this.povIsWin) {
 					//console.log("i lose");
 					//this.p1Left.play("match_p1Left_lose");
 					this.p1Right.play("match_p1Right_lose");
@@ -431,7 +566,7 @@ export default class Match extends Phaser.Scene {
 				this.time.addEvent({
 					delay: 500,
 					callback: () => {
-						if (this.state.roundWinner == null) {
+						if (this.povIsWin == null) {
 							this.events.emit("roundStart");
 						} else {
 							this.events.emit("towerStart");
@@ -451,7 +586,18 @@ export default class Match extends Phaser.Scene {
 		this.state.stage = "towerStart";
 		console.log("tower start");
 
-		if (this.state.roundWinner.name != this.povName) {
+		// Add null check for roundWinner
+		
+		if (this.povIsWin === null) {
+			console.warn("No round winner determined, returning to round start");
+			this.events.emit("roundStart");
+			return;
+		}
+		//console.log("%%% roundWinner.name = ", this.state.roundWinner.name, ", povName: ", this.povName);
+		else if (!this.povIsWin) {
+			console.log("I lose, play below animation");
+			this.state.roundWinner = this.state.players[1]
+			this.state.roundLoser = this.state.players[0]
 			//i lose, watch opponent think
 			this.p1Left.play("match_p1Left_wait");
 			this.p1Right.play("match_p1Right_waitTower");
@@ -467,8 +613,11 @@ export default class Match extends Phaser.Scene {
 				);
 				return;
 			}
-		} else {
+		} else if(this.povIsWin) {
+			this.state.roundWinner = this.state.players[0]
+			this.state.roundLoser = this.state.players[1]
 			// i win
+			console.log("I win, play below animation");
 			this.p1Left.play("match_p1Left_think");
 			this.p1Right.visible = false;
 			this.p2Body.play("match_p2Body_wait");
@@ -483,7 +632,13 @@ export default class Match extends Phaser.Scene {
 				);
 				return;
 			}
-			this._showTowerButtons();
+			else {
+				console.log("showing tower buttons")
+				this._showTowerButtons();
+			}
+		}
+		else {
+
 		}
 	}
 
@@ -492,11 +647,16 @@ export default class Match extends Phaser.Scene {
 		console.log("Client: Updating tower visuals based on server state");
 
 		// Update the HP display for both players
-		if (state.players[0].hp <= 4) {
+		console.log("Client: Updating base HP visuals", state.players[0].hp, state.players[1].hp);
+		
+		// Update player 1 base
+		if (state.players[0].hp >= 0 && state.players[0].hp <= 4) {
 			console.log("Client: Updating player 1 base to HP", state.players[0].hp);
 			this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
 		}
-		if (state.players[1].hp <= 4) {
+		
+		// Update player 2 base
+		if (state.players[1].hp >= 0 && state.players[1].hp <= 4) {
 			console.log("Client: Updating player 2 base to HP", state.players[1].hp);
 			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
 		}
@@ -699,10 +859,16 @@ export default class Match extends Phaser.Scene {
 			state.players[0].hp,
 			state.players[1].hp
 		);
-		if (state.players[0].hp <= 4) {
+		
+		// Update player 1 base
+		if (state.players[0].hp >= 0 && state.players[0].hp <= 4) {
+			console.log("Client: Updating player 1 base to HP", state.players[0].hp);
 			this.p1Base.setFrame("match_p1Base000" + state.players[0].hp);
 		}
-		if (state.players[1].hp <= 4) {
+		
+		// Update player 2 base
+		if (state.players[1].hp >= 0 && state.players[1].hp <= 4) {
+			console.log("Client: Updating player 2 base to HP", state.players[1].hp);
 			this.p2Base.setFrame("match_p2Base000" + state.players[1].hp);
 		}
 
@@ -1080,17 +1246,23 @@ export default class Match extends Phaser.Scene {
 						"match_cannonBtn"
 					).setName("cannonBtn");
 
-					this.shieldBtn = new Button(
-						this,
-						906,
-						579,
-						"match_shieldBtn"
-					).setName("shieldBtn");
+					// Only show shield button if HP is 4 or more
+					if (this.state.roundWinner.hp >= 4) {
+						this.shieldBtn = new Button(
+							this,
+							906,
+							579,
+							"match_shieldBtn"
+						).setName("shieldBtn");
+					}
+
 					// this.bldBtn.off("pointerdown", chooseBld);
 					// this.bldBtn.removeInteractive();
 					const handleAddCannon = () => {
 						console.info("handleAddCannon() called");
-						this.shieldBtn.removeInteractive();
+						if (this.shieldBtn) {
+							this.shieldBtn.removeInteractive();
+						}
 						let cannon = new Cannon(this, this.input.mousePointer);
 
 						const handleMove = (pointer) => {
@@ -1194,55 +1366,57 @@ export default class Match extends Phaser.Scene {
 						})
 						.once("pointerdown", handleAddCannon, this);
 
-					//disable later to avoid double clickin
-					const handleAddShield = () => {
-						this.cannonBtn.removeInteractive();
-						let shield = new Shield(this, this.input.mousePointer).setName(
-							"p1 shield"
-						);
-
-						const handleResize = (pointer) => {
-							console.info("handleResize() called");
-							shield.handleResize(pointer);
-							this.cantAddShield = this.p1Shields.some(
-								(builtS) => Math.abs(builtS.scale - shield.scale) <= 0.001
+					// Only add shield button handler if shield button exists
+					if (this.shieldBtn) {
+						const handleAddShield = () => {
+							this.cannonBtn.removeInteractive();
+							let shield = new Shield(this, this.input.mousePointer).setName(
+								"p1 shield"
 							);
 
-							if (this.cantAddShield) {
-								shield.setTint(0xff0000);
-							} else {
-								shield.clearTint();
-							}
+							const handleResize = (pointer) => {
+								console.info("handleResize() called");
+								shield.handleResize(pointer);
+								this.cantAddShield = this.p1Shields.some(
+									(builtS) => Math.abs(builtS.scale - shield.scale) <= 0.001
+								);
+
+								if (this.cantAddShield) {
+									shield.setTint(0xff0000);
+								} else {
+									shield.clearTint();
+								}
+							};
+
+							this.input.on("pointermove", handleResize, this);
+
+							// confirm add shields
+							this.time.addEvent({
+								delay: 50,
+								callback: () => {
+									const handleConfirm = () => {
+										if (!this.cantAddShield) {
+											this.input.off("pointermove", handleAddShield);
+											this.input.off("pointermove", handleResize);
+											this.p1Shields.push(shield);
+											console.log(this.p1Shields);
+											this.handleTowerInput(TowerActionTypes.BUILD_SHIELD, {
+												scaleX: shield.scaleX,
+												scaleY: shield.scaleY,
+											});
+										}
+									};
+									this.input.once("pointerdown", handleConfirm);
+								},
+								loop: false,
+							});
 						};
-
-						this.input.on("pointermove", handleResize, this);
-
-						// confirm add shields
-						this.time.addEvent({
-							delay: 50,
-							callback: () => {
-								const handleConfirm = () => {
-									if (!this.cantAddShield) {
-										this.input.off("pointermove", handleAddShield);
-										this.input.off("pointermove", handleResize);
-										this.p1Shields.push(shield);
-										console.log(this.p1Shields);
-										this.handleTowerInput(TowerActionTypes.BUILD_SHIELD, {
-											scaleX: shield.scaleX,
-											scaleY: shield.scaleY,
-										});
-									}
-								};
-								this.input.once("pointerdown", handleConfirm);
-							},
-							loop: false,
-						});
-					};
-					this.shieldBtn
-						.setInteractive({
-							cursor: "pointer",
-						})
-						.once("pointerdown", handleAddShield);
+						this.shieldBtn
+							.setInteractive({
+								cursor: "pointer",
+							})
+							.once("pointerdown", handleAddShield);
+					}
 				},
 			});
 		};
@@ -1320,7 +1494,7 @@ export default class Match extends Phaser.Scene {
 		this.cannonSelectors.removeAll(true);
 		this.targets.removeAll(true);
 	}
-
+	/*
 	_decideWinner(p1RpsChoice, p2RpsChoice) {
 		console.log("decide winner");
 		console.info(this.state.players);
@@ -1342,107 +1516,52 @@ export default class Match extends Phaser.Scene {
 			this.state.roundLoser = this.state.players[0];
 			return 1;
 		}
-	}
+	}*/
 
 	onKeyDown(e) {
-		//Thesea re all temporareeie
+		//These are all temporary
 		if (this.state.stage == "rpsStart") {
 			if (["r", "p", "s"].includes(e.key)) {
-				this.handleRpsInput(e.key, "discovry");
+				// Only handle keyboard input for the current player
+				this.handleRpsInput(e.key, this.povName);
 			}
 		} else if (this.state.stage == "towerStart") {
-			// Specific tower actions for player 2
-			switch (e.key) {
-				case "1": // Build tower
-					this.handleTowerInput(TowerActionTypes.BUILD_TOWER, {});
-					break;
-				case "2": // Build shield
-					this.handleTowerInput(TowerActionTypes.BUILD_SHIELD, {
-						scaleX: 1.2,
-						scaleY: 1.2,
-					});
-					break;
-				case "3": // Build cannon
-					this.handleTowerInput(TowerActionTypes.BUILD_CANNON, {
-						x: 500, // Fixed position for testing
-					});
-					break;
-				case "4": // Attack tower
-					this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
-						target: -1,
-						cannonId: 0,
-					});
-					break;
-				case "5": // Attack cannon
-					// Only try to attack a cannon if there are any
-					/*
-					TowerActionTypes.ATTACK_CANNON, {
-											// Primary identification using IDs
-											attackerCannonId: attackerCannonId,
-											targetCannonId: targetCannonId,
-
-											// Fallback to indices for backward compatibility
-											attackerIndex: p1Index,
-											target: p2Index,
-										}*/
-					if (
-						this.state.roundLoser &&
-						this.state.roundLoser.cannons.length > 0
-					) {
-						// Get the first cannon's ID if available, otherwise use index
-						const firstOppCannon = this.state.roundLoser.cannons[0];
-						const firstSelfCannon = this.state.roundWinner.cannons[0];
-						this.handleTowerInput(TowerActionTypes.ATTACK_CANNON, {
-							attackerCannonId: firstSelfCannon.id,
-							targetCannonId: firstOppCannon,
-
-							// Fallback to indices for backward compatibility
-							attackerIndex: 0,
-							target: 0,
-						});
-					}
-					break;
-				case "6": // Upgrade cannon
-					// Only try to upgrade if there are any cannons
-					if (
-						this.state.roundWinner &&
-						this.state.roundWinner.cannons.length > 0
-					) {
-						const firstCannon = this.state.roundWinner.cannons[0];
-						if (firstCannon.id) {
-							this.handleTowerInput(TowerActionTypes.UPGRADE_CANNON, {
-								id: firstCannon.id, // Upgrade by ID
-							});
-						}
-					}
-					break;
-			}
+			// Rest of the tower action handling...
 		}
 	}
 
 	handleRpsInput(choice, playerName) {
-		console.info("handleRpsInput() called");
+		console.info("handleRpsInput() called with choice:", choice, "playerName:", playerName);
 		/**called only during roundStart event.
-		 * Sends message to quasi server.
+		 * Sends message to server.
 		 */
 		if (choice != "r" && choice != "p" && choice != "s") {
 			console.warn("invalid choice");
 			return;
 		}
 
-		// saves input to server.
-		if (this.povName == playerName) {
+		// Only handle input for the current player
+		if (this.povName === playerName) {
+			// Send RPS choice to server
+			const message = {
+				player_name: this.gameToken, // Use the game token instead of povName
+				action: 'RPS',
+				value: choice,
+				room_id: this.roomId
+			};
+			console.log("Current game state:", {
+				povName: this.povName,
+				gameToken: this.gameToken,
+				roomId: this.roomId,
+				state: this.state
+			});
+			console.log("Sending RPS choice to server:", message);
+			socket.emit('message_from_client', JSON.stringify(message));
+
+			// Update local state
 			this.state.p1RpsChoice = choice;
 		} else {
-			this.state.p2RpsChoice = choice;
-		}
-		console.log(this.state.p1RpsChoice, this.state.p2RpsChoice);
-
-		/**Quasi server logic.
-		 * Called everytime an rps input is received. */
-		if (this.state.p1RpsChoice && this.state.p2RpsChoice) {
-			this.state.stage = "rpsResult";
-			this.events.emit("rpsResult");
+			console.warn("Ignoring RPS input for non-current player:", playerName);
 		}
 	}
 	handleTowerInput(towerAction, info) {
@@ -1687,32 +1806,9 @@ export default class Match extends Phaser.Scene {
 }
 
 class Player {
-	constructor(name) {
+	constructor(name, initialHp = 0) {
 		this.name = name;
-		/***
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 * @todo change this hp
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 *
-		 */
-		this.hp = 4;
+		this.hp = initialHp;
 		this.shields = [];
 		this.cannons = [];
 	}

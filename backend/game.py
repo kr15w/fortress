@@ -130,7 +130,7 @@ class Game:
         if self.state == 0:  # RPS state
             if action != 'RPS':
                 return False, "Invalid action for current state"
-            if value.lower() not in ['rock', 'paper', 'scissors']:
+            if value.lower() not in ['r', 'p', 's']:
                 return False, "Invalid RPS choice (must be rock/paper/scissors)"
             if player.rps_choice is not None:
                 return False, "Player already made RPS choice"
@@ -170,9 +170,9 @@ class Game:
     
     def _determine_rps_winner(self):
         choice = {
-            'rock': 0,
-            'paper': 1,
-            'scissors': 2
+            'r': 0,
+            'p': 1,
+            's': 2
         }
         p1 = choice.get(self.player1.rps_choice, -1)
         p2 = choice.get(self.player2.rps_choice, -1)
@@ -189,8 +189,10 @@ class Game:
     def _reset_rps(self):
         self.player1.rps_choice = None
         self.player2.rps_choice = None
+        '''
         if self.state != 1:  # Only clear winner if not moving to action state
             self.winner = None
+        '''
 
 if __name__ == "__main__":
     print("Game module loaded")
