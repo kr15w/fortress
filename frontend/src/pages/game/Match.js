@@ -1097,10 +1097,6 @@ export default class Match extends Phaser.Scene {
 									// Get attacker cannon ID if available
 									let attackerCannonId = cannon.id;
 
-									console.warn({
-										// Attacker information
-										attackerCannonId: attackerCannonId,
-									});
 									this.handleTowerInput(TowerActionTypes.ATTACK_TOWER, {
 										// Attacker information
 										attackerCannonId: attackerCannonId,
@@ -1602,9 +1598,13 @@ export default class Match extends Phaser.Scene {
 					console.log("Server: Shield absorbed the attack");
 				} else {
 					// No shields, reduce HP directly
-					this.state.roundLoser.hp -= info.pow;
+					const pow = this.state.roundWinner.cannons.find(
+						(c) => c.id === info.attackerCannonId
+					).pow;
+					this.state.roundLoser.hp -= pow;
 					console.log(
 						"Server: Tower took damage, new HP:",
+						this.state.roundLoser,
 						this.state.roundLoser.hp
 					);
 				}
