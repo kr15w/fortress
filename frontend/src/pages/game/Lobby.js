@@ -84,6 +84,7 @@ export default class Lobby extends Phaser.Scene {
 			.setVisible(false);
 		this.p1 = this.add.sprite(0, 1184, "lobby_player").setName("p1");
 		this.p2 = this.add.sprite(0, 1184, "lobby_player").setName("p2");
+		this.p2.preFX.addColorMatrix().hue(109); //too lazy to get a new sprite lol
 		this.lol = 0;
 
 		/*sign text*/
@@ -131,8 +132,8 @@ export default class Lobby extends Phaser.Scene {
 
 		// PIVOTS
 		// AUTOMATE THIS use the largest anim for the stuff
-		this.p1.setDisplayOrigin(361, 808);
-		this.p2.setDisplayOrigin(361, 808);
+		this.p1.setDisplayOrigin(366, 789);
+		this.p2.setDisplayOrigin(366, 789);
 
 		loadAnims(ANIMS, this);
 
@@ -272,12 +273,17 @@ export default class Lobby extends Phaser.Scene {
 				this.startingGame = true;
 				console.log("both ready, start in 2 sec");
 				this.time.delayedCall(1500, () => {
+					//fall over sign, then show transition, then fade to black, then switch scenes
 					this.rmCodeDigits.removeAll(true);
 					this.rmCodeSign
 						.play("lobby_rmCodeSign_fall")
 						.on("animationcomplete", () => {
+							//seems a bit half baked...
 							this.rmCodeSign.destroy();
+							//show transition
 							this.time.delayedCall(1000, () => {
+								this.p1.play("lobby_player_matchPose");
+								this.p2.play("lobby_player_matchPose");
 								const black = this.add
 									.rectangle(0, 0, SCENE_W, SCENE_H, 0x333333, 0.2)
 									.setDepth(101)

@@ -18,24 +18,25 @@
 			"repeat": -1
 		},
 		{
-			"key": "ready",
-			"start": 20,
-			"end": 27,
-			"frameRate": 24,
-			"repeat": 0
-		},
-		{
 			"key": "notice",
-			"start": 28,
-			"end": 32,
+			"start": 20,
+			"end": 24,
 			"frameRate": 24,
 			"repeat": 0
 		},
 		{
 			"key": "annoyed",
-			"start": 33,
-			"end": 33
-		}
+			"start": 25,
+			"end": 25,
+			"frameRate": 24,
+			"repeat": 0
+		},
+		{
+			"key": "ready",
+			"start": 28,
+			"end": 30
+		},
+		{ "key": "matchPose", "start": 31, "end": 39 }
 	],
 	"lobby_rmCodeSign": [
 		{
