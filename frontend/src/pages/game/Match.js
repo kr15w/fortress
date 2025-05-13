@@ -295,7 +295,7 @@ export default class Match extends Phaser.Scene {
 		this.p2Hand = this.add
 			//why is it all around the place!!!!!!
 			.sprite(1130, 350, "match_p2Hand")
-			.setDisplayOrigin(313, 212)
+			.setDisplayOrigin(318, 254)
 			.setDepth(999)
 			.setName("p2Hand");
 
